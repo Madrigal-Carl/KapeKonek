@@ -3,6 +3,8 @@ import { Routes, Route } from "react-router-dom";
 import HomePage from "@/pages/public/HomePage";
 import AboutPage from "@/pages/public/AboutPage";
 import ProductsPage from "@/pages/public/ProductsPage";
+import LoginPage from "@/pages/public/LoginPage";
+import RegisterPage from "@/pages/public/RegisterPage";
 
 import PublicLayout from "@/layouts/PublicLayout";
 // import DashboardLayout from "@/layouts/DashboardLayout";
@@ -49,8 +51,8 @@ export default function AppRouter() {
 
         {/* GUEST ONLY */}
         <Route element={<PublicOnlyRoute />}>
-          <Route path="/login" element={<div>Login Page</div>} />
-          <Route path="/register" element={<div>Register Page</div>} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
         </Route>
 
         {/* FAR ONLY */}
