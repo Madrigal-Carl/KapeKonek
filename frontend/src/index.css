@@ -1,3 +1,119 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Base ───────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --radius: 0px;
+    --color-background: oklch(0.965 0.005 80);
+    --color-foreground: oklch(0.18 0.005 270);
+    --color-surface: oklch(0.965 0.005 80);
+    --color-neutral-warm: oklch(0.92 0.006 75);
+    --color-on-primary: oklch(0.965 0.005 80);
+    --color-accent: oklch(0.62 0.18 42);
+    --color-accent-foreground: oklch(0.985 0.003 80);
+    --color-border: oklch(0.88 0.006 75);
+
+    --background: oklch(0.965 0.005 80); /* #F3F1EC surface */
+    --foreground: oklch(0.18 0.005 270); /* #0F1113 primary text */
+    --surface: oklch(0.965 0.005 80);
+    --neutral-warm: oklch(0.92 0.006 75); /* #E7E5E1 */
+    --on-primary: oklch(0.965 0.005 80);
+
+    --card: oklch(0.985 0.003 80);
+    --card-foreground: oklch(0.18 0.005 270);
+    --popover: oklch(0.985 0.003 80);
+    --popover-foreground: oklch(0.18 0.005 270);
+
+    --primary: oklch(0.18 0.005 270); /* #0F1113 */
+    --primary-foreground: oklch(0.965 0.005 80);
+    --secondary: oklch(0.92 0.006 75);
+    --secondary-foreground: oklch(0.18 0.005 270);
+    --muted: oklch(0.92 0.006 75);
+    --muted-foreground: oklch(0.5 0.005 270); /* #6B6F74 */
+    --accent: oklch(0.62 0.18 42); /* #D95600 utility orange */
+    --accent-foreground: oklch(0.985 0.003 80);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.985 0.003 80);
+
+    --border: oklch(0.88 0.006 75);
+    --input: oklch(0.88 0.006 75);
+    --ring: oklch(0.62 0.18 42);
+
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+
+    --sidebar: oklch(0.984 0.003 247.858);
+    --sidebar-foreground: oklch(0.129 0.042 264.695);
+    --sidebar-primary: oklch(0.208 0.042 265.755);
+    --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+    --sidebar-accent: oklch(0.968 0.007 247.896);
+    --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
+    --sidebar-border: oklch(0.929 0.013 255.508);
+    --sidebar-ring: oklch(0.704 0.04 256.788);
+  }
+
+  /* Dark mode left as the same Braun palette for now since this
+     design system is intentionally light/industrial. Tweak if needed. */
+  .dark {
+    --background: oklch(0.129 0.042 264.695);
+    --foreground: oklch(0.984 0.003 247.858);
+    --card: oklch(0.208 0.042 265.755);
+    --card-foreground: oklch(0.984 0.003 247.858);
+    --popover: oklch(0.208 0.042 265.755);
+    --popover-foreground: oklch(0.984 0.003 247.858);
+    --primary: oklch(0.929 0.013 255.508);
+    --primary-foreground: oklch(0.208 0.042 265.755);
+    --secondary: oklch(0.279 0.041 260.031);
+    --secondary-foreground: oklch(0.984 0.003 247.858);
+    --muted: oklch(0.279 0.041 260.031);
+    --muted-foreground: oklch(0.704 0.04 256.788);
+    --accent: oklch(0.279 0.041 260.031);
+    --accent-foreground: oklch(0.984 0.003 247.858);
+    --destructive: oklch(0.704 0.191 22.216);
+    --destructive-foreground: oklch(0.984 0.003 247.858);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.551 0.027 264.364);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: theme("fontFamily.sans");
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .label-mono {
+    font-family: theme("fontFamily.mono");
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+  }
+}
+
+/* ─── Custom utility classes (replacement for @utility, v3 style) ─── */
+@layer utilities {
+  .kk-container {
+    width: 100%;
+    max-width: 1400px;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+
+  .kk-rule {
+    border-top: 1px solid var(--border);
+  }
+}
