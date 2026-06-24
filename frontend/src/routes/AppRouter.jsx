@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 
 import HomePage from "@/pages/public/HomePage";
 import AboutPage from "@/pages/public/AboutPage";
+import ProductsPage from "@/pages/public/ProductsPage";
 
 import PublicLayout from "@/layouts/PublicLayout";
 // import DashboardLayout from "@/layouts/DashboardLayout";
@@ -28,7 +29,7 @@ export default function AppRouter() {
           <Route element={<PublicLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<AboutPage />} />
-            <Route path="/products" element={<div>Products Page</div>} />
+            <Route path="/products" element={<ProductsPage />} />
 
             {/*  AUTHENTICATED USER ONLY */}
             <Route
