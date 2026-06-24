@@ -33,7 +33,6 @@ export function Navbar() {
               key={n.to}
               to={n.to}
               className="label-mono text-foreground transition-colors hover:text-[var(--color-accent)]"
-              activeOptions={{ exact: true }}
             >
               {n.label}
             </Link>

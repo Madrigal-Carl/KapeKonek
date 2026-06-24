@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 
 import HomePage from "@/pages/public/HomePage";
+import AboutPage from "@/pages/public/AboutPage";
 
 import PublicLayout from "@/layouts/PublicLayout";
 // import DashboardLayout from "@/layouts/DashboardLayout";
@@ -26,7 +27,7 @@ export default function AppRouter() {
         <Route element={<AuthRedirectRoute />}>
           <Route element={<PublicLayout />}>
             <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<div>About Page</div>} />
+            <Route path="/about" element={<AboutPage />} />
             <Route path="/products" element={<div>Products Page</div>} />
 
             {/*  AUTHENTICATED USER ONLY */}
