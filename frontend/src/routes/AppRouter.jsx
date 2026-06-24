@@ -5,6 +5,7 @@ import AboutPage from "@/pages/public/AboutPage";
 import ProductsPage from "@/pages/public/ProductsPage";
 import LoginPage from "@/pages/public/LoginPage";
 import RegisterPage from "@/pages/public/RegisterPage";
+import CheckoutPage from "@/pages/public/CheckoutPage";
 
 import PublicLayout from "@/layouts/PublicLayout";
 // import DashboardLayout from "@/layouts/DashboardLayout";
@@ -32,6 +33,7 @@ export default function AppRouter() {
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/products" element={<ProductsPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
 
             {/*  AUTHENTICATED USER ONLY */}
             <Route
@@ -78,13 +80,15 @@ export default function AppRouter() {
         </Route>
 
         {/* MULTIPLE ROLES */}
-        {/* <Route
+        <Route
           element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.HEAD]} />
+            <ProtectedRoute
+              allowedRoles={[ROLES.FARMER, ROLES.BUYER, ROLES.KALUPPA]}
+            />
           }
         >
-          <Route path="/reports" element={<div>Reports Page</div>} />
-        </Route> */}
+          {/* <Route path="/checkout" element={<CheckoutPage />} /> */}
+        </Route>
 
         {/* UNAUTHORIZED */}
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
