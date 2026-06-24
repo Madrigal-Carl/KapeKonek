@@ -228,7 +228,7 @@ export default function HomePage() {
               Browse Products
             </Link>
             <Link
-              to="/signup"
+              to="/register"
               className="label-mono border border-foreground px-6 py-4 text-foreground hover:bg-foreground hover:text-background"
             >
               Create Account
