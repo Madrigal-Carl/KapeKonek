@@ -14,7 +14,7 @@ export function Navbar() {
   const { count, setOpen: setCartOpen } = useCart();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border bg-background backdrop-blur">
       <div className="kk-container flex h-16 items-center justify-between gap-6">
         <Link
           to="/"
@@ -33,9 +33,6 @@ export function Navbar() {
               key={n.to}
               to={n.to}
               className="label-mono text-foreground transition-colors hover:text-[var(--color-accent)]"
-              activeProps={{
-                className: "label-mono text-[var(--color-accent)]",
-              }}
               activeOptions={{ exact: true }}
             >
               {n.label}

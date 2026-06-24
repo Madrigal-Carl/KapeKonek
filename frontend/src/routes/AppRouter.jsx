@@ -26,6 +26,8 @@ export default function AppRouter() {
         <Route element={<AuthRedirectRoute />}>
           <Route element={<PublicLayout />}>
             <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<div>About Page</div>} />
+            <Route path="/products" element={<div>Products Page</div>} />
 
             {/*  AUTHENTICATED USER ONLY */}
             <Route
