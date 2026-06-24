@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import HomePage from "@/pages/public/HomePage";
 import AboutPage from "@/pages/public/AboutPage";
 import ProductsPage from "@/pages/public/ProductsPage";
+import ProductDetailPage from "@/pages/public/ProductDetailPage";
 import LoginPage from "@/pages/public/LoginPage";
 import RegisterPage from "@/pages/public/RegisterPage";
 import CheckoutPage from "@/pages/public/CheckoutPage";
@@ -33,6 +34,10 @@ export default function AppRouter() {
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/products" element={<ProductsPage />} />
+            <Route
+              path="/products/:productId"
+              element={<ProductDetailPage />}
+            />
             <Route path="/checkout" element={<CheckoutPage />} />
 
             {/*  AUTHENTICATED USER ONLY */}
