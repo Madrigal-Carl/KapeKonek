@@ -20,6 +20,7 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        "foreground-40": "var(--foreground-40)",
         surface: "var(--surface)",
         "neutral-warm": "var(--neutral-warm)",
         "on-primary": "var(--on-primary)",

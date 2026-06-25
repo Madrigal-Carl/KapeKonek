@@ -1,11 +1,14 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import useProtectedAction from "@/hooks/useProtectedAction";
 
 export function CartDrawer() {
   const { items, open, setOpen, setQty, remove, count, subtotal, formatPrice } =
     useCart();
+  const navigate = useNavigate();
+  const protectedAction = useProtectedAction();
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -14,12 +17,22 @@ export function CartDrawer() {
     };
   }, [open]);
 
+  const handleCheckout = () => {
+    protectedAction({
+      role: ["buyer", "farmer", "kaluppa"],
+      onSuccess: () => {
+        setOpen(false);
+        navigate("/checkout");
+      },
+    });
+  };
+
   return (
     <>
       {/* overlay */}
       <div
         onClick={() => setOpen(false)}
-        className={`fixed inset-0 z-50 bg-foreground/40 transition-opacity ${
+        className={`fixed inset-0 z-50 bg-foreground-40 transition-opacity ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
@@ -140,13 +153,13 @@ export function CartDrawer() {
                 />
               </div>
             </dl>
-            <Link
-              to="/checkout"
-              onClick={() => setOpen(false)}
+            <button
+              type="button"
+              onClick={handleCheckout}
               className="label-mono mt-5 block w-full bg-[var(--color-accent)] px-5 py-4 text-center text-[var(--color-accent-foreground)] transition-transform active:scale-[0.98]"
             >
               Proceed to Checkout
-            </Link>
+            </button>
             <button
               onClick={() => setOpen(false)}
               className="label-mono mt-2 w-full border border-border px-5 py-4 text-foreground hover:bg-[var(--color-neutral-warm)]"

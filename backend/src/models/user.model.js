@@ -26,8 +26,8 @@ const userSchema = new mongoose.Schema(
         },
         role: {
             type: String,
-            enum: ["far", "aew", "coordinator", "governor", "head", "admin"],
-            default: "customer",
+            enum: ["buyer", "farmer", "manager", "dti", "kaluppa"],
+            required: true,
         },
     },
     {

@@ -38,7 +38,6 @@ export default function AppRouter() {
               path="/products/:productId"
               element={<ProductDetailPage />}
             />
-            <Route path="/checkout" element={<CheckoutPage />} />
 
             {/*  AUTHENTICATED USER ONLY */}
             <Route
@@ -48,7 +47,7 @@ export default function AppRouter() {
                 />
               }
             >
-              <Route path="/checkout" element={<div>CHECKOUT PAGE</div>} />
+              <Route path="/checkout" element={<CheckoutPage />} />
             </Route>
           </Route>
         </Route>
