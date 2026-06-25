@@ -31,7 +31,7 @@ export function Footer() {
           title="Account"
           links={[
             ["Login", "/login"],
-            ["Sign Up", "/signup"],
+            ["Sign Up", "/register"],
           ]}
         />
         <FooterCol
