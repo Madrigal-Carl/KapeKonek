@@ -21,7 +21,7 @@ export function Navbar() {
           className="flex items-center gap-2.5"
           onClick={() => setOpen(false)}
         >
-          <span className="grid h-8 w-8 place-items-center bg-foreground text-background">
+          <span className="grid h-8 w-8 place-items-center bg-[var(--color-accent)] text-background">
             <Coffee size={16} strokeWidth={2.4} />
           </span>
           <span className="text-base font-bold tracking-tight">KapeKonek</span>
