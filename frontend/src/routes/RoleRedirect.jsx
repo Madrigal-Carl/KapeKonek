@@ -4,7 +4,11 @@ import { ROLES } from "@/constants/roles";
 import { getRoleRedirect } from "@/utils/getRoleRedirect";
 
 export default function RoleRedirect() {
-  const { role, isAuthenticated } = useAuth();
+  const { role, isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;

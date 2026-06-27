@@ -10,7 +10,7 @@ export default function ProtectedRoute({ allowedRoles }) {
 
   // Not logged in
   if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // Role not allowed

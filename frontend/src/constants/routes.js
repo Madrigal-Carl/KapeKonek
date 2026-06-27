@@ -1,7 +1,7 @@
 export const ROLE_ROUTES = {
   buyer: "/",
-  famer: "/",
+  farmer: "/farmer/overview",
   manager: "/manager/overview",
   dti: "/dti/overview",
-  kaluppa: "/",
+  kaluppa: "/kaluppa/overview",
 };

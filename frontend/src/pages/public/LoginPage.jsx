@@ -99,19 +99,6 @@ export default function LoginPage() {
               <FieldError message={errors.password?.message} />
             </Field>
 
-            <div className="flex items-center justify-between">
-              <label className="inline-flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 accent-[var(--color-accent)]"
-                />
-                <span className="text-muted-foreground">Remember me</span>
-              </label>
-              <a href="#" className="label-mono text-[var(--color-accent)]">
-                Forgot?
-              </a>
-            </div>
-
             <button
               type="submit"
               disabled={isSubmitting}

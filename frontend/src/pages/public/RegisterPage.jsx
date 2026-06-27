@@ -1,8 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import farm from "@/assets/images/coffee-farm.jpg";
 import { registerSchema } from "@/schemas/auth.schema";
 import useAuth from "@/hooks/useAuth";
@@ -10,6 +10,8 @@ import FieldError from "@/components/ui/FieldError";
 
 export default function RegisterPage() {
   const [serverError, setServerError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { register: registerUser } = useAuth();
 
@@ -87,28 +89,54 @@ export default function RegisterPage() {
             </Field>
 
             <Field label="Password">
-              <input
-                type="password"
-                placeholder="••••••••"
-                aria-invalid={!!errors.password}
-                className={`h-12 w-full border bg-background px-3 text-sm outline-none focus:border-foreground ${
-                  errors.password ? "border-red-400" : "border-border"
-                }`}
-                {...register("password")}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  aria-invalid={!!errors.password}
+                  className={`h-12 w-full border bg-background px-3 pr-10 text-sm outline-none focus:border-foreground ${
+                    errors.password ? "border-red-400" : "border-border"
+                  }`}
+                  {...register("password")}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center text-muted-foreground"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
               <FieldError message={errors.password?.message} />
             </Field>
 
             <Field label="Confirm Password">
-              <input
-                type="password"
-                placeholder="••••••••"
-                aria-invalid={!!errors.confirmPassword}
-                className={`h-12 w-full border bg-background px-3 text-sm outline-none focus:border-foreground ${
-                  errors.confirmPassword ? "border-red-400" : "border-border"
-                }`}
-                {...register("confirmPassword")}
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  aria-invalid={!!errors.confirmPassword}
+                  className={`h-12 w-full border bg-background px-3 pr-10 text-sm outline-none focus:border-foreground ${
+                    errors.confirmPassword ? "border-red-400" : "border-border"
+                  }`}
+                  {...register("confirmPassword")}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center text-muted-foreground"
+                  aria-label={
+                    showConfirmPassword ? "Hide password" : "Show password"
+                  }
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={16} />
+                  ) : (
+                    <Eye size={16} />
+                  )}
+                </button>
+              </div>
               <FieldError message={errors.confirmPassword?.message} />
             </Field>
 
