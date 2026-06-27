@@ -76,7 +76,7 @@ export const loginUser = async ({ email, password }) => {
     throw new Error("Password is incorrect");
   }
 
-  if (!user.isVerified) {
+  if (!user.isVerified && user.role === "buyer") {
     throw new Error("Please verify your email first");
   }
 

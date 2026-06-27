@@ -3,5 +3,5 @@ export const ROLE_ROUTES = {
   famer: "/",
   manager: "/manager/overview",
   dti: "/dti/overview",
-  kaluppa: "/kaluppa/overview",
+  kaluppa: "/",
 };
