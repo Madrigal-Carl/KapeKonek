@@ -3,21 +3,11 @@ import { Search, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { PRODUCTS, CATEGORIES } from "@/constants/products";
 import { ProductCard } from "@/components/public";
 
-const SORTS = [
-  { v: "latest", l: "Latest" },
-  { v: "price-asc", l: "Price: Low to High" },
-  { v: "price-desc", l: "Price: High to Low" },
-  { v: "best", l: "Best Selling" },
-];
-
 const PAGE_SIZE = 8;
 
 export default function ProductsPage() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
-  const [min, setMin] = useState("");
-  const [max, setMax] = useState("");
-  const [sort, setSort] = useState("latest");
   const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
@@ -30,27 +20,8 @@ export default function ProductsPage() {
           p.description.toLowerCase().includes(ql),
       );
     if (cat !== "All") list = list.filter((p) => p.category === cat);
-    const mn = Number(min);
-    const mx = Number(max);
-    if (!Number.isNaN(mn) && min !== "")
-      list = list.filter((p) => p.price >= mn);
-    if (!Number.isNaN(mx) && max !== "")
-      list = list.filter((p) => p.price <= mx);
-    switch (sort) {
-      case "price-asc":
-        list.sort((a, b) => a.price - b.price);
-        break;
-      case "price-desc":
-        list.sort((a, b) => b.price - a.price);
-        break;
-      case "best":
-        list.sort((a, b) => b.sellerProductsSold - a.sellerProductsSold);
-        break;
-      default:
-        break;
-    }
     return list;
-  }, [q, cat, min, max, sort]);
+  }, [q, cat]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -77,7 +48,7 @@ export default function ProductsPage() {
       </section>
 
       <section className="border-b border-border bg-background">
-        <div className="kk-container grid gap-4 py-6 lg:grid-cols-[1.5fr_1fr_1fr_1fr] lg:items-end">
+        <div className="kk-container grid gap-4 py-6 lg:grid-cols-[3fr_1fr] lg:items-end">
           <Field label="Search">
             <div className="relative">
               <Search
@@ -108,46 +79,6 @@ export default function ProductsPage() {
                 <option>All</option>
                 {CATEGORIES.map((c) => (
                   <option key={c}>{c}</option>
-                ))}
-              </select>
-            </SelectWrap>
-          </Field>
-          <Field label="Price Range">
-            <div className="flex gap-2">
-              <input
-                value={min}
-                onChange={(e) => {
-                  setMin(e.target.value);
-                  setPage(1);
-                }}
-                placeholder="Min"
-                inputMode="numeric"
-                className="h-11 w-full border border-border bg-background px-3 text-sm outline-none focus:border-foreground"
-              />
-
-              <input
-                value={max}
-                onChange={(e) => {
-                  setMax(e.target.value);
-                  setPage(1);
-                }}
-                placeholder="Max"
-                inputMode="numeric"
-                className="h-11 w-full border border-border bg-background px-3 text-sm outline-none focus:border-foreground"
-              />
-            </div>
-          </Field>
-          <Field label="Sort By">
-            <SelectWrap>
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-                className="h-11 w-full appearance-none border border-border bg-background pl-3 pr-9 text-sm outline-none focus:border-foreground"
-              >
-                {SORTS.map((s) => (
-                  <option key={s.v} value={s.v}>
-                    {s.l}
-                  </option>
                 ))}
               </select>
             </SelectWrap>
