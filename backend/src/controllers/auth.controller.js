@@ -1,5 +1,6 @@
 import {
   registerUser,
+  verifyUserEmail,
   loginUser,
   logoutUser,
 } from "../services/auth.service.js";
@@ -12,6 +13,22 @@ export const register = asyncHandler(async (req, res) => {
 
   return res.status(201).json({
     message: "Account created. Please verify your email.",
+  });
+});
+
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+
+  const { accessToken, refreshToken } = await verifyUserEmail(token);
+
+  sendTokenCookies({
+    res,
+    accessToken,
+    refreshToken,
+  });
+
+  return res.json({
+    message: "Email verified successfully",
   });
 });
 

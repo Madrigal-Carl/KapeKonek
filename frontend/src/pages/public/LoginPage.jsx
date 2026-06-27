@@ -1,10 +1,39 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import hero from "@/assets/images/hero-coffee.jpg";
+import { loginSchema } from "@/schemas/auth.schema";
+import useAuth from "@/hooks/useAuth";
+import FieldError from "@/components/ui/FieldError";
 
 export default function LoginPage() {
   const [show, setShow] = useState(false);
+  const [serverError, setServerError] = useState("");
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data) => {
+    setServerError("");
+    try {
+      await login(data);
+      navigate("/");
+    } catch (err) {
+      setServerError(
+        err?.response?.data?.message ?? "Invalid email or password.",
+      );
+    }
+  };
+
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="hidden lg:block">
@@ -21,29 +50,43 @@ export default function LoginPage() {
         >
           <ArrowLeft size={14} /> Return home
         </Link>
-        <form onSubmit={(e) => e.preventDefault()} className="w-full max-w-sm">
+        <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-sm">
           <span className="label-mono text-[var(--color-accent)]">Account</span>
           <h1 className="mt-4 text-3xl font-extrabold">Welcome back.</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Sign in to continue to KapeKonek.
           </p>
 
+          {serverError && (
+            <div className="mt-6 border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-600">
+              {serverError}
+            </div>
+          )}
+
           <div className="mt-10 space-y-5">
             <Field label="Email">
               <input
                 type="email"
-                required
                 placeholder="you@example.com"
-                className="h-12 w-full border border-border bg-background px-3 text-sm outline-none focus:border-foreground"
+                aria-invalid={!!errors.email}
+                className={`h-12 w-full border bg-background px-3 text-sm outline-none focus:border-foreground ${
+                  errors.email ? "border-red-400" : "border-border"
+                }`}
+                {...register("email")}
               />
+              <FieldError message={errors.email?.message} />
             </Field>
+
             <Field label="Password">
               <div className="relative">
                 <input
                   type={show ? "text" : "password"}
-                  required
                   placeholder="••••••••"
-                  className="h-12 w-full border border-border bg-background px-3 pr-10 text-sm outline-none focus:border-foreground"
+                  aria-invalid={!!errors.password}
+                  className={`h-12 w-full border bg-background px-3 pr-10 text-sm outline-none focus:border-foreground ${
+                    errors.password ? "border-red-400" : "border-border"
+                  }`}
+                  {...register("password")}
                 />
                 <button
                   type="button"
@@ -53,6 +96,7 @@ export default function LoginPage() {
                   {show ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              <FieldError message={errors.password?.message} />
             </Field>
 
             <div className="flex items-center justify-between">
@@ -70,9 +114,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="label-mono mt-2 w-full bg-[var(--color-accent)] px-5 py-4 text-[var(--color-accent-foreground)]"
+              disabled={isSubmitting}
+              className="label-mono mt-2 w-full bg-[var(--color-accent)] px-5 py-4 text-[var(--color-accent-foreground)] disabled:opacity-60"
             >
-              Login
+              {isSubmitting ? "Signing in..." : "Login"}
             </button>
             <Link
               to="/register"

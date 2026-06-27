@@ -1,11 +1,13 @@
 import { Routes, Route } from "react-router-dom";
 
+import LoginPage from "@/pages/public/LoginPage";
+import RegisterPage from "@/pages/public/RegisterPage";
+import VerifyEmailPage from "@/pages/public/VerifyEmailPage";
+
 import HomePage from "@/pages/public/HomePage";
 import AboutPage from "@/pages/public/AboutPage";
 import ProductsPage from "@/pages/public/ProductsPage";
 import ProductDetailPage from "@/pages/public/ProductDetailPage";
-import LoginPage from "@/pages/public/LoginPage";
-import RegisterPage from "@/pages/public/RegisterPage";
 import CheckoutPage from "@/pages/public/CheckoutPage";
 
 import PublicLayout from "@/layouts/PublicLayout";
@@ -59,6 +61,7 @@ export default function AppRouter() {
         <Route element={<PublicOnlyRoute />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
         </Route>
 
         {/* FAR ONLY */}

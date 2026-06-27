@@ -6,6 +6,12 @@ export async function registerUser(data) {
     return response.data;
 }
 
+export async function verifyEmail(token) {
+    const response = await api.get(`/auth/verify-email/${token}`);
+
+    return response.data;
+}
+
 export async function loginUser(data) {
     const response = await api.post("/auth/login", data);
 

@@ -20,6 +20,7 @@ const useAuth = () => {
         role: user?.role ?? null,
         login,
         register,
+        fetchCurrentUser,
         logout,
     };
 };

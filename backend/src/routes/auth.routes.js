@@ -1,20 +1,24 @@
 import express from "express";
 import {
     register,
+    verifyEmail,
     login,
     logout,
     getMe,
 } from "../controllers/auth.controller.js";
 import {
-    validateAuth,
+    validateLogin,
+    validateRegister,
 } from "../validators/auth.validator.js";
 import { authenticated, guestOnly } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/register", guestOnly, validateAuth, register);
+router.post("/register", guestOnly, validateRegister, register);
 
-router.post("/login", guestOnly, validateAuth, login);
+router.get("/verify-email/:token", guestOnly, verifyEmail);
+
+router.post("/login", guestOnly, validateLogin, login);
 
 router.post("/logout", authenticated, logout);
 
