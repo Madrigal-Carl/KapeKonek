@@ -94,15 +94,13 @@ export function Navbar() {
           )}
 
           {isAuthenticated && (role === "farmer" || role === "kaluppa") && (
-            <>
-              <Link
-                to="/dashboard"
-                className="label-mono inline-flex items-center gap-2 border border-[var(--color-accent)] bg-[var(--color-accent)] px-4 py-2.5 text-[var(--color-accent-foreground)] transition-colors hover:bg-foreground hover:border-foreground hover:text-background"
-              >
-                <LayoutDashboard size={14} />
-                <span className="hidden sm:inline">Dashboard</span>
-              </Link>
-            </>
+            <Link
+              to={`/${role}`}
+              className="label-mono inline-flex items-center gap-2 border border-[var(--color-accent)] bg-[var(--color-accent)] px-4 py-2.5 text-[var(--color-accent-foreground)] transition-colors hover:bg-foreground hover:border-foreground hover:text-background"
+            >
+              <LayoutDashboard size={14} />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Link>
           )}
 
           {isAuthenticated && role === "buyer" && (

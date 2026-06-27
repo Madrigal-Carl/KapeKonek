@@ -10,6 +10,9 @@ import ProductsPage from "@/pages/public/ProductsPage";
 import ProductDetailPage from "@/pages/public/ProductDetailPage";
 import CheckoutPage from "@/pages/public/CheckoutPage";
 
+import OrdersPage from "../pages/public/OrdersPage";
+import SettingsPage from "../pages/public/SettingsPage";
+
 import PublicLayout from "@/layouts/PublicLayout";
 // import DashboardLayout from "@/layouts/DashboardLayout";
 
@@ -64,16 +67,19 @@ export default function AppRouter() {
           <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
         </Route>
 
-        {/* FAR ONLY */}
-        <Route element={<ProtectedRoute allowedRoles={[ROLES.FARMER]} />}>
-          {/* <Route path="/far" element={<DashboardLayout />}> */}
-          <Route path="overview" element={<div>FARMER Page</div>} />
-          {/* </Route> */}
+        {/* BUYER ONLY */}
+        <Route element={<ProtectedRoute allowedRoles={[ROLES.BUYER]} />}>
+          <Route element={<PublicLayout />}>
+            <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
         </Route>
 
-        {/* MANAGER ONLY */}
-        <Route element={<ProtectedRoute allowedRoles={[ROLES.MANAGER]} />}>
-          <Route path="/manager/overview" element={<div>MANAGER Page</div>} />
+        {/* FARMER ONLY */}
+        <Route element={<ProtectedRoute allowedRoles={[ROLES.FARMER]} />}>
+          {/* <Route path="/far" element={<DashboardLayout />}> */}
+          <Route path="/farmer/overview" element={<div>FARMER Page</div>} />
+          {/* </Route> */}
         </Route>
 
         {/* DTI ONLY */}
