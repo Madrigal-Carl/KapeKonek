@@ -16,7 +16,7 @@ export const farmerNavSections = [
         label: "Community",
         items: [
             { to: "/farmer/chat", label: "Chat", icon: MessageCircle },
-            { to: "/farmer/hub", label: "Hub", icon: Users, badge: 3 }
+            { to: "/knowledge-hub", label: "Hub", icon: Users, badge: 3 }
         ]
     },
     {
