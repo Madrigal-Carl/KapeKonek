@@ -79,6 +79,12 @@ export default function AppRouter() {
         <Route element={<ProtectedRoute allowedRoles={[ROLES.FARMER]} />}>
           <Route path="/farmer" element={<DashboardLayout />}>
             <Route path="overview" element={<div>FARMER Page</div>} />
+            <Route path="farm" element={<div>FARMER Page</div>} />
+            <Route path="harvest" element={<div>FARMER Page</div>} />
+            <Route path="chat" element={<div>FARMER Page</div>} />
+            <Route path="hub" element={<div>FARMER Page</div>} />
+            <Route path="inventory" element={<div>FARMER Page</div>} />
+            <Route path="settings" element={<div>FARMER Page</div>} />
           </Route>
         </Route>
 
