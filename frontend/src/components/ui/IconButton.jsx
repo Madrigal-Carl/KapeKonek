@@ -11,8 +11,8 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={[
-        "inline-flex h-9 w-9 items-center justify-center border border-border bg-background text-foreground transition-colors hover:bg-accent",
-        tone === "danger" && "text-destructive hover:bg-destructive/10",
+        "inline-flex h-9 w-9 items-center justify-center border border-border bg-background text-foreground transition-colors hover:bg-accent hover:text-white",
+        tone === "danger" && "text-destructive hover:bg-destructive",
         className,
       ]
         .filter(Boolean)

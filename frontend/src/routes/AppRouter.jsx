@@ -19,6 +19,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import {
   OverviewPage as FarmerOverview,
   FarmsPage as FarmerFarmsPage,
+  HarvestPage,
 } from "@/pages/farmer";
 
 import UnauthorizedPage from "@/pages/shared/UnauthorizedPage";
@@ -85,7 +86,7 @@ export default function AppRouter() {
           <Route path="/farmer" element={<DashboardLayout />}>
             <Route path="overview" element={<FarmerOverview />} />
             <Route path="farm" element={<FarmerFarmsPage />} />
-            <Route path="harvest" element={<div>FARMER Page</div>} />
+            <Route path="harvest" element={<HarvestPage />} />
             <Route path="chat" element={<div>FARMER Page</div>} />
             <Route path="hub" element={<div>FARMER Page</div>} />
             <Route path="inventory" element={<div>FARMER Page</div>} />
