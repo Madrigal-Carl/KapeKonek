@@ -16,7 +16,10 @@ import {
 import PublicLayout from "@/layouts/PublicLayout";
 import DashboardLayout from "@/layouts/DashboardLayout";
 
-import { OverviewPage as FarmerOverview } from "@/pages/farmer";
+import {
+  OverviewPage as FarmerOverview,
+  FarmsPage as FarmerFarmsPage,
+} from "@/pages/farmer";
 
 import UnauthorizedPage from "@/pages/shared/UnauthorizedPage";
 
@@ -81,7 +84,7 @@ export default function AppRouter() {
         <Route element={<ProtectedRoute allowedRoles={[ROLES.FARMER]} />}>
           <Route path="/farmer" element={<DashboardLayout />}>
             <Route path="overview" element={<FarmerOverview />} />
-            <Route path="farm" element={<div>FARMER Page</div>} />
+            <Route path="farm" element={<FarmerFarmsPage />} />
             <Route path="harvest" element={<div>FARMER Page</div>} />
             <Route path="chat" element={<div>FARMER Page</div>} />
             <Route path="hub" element={<div>FARMER Page</div>} />
