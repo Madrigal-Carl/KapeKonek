@@ -22,6 +22,7 @@ import {
   HarvestPage,
   ChatPage,
   HubPage,
+  InventoryPage,
 } from "@/pages/farmer";
 
 import UnauthorizedPage from "@/pages/shared/UnauthorizedPage";
@@ -105,7 +106,7 @@ export default function AppRouter() {
             <Route path="farm" element={<FarmerFarmsPage />} />
             <Route path="harvest" element={<HarvestPage />} />
             <Route path="chat" element={<ChatPage />} />
-            <Route path="inventory" element={<div>FARMER Page</div>} />
+            <Route path="inventory" element={<InventoryPage />} />
             <Route path="settings" element={<div>FARMER Page</div>} />
           </Route>
         </Route>
