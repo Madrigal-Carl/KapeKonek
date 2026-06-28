@@ -6,20 +6,12 @@
 @layer base {
   :root {
     --radius: 0px;
-    --color-background: oklch(0.94 0.015 75); /* warm cream */
-    --color-foreground: oklch(0.22 0.025 40); /* dark roast brown */
-    --color-surface: oklch(0.94 0.015 75);
-    --color-neutral-warm: oklch(0.88 0.025 60); /* latte beige */
-    --color-on-primary: oklch(0.96 0.012 75);
-    --color-accent: oklch(0.5 0.13 40); /* espresso/caramel */
-    --color-accent-foreground: oklch(0.97 0.01 75);
-    --color-border: oklch(0.8 0.03 55); /* tan border */
 
-    --background: oklch(0.94 0.015 75); /* cream surface */
-    --foreground: oklch(0.22 0.025 40); /* dark roast text */
+    --background: oklch(0.94 0.015 75); /* warm cream */
+    --foreground: oklch(0.22 0.025 40); /* dark roast brown */
     --foreground-40: rgba(14, 16, 22, 0.4);
     --surface: oklch(0.94 0.015 75);
-    --neutral-warm: oklch(0.88 0.025 60); /* latte */
+    --neutral-warm: oklch(0.88 0.025 60); /* latte beige */
     --on-primary: oklch(0.96 0.012 75);
 
     --card: oklch(0.97 0.01 75);
@@ -38,7 +30,7 @@
     --destructive: oklch(0.577 0.245 27.325);
     --destructive-foreground: oklch(0.985 0.003 80);
 
-    --border: oklch(0.8 0.03 55);
+    --border: oklch(0.8 0.03 55); /* tan border */
     --input: oklch(0.8 0.03 55);
     --ring: oklch(0.5 0.13 40);
 
@@ -56,20 +48,21 @@
     --sidebar-accent-foreground: oklch(0.28 0.03 40);
     --sidebar-border: oklch(0.8 0.03 55);
     --sidebar-ring: oklch(0.5 0.13 40);
+  }
 
-    input[type="password"]::-ms-reveal,
-    input[type="password"]::-ms-clear {
-      display: none;
-    }
+  /* Hide native password reveal/autofill buttons (not nested under :root) */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
 
-    input[type="password"]::-webkit-credentials-auto-fill-button,
-    input[type="password"]::-webkit-strong-password-auto-fill-button {
-      display: none !important;
-      visibility: hidden;
-      pointer-events: none;
-      position: absolute;
-      right: 0;
-    }
+  input[type="password"]::-webkit-credentials-auto-fill-button,
+  input[type="password"]::-webkit-strong-password-auto-fill-button {
+    display: none !important;
+    visibility: hidden;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
   }
 
   html {
@@ -95,7 +88,7 @@
   }
 }
 
-/* ─── Custom utility classes (replacement for @utility, v3 style) ─── */
+/* ─── Custom utility classes ─────────────────────────────────── */
 @layer utilities {
   .kk-container {
     width: 100%;
@@ -106,5 +99,13 @@
 
   .kk-rule {
     border-top: 1px solid var(--border);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
