@@ -9,9 +9,9 @@ export default function DashboardLayout() {
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur lg:hidden">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur lg:hidden">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center bg-primary text-primary-foreground">
+            <div className="flex h-8 w-8 items-center justify-center bg-accent text-primary-foreground">
               <Coffee className="h-4 w-4" />
             </div>
             <span className="font-semibold tracking-tight text-foreground">

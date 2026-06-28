@@ -64,7 +64,7 @@ export function Sidebar({ open, onClose }) {
     <>
       {open && (
         <div
-          className="fixed inset-0 z-30 bg-foreground/40 lg:hidden"
+          className="fixed inset-0 z-30 bg-foreground-40 lg:hidden"
           onClick={onClose}
           aria-hidden
         />
