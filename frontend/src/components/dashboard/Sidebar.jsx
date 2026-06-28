@@ -22,6 +22,7 @@ export function Sidebar({ open, onClose }) {
   const renderItem = (item) => {
     const Icon = item.icon;
     const active = isActive(item.to, item.exact);
+
     if (item.action === "logout") {
       return (
         <li key={item.label}>
@@ -50,7 +51,7 @@ export function Sidebar({ open, onClose }) {
           <Icon className="h-4 w-4" />
           <span className="flex-1">{item.label}</span>
           {item.badge ? (
-            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[10px] font-semibold text-primary-foreground">
               {item.badge}
             </span>
           ) : null}
@@ -74,11 +75,11 @@ export function Sidebar({ open, onClose }) {
         {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center bg-primary text-primary-foreground">
+            <div className="flex h-8 w-8 items-center justify-center bg-accent text-primary-foreground">
               <Coffee className="h-4 w-4" />
             </div>
-            <span className="font-semibold tracking-tight text-sidebar-foreground">
-              kapekonek
+            <span className="font-semibold tracking-tight text-primary">
+              KapeKonek
             </span>
           </div>
           <button
