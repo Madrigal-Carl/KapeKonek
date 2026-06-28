@@ -14,7 +14,7 @@ import OrdersPage from "../pages/public/OrdersPage";
 import SettingsPage from "../pages/public/SettingsPage";
 
 import PublicLayout from "@/layouts/PublicLayout";
-// import DashboardLayout from "@/layouts/DashboardLayout";
+import DashboardLayout from "@/layouts/DashboardLayout";
 
 import UnauthorizedPage from "@/pages/shared/UnauthorizedPage";
 
@@ -77,9 +77,9 @@ export default function AppRouter() {
 
         {/* FARMER ONLY */}
         <Route element={<ProtectedRoute allowedRoles={[ROLES.FARMER]} />}>
-          {/* <Route path="/far" element={<DashboardLayout />}> */}
-          <Route path="/farmer/overview" element={<div>FARMER Page</div>} />
-          {/* </Route> */}
+          <Route path="/farmer" element={<DashboardLayout />}>
+            <Route path="overview" element={<div>FARMER Page</div>} />
+          </Route>
         </Route>
 
         {/* DTI ONLY */}
