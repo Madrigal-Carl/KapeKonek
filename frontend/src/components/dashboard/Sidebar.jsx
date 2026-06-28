@@ -1,12 +1,16 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Coffee, LogOut, X } from "lucide-react";
 import { useState } from "react";
 import { farmerNavSections } from "@/constants/navigation";
 import { Button } from "@/components/ui";
+import useAuth from "@/hooks/useAuth";
 
 export function Sidebar({ open, onClose }) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const isActive = (to, exact) =>
     to
       ? exact
@@ -14,9 +18,16 @@ export function Sidebar({ open, onClose }) {
         : pathname === to || pathname.startsWith(to + "/")
       : false;
 
-  function handleLogoutConfirm() {
-    setLogoutOpen(false);
-    onClose();
+  async function handleLogoutConfirm() {
+    setLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setLoggingOut(false);
+      setLogoutOpen(false);
+      onClose();
+      navigate("/login", { replace: true });
+    }
   }
 
   const renderItem = (item) => {
@@ -107,7 +118,7 @@ export function Sidebar({ open, onClose }) {
       {logoutOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-foreground-40 p-4"
-          onClick={() => setLogoutOpen(false)}
+          onClick={() => !loggingOut && setLogoutOpen(false)}
         >
           <div
             className="w-full max-w-md border border-border bg-card p-6 shadow-xl"
@@ -122,11 +133,19 @@ export function Sidebar({ open, onClose }) {
               sign in again to access your account.
             </p>
             <div className="flex items-center justify-end gap-2">
-              <Button variant="outline" onClick={() => setLogoutOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setLogoutOpen(false)}
+                disabled={loggingOut}
+              >
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={handleLogoutConfirm}>
-                Log out
+              <Button
+                variant="destructive"
+                onClick={handleLogoutConfirm}
+                disabled={loggingOut}
+              >
+                {loggingOut ? "Logging out…" : "Log out"}
               </Button>
             </div>
           </div>
