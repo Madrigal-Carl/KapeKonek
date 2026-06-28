@@ -13,7 +13,7 @@ import community from "@/assets/images/community.jpg";
 import { ProductCard } from "@/components/public";
 import { PRODUCTS } from "@/constants/products";
 
-export default function HomePage() {
+export function HomePage() {
   const featured = PRODUCTS.slice(0, 4);
   return (
     <div>

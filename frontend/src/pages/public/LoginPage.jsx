@@ -8,7 +8,7 @@ import { loginSchema } from "@/schemas/auth.schema";
 import useAuth from "@/hooks/useAuth";
 import FieldError from "@/components/ui/FieldError";
 
-export default function LoginPage() {
+export function LoginPage() {
   const [show, setShow] = useState(false);
   const [serverError, setServerError] = useState("");
   const navigate = useNavigate();

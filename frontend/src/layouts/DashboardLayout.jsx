@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Coffee, Menu } from "lucide-react";
-import Sidebar from "@/components/dashboard/Sidebar";
+import { Sidebar } from "@/components/dashboard";
 
 export default function DashboardLayout({ children }) {
   const [open, setOpen] = useState(false);

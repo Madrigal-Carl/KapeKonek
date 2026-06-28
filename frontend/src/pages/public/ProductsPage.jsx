@@ -5,7 +5,7 @@ import { ProductCard } from "@/components/public";
 
 const PAGE_SIZE = 8;
 
-export default function ProductsPage() {
+export function ProductsPage() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
   const [page, setPage] = useState(1);

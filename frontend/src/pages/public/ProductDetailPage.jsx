@@ -18,7 +18,7 @@ function NotFound() {
   );
 }
 
-export default function ProductDetailPage() {
+export function ProductDetailPage() {
   const { productId } = useParams();
   const product = getProduct(productId);
   const { add, setOpen, formatPrice } = useCart();

@@ -95,7 +95,7 @@ function getItemCount(items) {
   return items.reduce((sum, item) => sum + item.quantity, 0);
 }
 
-export default function OrdersPage() {
+export function OrdersPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);

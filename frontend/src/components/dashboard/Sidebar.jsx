@@ -4,7 +4,7 @@ import { useState } from "react";
 import { farmerNavSections } from "@/constants/navigation";
 import { Button } from "@/components/ui";
 
-export default function Sidebar({ open, onClose }) {
+export function Sidebar({ open, onClose }) {
   const { pathname } = useLocation();
   const [logoutOpen, setLogoutOpen] = useState(false);
   const isActive = (to, exact) =>

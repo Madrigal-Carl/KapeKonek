@@ -1,17 +1,17 @@
 import { Routes, Route } from "react-router-dom";
 
-import LoginPage from "@/pages/public/LoginPage";
-import RegisterPage from "@/pages/public/RegisterPage";
-import VerifyEmailPage from "@/pages/public/VerifyEmailPage";
-
-import HomePage from "@/pages/public/HomePage";
-import AboutPage from "@/pages/public/AboutPage";
-import ProductsPage from "@/pages/public/ProductsPage";
-import ProductDetailPage from "@/pages/public/ProductDetailPage";
-import CheckoutPage from "@/pages/public/CheckoutPage";
-
-import OrdersPage from "../pages/public/OrdersPage";
-import SettingsPage from "../pages/public/SettingsPage";
+import {
+  LoginPage,
+  RegisterPage,
+  VerifyEmailPage,
+  HomePage,
+  AboutPage,
+  ProductsPage,
+  ProductDetailPage,
+  CheckoutPage,
+  OrdersPage,
+  SettingsPage,
+} from "@/pages/public";
 
 import PublicLayout from "@/layouts/PublicLayout";
 import DashboardLayout from "@/layouts/DashboardLayout";

@@ -4,7 +4,7 @@ import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { verifyEmail } from "@/services/auth.service";
 import useAuth from "@/hooks/useAuth";
 
-export default function VerifyEmailPage() {
+export function VerifyEmailPage() {
   const { token } = useParams();
   const navigate = useNavigate();
   const { fetchCurrentUser } = useAuth();

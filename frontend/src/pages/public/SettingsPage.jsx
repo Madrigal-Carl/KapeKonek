@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, User } from "lucide-react";
 
-export default function SettingsPage() {
+export function SettingsPage() {
   const [show, setShow] = useState(false);
 
   return (

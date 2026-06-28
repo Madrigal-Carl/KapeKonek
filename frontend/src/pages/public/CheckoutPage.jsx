@@ -18,7 +18,7 @@ const EWALLETS = [
   { id: "grabpay", name: "GrabPay" },
 ];
 
-export default function CheckoutPage() {
+export function CheckoutPage() {
   const { items, count, subtotal, setQty, remove, formatPrice } = useCart();
   const [method, setMethod] = useState("ewallet");
   const [wallet, setWallet] = useState("gcash");

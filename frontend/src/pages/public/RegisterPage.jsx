@@ -8,7 +8,7 @@ import { registerSchema } from "@/schemas/auth.schema";
 import useAuth from "@/hooks/useAuth";
 import FieldError from "@/components/ui/FieldError";
 
-export default function RegisterPage() {
+export function RegisterPage() {
   const [serverError, setServerError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import farm from "@/assets/images/coffee-farm.jpg";
 
-export default function AboutPage() {
+export function AboutPage() {
   return (
     <div>
       <section className="border-b border-border bg-[var(--color-surface)]">
