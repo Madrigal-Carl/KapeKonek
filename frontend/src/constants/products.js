@@ -3,12 +3,13 @@ import community from "@/assets/images/community.jpg";
 import farm from "@/assets/images/coffee-farm.jpg";
 
 export const CATEGORIES = [
-    "Beans",
-    "Green Coffee",
-    "Roasted Coffee",
-    "Ground Coffee",
-    "Specialty Lots",
+    "Coffee Seedlings",
+    "Coffee Cherries",
+    "Fertilizer",
+    "Coffee Beans",
 ];
+
+export const VARIETY_OPTIONS = ["Arabica", "Robusta", "Liberica", "Excelsa"];
 
 const SELLERS = [
     { name: "Sagada Highland Co-op", location: "Sagada, Mountain Province", rating: 4.8, sold: 1240 },
@@ -41,6 +42,7 @@ function buildProducts() {
     for (let i = 0; i < NAMES.length; i++) {
         const name = NAMES[i];
         const category = CATEGORIES[i % CATEGORIES.length];
+        const variety = VARIETY_OPTIONS[i % VARIETY_OPTIONS.length];
         const seller = SELLERS[i % SELLERS.length];
         const image = IMAGES[i % IMAGES.length];
         const price = 320 + ((i * 73) % 9) * 60;
@@ -49,6 +51,7 @@ function buildProducts() {
             id: `kk-${(i + 1).toString().padStart(3, "0")}`,
             name,
             category,
+            variety,
             price,
             weightKg: weight,
             stock: 24 + ((i * 17) % 80),

@@ -81,7 +81,7 @@ export function ProductDetailPage() {
         {/* Info */}
         <div className="flex flex-col">
           <span className="label-mono text-[var(--color-accent)]">
-            {product.category}
+            {product.category} - {product.variety}
           </span>
           <h1 className="mt-3 text-3xl font-extrabold leading-tight sm:text-4xl md:text-5xl">
             {product.name}

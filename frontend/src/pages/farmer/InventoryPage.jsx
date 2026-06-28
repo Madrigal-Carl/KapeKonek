@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronLeft,
@@ -14,17 +14,20 @@ import {
 import { IconButton, Field, TextInput, Button } from "@/components/ui";
 
 const CATEGORIES = [
-  "Green Beans",
-  "Roasted Beans",
-  "Ground Coffee",
-  "Seedlings",
-  "Supplies",
+  "Coffee Seedlings",
+  "Coffee Cherries",
+  "Fertilizer",
+  "Coffee Beans",
 ];
+
+const VARIETY_OPTIONS = ["Arabica", "Robusta", "Liberica", "Excelsa"];
+
 const SEED = [
   {
     id: "PD-001",
     name: "Arabica Green Beans",
-    category: "Green Beans",
+    category: "Coffee Beans",
+    variety: "Arabica",
     stock: 120,
     weightKg: 60,
     description: "Washed Arabica green beans from Marinduque highlands.",
@@ -34,7 +37,8 @@ const SEED = [
   {
     id: "PD-002",
     name: "Robusta Roasted Medium",
-    category: "Roasted Beans",
+    category: "Coffee Beans",
+    variety: "Robusta",
     stock: 45,
     weightKg: 22.5,
     description: "Medium roast Robusta with chocolatey notes.",
@@ -44,7 +48,8 @@ const SEED = [
   {
     id: "PD-003",
     name: "Liberica Ground",
-    category: "Ground Coffee",
+    category: "Coffee Beans",
+    variety: "Liberica",
     stock: 0,
     weightKg: 0,
     description: "Bold ground Liberica, woody and smoky.",
@@ -54,7 +59,8 @@ const SEED = [
   {
     id: "PD-004",
     name: "Coffee Seedlings (Excelsa)",
-    category: "Seedlings",
+    category: "Coffee Seedlings",
+    variety: "Excelsa",
     stock: 320,
     weightKg: 96,
     description: "Healthy Excelsa seedlings, 6 months old.",
@@ -99,6 +105,7 @@ export function InventoryPage() {
         id: nextId(),
         name: "",
         category: CATEGORIES[0],
+        variety: VARIETY_OPTIONS[0],
         stock: 0,
         weightKg: 0,
         description: "",
@@ -168,6 +175,7 @@ export function InventoryPage() {
 function DataTable({ rows, onEdit, onDelete }) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [page, setPage] = useState(1);
   const pageSize = 5;
   const filtered = useMemo(() => {
@@ -178,13 +186,16 @@ function DataTable({ rows, onEdit, onDelete }) {
         (x) =>
           x.name.toLowerCase().includes(q) ||
           x.id.toLowerCase().includes(q) ||
-          x.category.toLowerCase().includes(q),
+          x.category.toLowerCase().includes(q) ||
+          (x.variety ?? "").toLowerCase().includes(q),
       );
     }
     if (statusFilter !== "all") r = r.filter((x) => x.status === statusFilter);
+    if (categoryFilter !== "all")
+      r = r.filter((x) => x.category === categoryFilter);
     return r;
-  }, [rows, query, statusFilter]);
-  useEffect(() => setPage(1), [query, statusFilter]);
+  }, [rows, query, statusFilter, categoryFilter]);
+  useEffect(() => setPage(1), [query, statusFilter, categoryFilter]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
   return (
@@ -195,9 +206,24 @@ function DataTable({ rows, onEdit, onDelete }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name, ID, or category…"
+            placeholder="Search by name, ID, category, or variety…"
             className="w-full border border-border bg-background py-2.5 pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus:border-foreground"
           />
+        </div>
+        <div className="relative w-full min-w-[160px] sm:w-auto">
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="w-full appearance-none border border-border bg-background py-2.5 pl-3 pr-9 text-sm text-foreground outline-none focus:border-foreground"
+          >
+            <option value="all">All Categories</option>
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         </div>
         <div className="relative w-full min-w-[160px] sm:w-auto">
           <select
@@ -214,12 +240,13 @@ function DataTable({ rows, onEdit, onDelete }) {
       </div>
 
       <div className="relative w-full overflow-auto">
-        <table className="w-full min-w-[820px] caption-bottom border-collapse text-sm">
+        <table className="w-full min-w-[920px] caption-bottom border-collapse text-sm">
           <thead className="bg-muted/60">
             <tr>
               {[
                 "Product Name",
                 "Category",
+                "Variety",
                 "Stock",
                 "Weight (kg)",
                 "Price",
@@ -243,7 +270,7 @@ function DataTable({ rows, onEdit, onDelete }) {
           <tbody>
             {paged.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-16 text-center">
+                <td colSpan={8} className="px-4 py-16 text-center">
                   <div className="mx-auto mb-3 grid h-12 w-12 place-items-center border border-border bg-muted">
                     <Search className="h-5 w-5 text-muted-foreground" />
                   </div>
@@ -270,6 +297,9 @@ function DataTable({ rows, onEdit, onDelete }) {
                     </div>
                   </td>
                   <td className="px-4 py-3.5 text-foreground">{r.category}</td>
+                  <td className="px-4 py-3.5 text-foreground">
+                    {r.variety || "—"}
+                  </td>
                   <td className="px-4 py-3.5 text-foreground">
                     {r.stock.toLocaleString()}
                   </td>
@@ -328,7 +358,6 @@ function DataTable({ rows, onEdit, onDelete }) {
 }
 function ProductModal({ mode, initial, onClose, onSave }) {
   const [form, setForm] = useState(initial);
-  const fileRef = useRef(null);
   const [uploads, setUploads] = useState([]);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   useEffect(() => {
@@ -427,6 +456,22 @@ function ProductModal({ mode, initial, onClose, onSave }) {
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               </div>
             </Field>
+            <Field label="Variety">
+              <div className="relative">
+                <select
+                  value={form.variety}
+                  onChange={(e) => set("variety", e.target.value)}
+                  className="w-full appearance-none border border-border bg-background px-3 py-2.5 pr-9 text-sm text-foreground outline-none focus:border-foreground"
+                >
+                  {VARIETY_OPTIONS.map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              </div>
+            </Field>
             <Field label="Status">
               <div className="relative">
                 <select
@@ -448,7 +493,7 @@ function ProductModal({ mode, initial, onClose, onSave }) {
                 placeholder="0"
               />
             </Field>
-            <Field label="Weight (kg)">
+            <Field label="Weight (kg)" full>
               <TextInput
                 type="number"
                 value={String(form.weightKg)}
@@ -466,8 +511,8 @@ function ProductModal({ mode, initial, onClose, onSave }) {
               />
             </Field>
             <Field label="Images" full>
-              <div
-                onClick={() => fileRef.current?.click()}
+              <label
+                htmlFor="product-images-upload"
                 className="flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed border-border bg-muted/30 px-4 py-8 text-center transition-colors hover:border-foreground-40 hover:bg-muted/50"
               >
                 <ImagePlus className="h-6 w-6 text-muted-foreground" />
@@ -477,18 +522,18 @@ function ProductModal({ mode, initial, onClose, onSave }) {
                 <div className="text-xs text-muted-foreground">
                   PNG, JPG up to 5MB each
                 </div>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    addImages(e.target.files);
-                    e.currentTarget.value = "";
-                  }}
-                />
-              </div>
+              </label>
+              <input
+                id="product-images-upload"
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  addImages(e.target.files);
+                  e.currentTarget.value = "";
+                }}
+              />
               {uploads.length > 0 && (
                 <div className="mt-3 space-y-2">
                   {uploads.map((u) => (
@@ -508,7 +553,7 @@ function ProductModal({ mode, initial, onClose, onSave }) {
                         <div
                           className={[
                             "h-full transition-all",
-                            u.progress >= 100 ? "bg-emerald-500" : "bg-accent",
+                            u.progress >= 100 ? "bg-accent" : "bg-accent/60",
                           ]
                             .filter(Boolean)
                             .join(" ")}

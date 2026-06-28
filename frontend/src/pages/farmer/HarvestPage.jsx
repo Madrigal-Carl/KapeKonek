@@ -19,7 +19,15 @@ import {
   Button,
 } from "@/components/ui";
 
-const CATEGORY_OPTIONS = ["Arabica", "Robusta", "Liberica", "Excelsa"];
+const CATEGORY_OPTIONS = [
+  "Coffee Seedlings",
+  "Coffee Cherries",
+  "Fertilizer",
+  "Coffee Beans",
+];
+
+const VARIETY_OPTIONS = ["Arabica", "Robusta", "Liberica", "Excelsa"];
+
 const FARM_OPTIONS = [
   "FM-001 \xB7 Sitio Malusak, Boac, Marinduque",
   "FM-002 \xB7 Barangay Tugos, Mogpog, Marinduque",
@@ -31,7 +39,8 @@ const SEED = [
   {
     id: "HV-001",
     name: "Spring Arabica Lot A",
-    category: "Arabica",
+    category: "Coffee Seedlings",
+    variety: "Arabica",
     yieldKg: 820,
     farm: "FM-001 \xB7 Sitio Malusak, Boac, Marinduque",
     harvestedAt: "2026-05-12",
@@ -39,7 +48,8 @@ const SEED = [
   {
     id: "HV-002",
     name: "Robusta Cycle 2",
-    category: "Robusta",
+    category: "Coffee Cherries",
+    variety: "Robusta",
     yieldKg: 540,
     farm: "FM-002 \xB7 Barangay Tugos, Mogpog, Marinduque",
     harvestedAt: "2026-06-02",
@@ -47,7 +57,8 @@ const SEED = [
   {
     id: "HV-003",
     name: "Liberica Field Pick",
-    category: "Liberica",
+    category: "Fertilizer",
+    variety: "Liberica",
     yieldKg: 310,
     farm: "FM-003 \xB7 Sitio Hinapulan, Gasan, Marinduque",
     harvestedAt: "2026-04-18",
@@ -64,7 +75,8 @@ export function HarvestPage() {
       data: {
         id: nextId(),
         name: "",
-        category: "Arabica",
+        category: CATEGORY_OPTIONS[0],
+        variety: VARIETY_OPTIONS[0],
         yieldKg: 0,
         farm: "",
         harvestedAt: /* @__PURE__ */ new Date().toISOString().slice(0, 10),
@@ -206,12 +218,13 @@ function DataTable({ rows, onEdit, onDelete }) {
       </div>
 
       <div className="relative w-full overflow-auto">
-        <table className="w-full min-w-[720px] caption-bottom border-collapse text-sm">
+        <table className="w-full min-w-[820px] caption-bottom border-collapse text-sm">
           <thead className="bg-muted/60">
             <tr>
               {[
                 { k: "name", l: "Coffee", sortable: true },
                 { k: "category", l: "Category", sortable: true },
+                { k: "variety", l: "Variety", sortable: true },
                 { k: "yieldKg", l: "Yielded (kg)", sortable: true },
                 { k: "harvestedAt", l: "Harvested At", sortable: true },
                 { k: "actions", l: "", sortable: false },
@@ -239,7 +252,7 @@ function DataTable({ rows, onEdit, onDelete }) {
           <tbody>
             {paged.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-16 text-center">
+                <td colSpan={6} className="px-4 py-16 text-center">
                   <div className="mx-auto mb-3 grid h-12 w-12 place-items-center border border-border bg-muted">
                     <Search className="h-5 w-5 text-muted-foreground" />
                   </div>
@@ -266,6 +279,9 @@ function DataTable({ rows, onEdit, onDelete }) {
                     </div>
                   </td>
                   <td className="px-4 py-3.5 text-foreground">{r.category}</td>
+                  <td className="px-4 py-3.5 text-foreground">
+                    {r.variety || "—"}
+                  </td>
                   <td className="px-4 py-3.5 text-foreground">
                     {r.yieldKg.toLocaleString()} kg
                   </td>
@@ -375,7 +391,23 @@ function HarvestModal({ mode, initial, onClose, onSave }) {
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               </div>
             </Field>
-            <Field label="Yielded (kg)">
+            <Field label="Variety">
+              <div className="relative">
+                <select
+                  value={form.variety}
+                  onChange={(e) => set("variety", e.target.value)}
+                  className="w-full appearance-none border border-border bg-background py-2.5 pl-3 pr-9 text-sm text-foreground outline-none focus:border-foreground"
+                >
+                  {VARIETY_OPTIONS.map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              </div>
+            </Field>
+            <Field label="Yielded (kg)" full>
               <TextInput
                 type="number"
                 value={String(form.yieldKg)}
