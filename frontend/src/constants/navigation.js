@@ -1,4 +1,4 @@
-import { LayoutDashboard, Sprout, Bean, MessageCircle, Users, Store, Package, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Sprout, Bean, MessageCircle, Users, Store, Package, Settings, LogOut, ClipboardList } from "lucide-react";
 
 export const farmerNavSections = [
     {
@@ -8,8 +8,8 @@ export const farmerNavSections = [
     {
         label: "Records",
         items: [
-            { to: "/farmer/farm", label: "Farm", icon: Sprout },
-            { to: "/farmer/harvest", label: "Harvest", icon: Bean }
+            { to: "/farmer/farms", label: "Farm", icon: Sprout },
+            { to: "/farmer/harvests", label: "Harvest", icon: Bean }
         ]
     },
     {
@@ -22,7 +22,8 @@ export const farmerNavSections = [
     {
         label: "Marketplace",
         items: [
-            { to: "/farmer/inventory", label: "Inventory", icon: Package },
+            { to: "/farmer/inventorys", label: "Inventory", icon: Package },
+            { to: "/farmer/orders", label: "Order", icon: ClipboardList, badge: 3 },
             { to: "/", label: "Store", icon: Store }
         ]
     },

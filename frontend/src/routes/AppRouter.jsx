@@ -24,6 +24,7 @@ import {
   HubPage,
   InventoryPage,
   SettingsPage as FarmerSettingsPage,
+  OrderPage,
 } from "@/pages/farmer";
 
 import UnauthorizedPage from "@/pages/shared/UnauthorizedPage";
@@ -104,10 +105,11 @@ export default function AppRouter() {
         <Route element={<ProtectedRoute allowedRoles={[ROLES.FARMER]} />}>
           <Route path="/farmer" element={<DashboardLayout />}>
             <Route path="overview" element={<FarmerOverview />} />
-            <Route path="farm" element={<FarmerFarmsPage />} />
-            <Route path="harvest" element={<HarvestPage />} />
+            <Route path="farms" element={<FarmerFarmsPage />} />
+            <Route path="harvests" element={<HarvestPage />} />
             <Route path="chat" element={<ChatPage />} />
-            <Route path="inventory" element={<InventoryPage />} />
+            <Route path="inventorys" element={<InventoryPage />} />
+            <Route path="orders" element={<OrderPage />} />
             <Route path="settings" element={<FarmerSettingsPage />} />
           </Route>
         </Route>
