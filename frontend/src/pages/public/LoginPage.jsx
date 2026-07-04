@@ -7,6 +7,7 @@ import hero from "@/assets/images/hero-coffee.jpg";
 import { loginSchema } from "@/schemas/auth.schema";
 import useAuth from "@/hooks/useAuth";
 import FieldError from "@/components/ui/FieldError";
+import { getRoleRedirect } from "@/utils/getRoleRedirect";
 
 export function LoginPage() {
   const [show, setShow] = useState(false);
@@ -25,8 +26,8 @@ export function LoginPage() {
   const onSubmit = async (data) => {
     setServerError("");
     try {
-      await login(data);
-      navigate("/");
+      const response = await login(data);
+      navigate(getRoleRedirect(response.user.role), { replace: true });
     } catch (err) {
       setServerError(
         err?.response?.data?.message ?? "Invalid email or password.",

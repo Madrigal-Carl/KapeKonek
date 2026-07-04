@@ -45,10 +45,15 @@ export default function AppRouter() {
     <>
       <ScrollToTop />
       <Routes>
-        {/* PUBLIC & AUTHENTICATED USER */}
         <Route element={<AuthRedirectRoute />}>
           <Route element={<PublicLayout />}>
             <Route path="/" element={<HomePage />} />
+          </Route>
+        </Route>
+
+        {/* PUBLIC & AUTHENTICATED USER */}
+        <Route element={<AuthRedirectRoute />}>
+          <Route element={<PublicLayout />}>
             <Route path="/about" element={<AboutPage />} />
             <Route path="/products" element={<ProductsPage />} />
             <Route

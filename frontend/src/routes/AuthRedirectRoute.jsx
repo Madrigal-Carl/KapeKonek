@@ -10,14 +10,11 @@ export default function AuthRedirectRoute() {
     return null;
   }
 
-  // Redirect admin/technician/cashier users to their role's default route
-  if (
-    isAuthenticated &&
-    [ROLES.ADMIN, ROLES.TECHNICIAN, ROLES.CASHIER].includes(role)
-  ) {
+  // Redirect manager/dti users away from the public homepage
+  if (isAuthenticated && [ROLES.MANAGER, ROLES.DTI].includes(role)) {
     return <Navigate to={getRoleRedirect(role)} replace />;
   }
 
-  // Allow guests and customers to proceed
+  // Allow guests, buyers, farmers, and kaluppa to proceed
   return <Outlet />;
 }
