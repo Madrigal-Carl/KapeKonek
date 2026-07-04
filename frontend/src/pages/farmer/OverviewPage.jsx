@@ -425,7 +425,7 @@ export function OverviewPage() {
     <div className="py-8 space-y-10">
       <PageHeader
         eyebrow="Overview"
-        title="Welcome back, Farmer"
+        title="Welcome back"
         description="Visual snapshot of farms, harvests, and inventory."
       />
 
