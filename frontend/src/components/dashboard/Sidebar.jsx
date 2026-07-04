@@ -1,16 +1,19 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Coffee, LogOut, X } from "lucide-react";
 import { useState } from "react";
-import { farmerNavSections } from "@/constants/navigation";
+import { getNavSectionsForRole } from "@/constants/navigation";
 import { Button } from "@/components/ui";
 import useAuth from "@/hooks/useAuth";
 
 export function Sidebar({ open, onClose }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  const navSections = getNavSectionsForRole(user?.role);
+
   const isActive = (to, exact) =>
     to
       ? exact
@@ -104,7 +107,7 @@ export function Sidebar({ open, onClose }) {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-4">
-          {farmerNavSections.map((group) => (
+          {navSections.map((group) => (
             <div key={group.label} className="mb-6">
               <p className="label-mono px-4 pb-2 text-muted-foreground">
                 {group.label}
@@ -113,6 +116,23 @@ export function Sidebar({ open, onClose }) {
             </div>
           ))}
         </nav>
+
+        {/* User footer */}
+        <div className="border-t border-sidebar-border p-3">
+          <div className="flex items-center gap-3 px-2 py-2">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent/10 text-sm font-semibold text-accent">
+              {user?.fullname?.charAt(0)?.toUpperCase() ?? "?"}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-semibold text-foreground">
+                {user?.email}
+              </div>
+              <div className="truncate text-[11px] capitalize text-muted-foreground">
+                {user?.role}
+              </div>
+            </div>
+          </div>
+        </div>
       </aside>
 
       {logoutOpen && (

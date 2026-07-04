@@ -109,7 +109,7 @@ export default function AppRouter() {
             <Route path="farms" element={<FarmerFarmsPage />} />
             <Route path="harvests" element={<HarvestPage />} />
             <Route path="chat" element={<ChatPage />} />
-            <Route path="inventorys" element={<InventoryPage />} />
+            <Route path="inventory" element={<InventoryPage />} />
             <Route path="orders" element={<OrderPage />} />
             <Route path="settings" element={<FarmerSettingsPage />} />
           </Route>
@@ -123,7 +123,7 @@ export default function AppRouter() {
             <Route path="farms" element={<FarmerFarmsPage />} />
             <Route path="harvests" element={<HarvestPage />} />
             <Route path="chat" element={<ChatPage />} />
-            <Route path="inventorys" element={<InventoryPage />} />
+            <Route path="inventory" element={<InventoryPage />} />
             <Route path="orders" element={<OrderPage />} />
             <Route path="settings" element={<FarmerSettingsPage />} />
           </Route>

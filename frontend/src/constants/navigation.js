@@ -22,7 +22,7 @@ export const farmerNavSections = [
     {
         label: "Marketplace",
         items: [
-            { to: "/farmer/inventorys", label: "Inventory", icon: Package },
+            { to: "/farmer/inventory", label: "Inventory", icon: Package },
             { to: "/farmer/orders", label: "Order", icon: ClipboardList, badge: 3 },
             { to: "/", label: "Store", icon: Store }
         ]
@@ -59,9 +59,8 @@ export const managerNavSections = [
     {
         label: "Marketplace",
         items: [
-            { to: "/manager/inventorys", label: "Inventory", icon: Package },
+            { to: "/manager/inventory", label: "Inventory", icon: Package },
             { to: "/manager/orders", label: "Order", icon: ClipboardList, badge: 3 },
-            { to: "/", label: "Store", icon: Store }
         ]
     },
     {
@@ -72,3 +71,19 @@ export const managerNavSections = [
         ]
     }
 ];
+
+/* ---------------- ROLE MAP ---------------- */
+export const navSectionsByRole = {
+    farmer: farmerNavSections,
+    manager: managerNavSections,
+};
+
+export function resolveRoleKey(role, fallback = "farmer") {
+    if (!role) return fallback;
+    const key = String(role).toLowerCase();
+    return navSectionsByRole[key] ? key : fallback;
+}
+
+export function getNavSectionsForRole(role) {
+    return navSectionsByRole[resolveRoleKey(role)];
+}
