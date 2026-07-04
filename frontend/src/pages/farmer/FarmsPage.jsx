@@ -396,7 +396,7 @@ function DataTable({ rows, onEdit, onDelete }) {
     <div className="border border-border bg-card">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
-        <div className="relative min-w-[220px] flex-1">
+        <div className="relative w-full flex-1 sm:min-w-[220px]">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={query}
@@ -405,7 +405,7 @@ function DataTable({ rows, onEdit, onDelete }) {
             className="w-full border border-border bg-background py-2.5 pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus:border-foreground"
           />
         </div>
-        <div className="relative min-w-[160px] flex-1">
+        <div className="relative w-full min-w-[240px] sm:w-auto">
           <select
             value={sizeFilter}
             onChange={(e) => setSizeFilter(e.target.value)}
