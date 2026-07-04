@@ -422,7 +422,7 @@ export function OverviewPage() {
     }));
 
   return (
-    <div className="kk-container py-8 space-y-10">
+    <div className="py-8 space-y-10">
       <PageHeader
         eyebrow="Overview"
         title="Welcome back, Farmer"

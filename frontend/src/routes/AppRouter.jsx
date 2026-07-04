@@ -17,7 +17,7 @@ import PublicLayout from "@/layouts/PublicLayout";
 import DashboardLayout from "@/layouts/DashboardLayout";
 
 import {
-  OverviewPage as FarmerOverview,
+  OverviewPage,
   FarmsPage as FarmerFarmsPage,
   HarvestPage,
   ChatPage,
@@ -25,6 +25,7 @@ import {
   InventoryPage,
   SettingsPage as FarmerSettingsPage,
   OrderPage,
+  FarmersPage,
 } from "@/pages/farmer";
 
 import UnauthorizedPage from "@/pages/shared/UnauthorizedPage";
@@ -104,7 +105,21 @@ export default function AppRouter() {
         {/* FARMER ONLY */}
         <Route element={<ProtectedRoute allowedRoles={[ROLES.FARMER]} />}>
           <Route path="/farmer" element={<DashboardLayout />}>
-            <Route path="overview" element={<FarmerOverview />} />
+            <Route path="overview" element={<OverviewPage />} />
+            <Route path="farms" element={<FarmerFarmsPage />} />
+            <Route path="harvests" element={<HarvestPage />} />
+            <Route path="chat" element={<ChatPage />} />
+            <Route path="inventorys" element={<InventoryPage />} />
+            <Route path="orders" element={<OrderPage />} />
+            <Route path="settings" element={<FarmerSettingsPage />} />
+          </Route>
+        </Route>
+
+        {/* MANAGER ONLY */}
+        <Route element={<ProtectedRoute allowedRoles={[ROLES.MANAGER]} />}>
+          <Route path="/manager" element={<DashboardLayout />}>
+            <Route path="overview" element={<OverviewPage />} />
+            <Route path="farmers" element={<FarmersPage />} />
             <Route path="farms" element={<FarmerFarmsPage />} />
             <Route path="harvests" element={<HarvestPage />} />
             <Route path="chat" element={<ChatPage />} />

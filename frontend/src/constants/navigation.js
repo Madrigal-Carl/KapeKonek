@@ -1,4 +1,4 @@
-import { LayoutDashboard, Sprout, Bean, MessageCircle, Users, Store, Package, Settings, LogOut, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Sprout, Bean, MessageCircle, Users, Store, Package, Settings, LogOut, ClipboardList, UserCog } from "lucide-react";
 
 export const farmerNavSections = [
     {
@@ -31,6 +31,43 @@ export const farmerNavSections = [
         label: "Settings",
         items: [
             { to: "/farmer/settings", label: "Settings", icon: Settings },
+            { label: "Logout", icon: LogOut, action: "logout" }
+        ]
+    }
+];
+
+export const managerNavSections = [
+    {
+        label: "Dashboard",
+        items: [{ to: "/manager/overview", label: "Overview", icon: LayoutDashboard, exact: true }]
+    },
+    {
+        label: "Records",
+        items: [
+            { to: "/manager/farmers", label: "Farmer", icon: UserCog },
+            { to: "/manager/farms", label: "Farm", icon: Sprout },
+            { to: "/manager/harvests", label: "Harvest", icon: Bean }
+        ]
+    },
+    {
+        label: "Community",
+        items: [
+            { to: "/manager/chat", label: "Chat", icon: MessageCircle },
+            { to: "/knowledge-hub", label: "Hub", icon: Users, badge: 3 }
+        ]
+    },
+    {
+        label: "Marketplace",
+        items: [
+            { to: "/manager/inventorys", label: "Inventory", icon: Package },
+            { to: "/manager/orders", label: "Order", icon: ClipboardList, badge: 3 },
+            { to: "/", label: "Store", icon: Store }
+        ]
+    },
+    {
+        label: "Settings",
+        items: [
+            { to: "/manager/settings", label: "Settings", icon: Settings },
             { label: "Logout", icon: LogOut, action: "logout" }
         ]
     }

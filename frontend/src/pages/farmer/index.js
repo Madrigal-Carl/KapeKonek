@@ -6,3 +6,4 @@ export { HubPage } from "./HubPage";
 export { InventoryPage } from "./InventoryPage";
 export { SettingsPage } from "./SettingsPage";
 export { OrderPage } from "./OrderPage";
+export { FarmersPage } from "./FarmersPage";
