@@ -57,6 +57,15 @@
     --sidebar-border: oklch(0.8 0.03 55);
     --sidebar-ring: oklch(0.5 0.13 40);
 
+    --color-ledger-olive: oklch(0.42 0.07 130); /* deep olive green */
+    --color-ledger-olive-deep: oklch(0.3 0.06 130); /* darker olive */
+    --color-ledger-terracotta: oklch(0.55 0.13 40); /* clay-red accent */
+    --color-ledger-tan: oklch(0.78 0.05 70); /* light tan bar */
+    --color-ledger-mustard: oklch(0.72 0.13 85); /* mustard underline */
+    --color-ledger-clay: oklch(0.5 0.15 35); /* alert/OOS red-clay */
+    --color-ledger-rule: oklch(0.8 0.03 55); /* same as border */
+    --color-ledger-track: oklch(0.88 0.02 60); /* bar track bg */
+
     input[type="password"]::-ms-reveal,
     input[type="password"]::-ms-clear {
       display: none;

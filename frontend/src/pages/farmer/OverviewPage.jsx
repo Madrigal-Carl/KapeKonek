@@ -104,12 +104,12 @@ const INVENTORY = [
 ];
 
 const CHART_COLORS = [
-  "#2f6f3e",
-  "#b8860b",
-  "#3b82f6",
-  "#a855f7",
-  "#ef4444",
-  "#0ea5e9",
+  "var(--color-ledger-olive)",
+  "var(--color-ledger-terracotta)",
+  "var(--color-ledger-tan)",
+  "var(--color-ledger-mustard)",
+  "var(--color-ledger-olive-deep)",
+  "var(--color-ledger-clay)",
 ];
 
 // ---------- Reusable chart primitives (no deps) ----------
@@ -364,19 +364,23 @@ export function OverviewPage() {
     {
       label: "Growing",
       value: cropStatusCounts.growing || 0,
-      color: "#2f6f3e",
+      color: "var(--color-ledger-olive)",
     },
     {
       label: "Planted",
       value: cropStatusCounts.planted || 0,
-      color: "#3b82f6",
+      color: "var(--color-ledger-tan)",
     },
     {
       label: "Harvested",
       value: cropStatusCounts.harvested || 0,
-      color: "#b8860b",
+      color: "var(--color-ledger-terracotta)",
     },
-    { label: "Fallow", value: cropStatusCounts.fallow || 0, color: "#94a3b8" },
+    {
+      label: "Fallow",
+      value: cropStatusCounts.fallow || 0,
+      color: "var(--color-ledger-olive-deep)",
+    },
   ].filter((d) => d.value > 0);
 
   // Harvest by category donut
@@ -418,7 +422,7 @@ export function OverviewPage() {
     }));
 
   return (
-    <div className="py-8 space-y-10">
+    <div className="kk-container py-8 space-y-10">
       <PageHeader
         eyebrow="Overview"
         title="Welcome back, Farmer"
@@ -457,45 +461,135 @@ export function OverviewPage() {
         />
       </div>
 
-      {/* Charts */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="border border-border bg-card p-5">
-          <SectionHeader eyebrow="Harvest" title="Recent Yield" to="/harvest" />
-          <BarChart data={harvestTimeline} height={220} unit="kg" />
-        </div>
-        <div className="border border-border bg-card p-5">
-          <SectionHeader
-            eyebrow="Inventory"
-            title="Product Sold"
-            to="/inventory"
-          />
-          <div className="space-y-3">
-            {INVENTORY.map((p, i) => (
-              <HBar
-                key={p.id}
-                label={p.name}
-                value={p.stock}
-                max={stockMax}
-                sub={`${p.stock.toLocaleString()} pcs`}
-                color={
-                  p.stock === 0
-                    ? "#ef4444"
-                    : CHART_COLORS[i % CHART_COLORS.length]
-                }
-              />
-            ))}
+      {/* Ledger charts */}
+      <section className="grid grid-cols-1 gap-0 border border-ledger-rule lg:grid-cols-2">
+        {/* Recent Yield — ledger bar chart */}
+        <div className="flex flex-col bg-card p-8 border-b border-ledger-rule lg:border-b-0 lg:border-r">
+          <div className="mb-10 flex items-end justify-between gap-4">
+            <div>
+              <p className="label-mono text-ledger-olive">Overview</p>
+              <h2 className="mt-1 text-2xl font-semibold tracking-tight text-foreground underline decoration-ledger-mustard decoration-2 underline-offset-4">
+                Recent Yield
+              </h2>
+            </div>
           </div>
+
+          <YieldLedgerBars data={harvestTimeline} />
+
+          <div className="mt-auto flex justify-between border-t border-border pt-6">
+            <span className="label-mono text-muted-foreground">
+              Current Cycle
+            </span>
+            <span className="label-mono font-bold text-foreground">
+              {totalHarvestKg.toLocaleString()} kg logged
+            </span>
+          </div>
+        </div>
+
+        {/* Product Sold — ledger stock list */}
+        <div className="flex flex-col bg-card p-8">
+          <div className="mb-10 flex items-end justify-between gap-4">
+            <div>
+              <p className="label-mono text-ledger-terracotta">Inventory</p>
+              <h2 className="mt-1 text-2xl font-semibold tracking-tight text-foreground underline decoration-ledger-olive decoration-2 underline-offset-4">
+                Product Sold
+              </h2>
+            </div>
+          </div>
+
+          <div className="mb-8 space-y-6">
+            {INVENTORY.map((p) => {
+              const oos = p.stock === 0;
+              const pct = (p.stock / Math.max(stockMax, 1)) * 100;
+              const barColor = oos
+                ? "var(--color-ledger-clay)"
+                : p.category === "Green Beans"
+                  ? "var(--color-ledger-olive)"
+                  : p.category === "Roasted Beans"
+                    ? "var(--color-ledger-tan)"
+                    : "var(--color-ledger-olive-deep)";
+              return (
+                <div key={p.id}>
+                  <div className="mb-2 flex items-end justify-between">
+                    <span
+                      className={`text-sm font-semibold ${oos ? "text-ledger-clay" : "text-foreground"}`}
+                    >
+                      {p.name}
+                    </span>
+                    <span
+                      className={`font-mono text-xs ${oos ? "font-bold text-ledger-clay" : "text-foreground"}`}
+                    >
+                      {p.stock.toLocaleString()} pcs
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-ledger-track">
+                    <div
+                      className="h-full"
+                      style={{ width: `${pct}%`, background: barColor }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
           {outOfStock > 0 && (
-            <div className="mt-4 flex items-center gap-2 border border-border bg-muted/40 px-3 py-2 text-xs text-foreground">
-              <AlertTriangle className="h-4 w-4 text-[#b8860b]" />
-              <span>
-                <span className="font-semibold">{outOfStock}</span> product
-                {outOfStock === 1 ? "" : "s"} out of stock.
-              </span>
+            <div className="mt-auto flex items-center justify-between bg-ledger-clay p-3">
+              <div className="flex items-center gap-3 text-primary-foreground">
+                <AlertTriangle
+                  className="h-3.5 w-3.5 text-primary-foreground"
+                  strokeWidth={2.5}
+                />
+                <span className="label-mono text-primary-foreground">
+                  {outOfStock} product{outOfStock === 1 ? "" : "s"} out of stock
+                </span>
+              </div>
+              <Link
+                to="/inventory"
+                className="label-mono border border-primary-foreground/40 px-2 py-0.5 text-primary-foreground transition-colors hover:bg-primary-foreground hover:text-ledger-clay"
+              >
+                Refill
+              </Link>
             </div>
           )}
         </div>
       </section>
+    </div>
+  );
+}
+
+function YieldLedgerBars({ data }) {
+  const max = Math.max(...data.map((d) => d.value), 1);
+  const tones = [
+    "var(--color-ledger-olive)",
+    "var(--color-ledger-terracotta)",
+    "var(--color-ledger-tan)",
+  ];
+  return (
+    <div className="mb-8 flex h-56 items-stretch justify-between gap-6 px-4">
+      {data.map((d, i) => {
+        const h = (d.value / max) * 100;
+        return (
+          <div
+            key={d.label + i}
+            className="group flex h-full flex-1 flex-col items-center justify-end"
+          >
+            <div
+              className="w-full transition-[height] duration-500"
+              style={{ height: `${h}%`, background: tones[i % tones.length] }}
+              aria-label={`${d.value} kg on ${d.label}`}
+            />
+            <div className="mt-4 text-center">
+              <p className="font-mono text-xs font-medium text-foreground">
+                {d.value.toLocaleString()} kg
+              </p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">
+                {d.label}
+              </p>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
