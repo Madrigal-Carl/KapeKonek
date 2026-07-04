@@ -97,7 +97,7 @@ export default function AppRouter() {
             <ProtectedRoute
               allowedRoles={[
                 ROLES.FARMER,
-                ROLES.MANANGER,
+                ROLES.MANAGER,
                 ROLES.DTI,
                 ROLES.KALUPPA,
               ]}
