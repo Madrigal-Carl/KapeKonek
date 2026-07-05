@@ -82,7 +82,7 @@ const SEED = [
 
 export function HarvestPage() {
   const { role } = useAuth();
-  const isFarmer = role === ROLES.FARMER;
+  const isManager = role === ROLES.MANAGER || ROLES.KALUPPA;
   const isViewOnly = role === ROLES.DTI;
 
   const [rows, setRows] = useState(SEED);
@@ -149,7 +149,7 @@ export function HarvestPage() {
         <HarvestModal
           mode={modal.mode}
           initial={modal.data}
-          isFarmer={isFarmer}
+          isManager={isManager}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />
@@ -377,7 +377,7 @@ function DataTable({ rows, isViewOnly = false, onEdit, onDelete }) {
   );
 }
 
-function HarvestModal({ mode, initial, isFarmer, onClose, onSave }) {
+function HarvestModal({ mode, initial, isManager, onClose, onSave }) {
   const [form, setForm] = useState(initial);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -471,7 +471,7 @@ function HarvestModal({ mode, initial, isFarmer, onClose, onSave }) {
               />
             </Field>
 
-            {!isFarmer && (
+            {isManager && (
               <Field label="Farmer" full>
                 <SearchSelect
                   value={form.farmer}

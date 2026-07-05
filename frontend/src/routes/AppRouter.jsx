@@ -26,6 +26,7 @@ import {
   SettingsPage as FarmerSettingsPage,
   OrderPage,
   FarmersPage,
+  ManagersPage,
 } from "@/pages/farmer";
 
 import UnauthorizedPage from "@/pages/shared/UnauthorizedPage";
@@ -148,7 +149,15 @@ export default function AppRouter() {
 
         {/* KALUPPA ONLY */}
         <Route element={<ProtectedRoute allowedRoles={[ROLES.KALUPPA]} />}>
-          <Route path="/kaluppa/overview" element={<div>KALUPPA Page</div>} />
+          <Route path="/kaluppa" element={<DashboardLayout />}>
+            <Route path="overview" element={<OverviewPage />} />
+            <Route path="managers" element={<ManagersPage />} />
+            <Route path="farms" element={<FarmerFarmsPage />} />
+            <Route path="harvests" element={<HarvestPage />} />
+            <Route path="inventory" element={<InventoryPage />} />
+            <Route path="orders" element={<OrderPage />} />
+            <Route path="settings" element={<FarmerSettingsPage />} />
+          </Route>
         </Route>
 
         {/* MULTIPLE ROLES */}

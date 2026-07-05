@@ -176,8 +176,9 @@ function fmtCoord(n, pos, neg) {
 
 export function FarmsPage() {
   const { role } = useAuth();
-  const isFarmer = role === ROLES.FARMER;
+  const isManager = role === ROLES.MANAGER;
   const isViewOnly = role === ROLES.DTI;
+  const isKaluppa = role === ROLES.KALUPPA;
 
   const [rows, setRows] = useState(SEED);
   const [modal, setModal] = useState(null);
@@ -299,7 +300,9 @@ export function FarmsPage() {
         </div>
         {!isViewOnly && (
           <Button
-            onClick={() => (isFarmer ? setAddChooserOpen(true) : openAddNew())}
+            onClick={() =>
+              !isManager && !isKaluppa ? setAddChooserOpen(true) : openAddNew()
+            }
             className="gap-2"
           >
             <Plus className="h-4 w-4" /> Add Farm
@@ -318,7 +321,8 @@ export function FarmsPage() {
         <FarmModal
           mode={modal.mode}
           initial={modal.data}
-          isFarmer={isFarmer}
+          isManager={isManager}
+          isKaluppa={isKaluppa}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />
@@ -573,7 +577,7 @@ function DataTable({ rows, isViewOnly = false, onEdit, onDelete }) {
   );
 }
 
-function FarmModal({ mode, initial, isFarmer, onClose, onSave }) {
+function FarmModal({ mode, initial, isManager, isKaluppa, onClose, onSave }) {
   const [form, setForm] = useState(initial);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -626,7 +630,7 @@ function FarmModal({ mode, initial, isFarmer, onClose, onSave }) {
               />
             </Field>
 
-            {!isFarmer && (
+            {isManager && !isKaluppa && (
               <Field label="Farmer(s)" full>
                 <MultiSelect
                   values={form.farmers || []}

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Sprout, Bean, MessageCircle, Users, Store, Package, Settings, LogOut, ClipboardList, UserCog } from "lucide-react";
+import { LayoutDashboard, Sprout, Bean, MessageCircle, Users, Store, Package, Settings, LogOut, ClipboardList, UserCog, SquareUser } from "lucide-react";
 
 export const farmerNavSections = [
     {
@@ -106,11 +106,47 @@ export const dtiNavSections = [
     }
 ];
 
+export const kaluppaNavSections = [
+    {
+        label: "Dashboard",
+        items: [{ to: "/kaluppa/overview", label: "Overview", icon: LayoutDashboard, exact: true }]
+    },
+    {
+        label: "Records",
+        items: [
+            { to: "/kaluppa/managers", label: "Manager", icon: SquareUser },
+            { to: "/kaluppa/farms", label: "Farm", icon: Sprout },
+            { to: "/kaluppa/harvests", label: "Harvest", icon: Bean }
+        ]
+    },
+    {
+        label: "Community",
+        items: [
+            { to: "/knowledge-hub", label: "Hub", icon: Users, badge: 3 }
+        ]
+    },
+    {
+        label: "Marketplace",
+        items: [
+            { to: "/kaluppa/inventory", label: "Inventory", icon: Package },
+            { to: "/kaluppa/orders", label: "Order", icon: ClipboardList, badge: 3 },
+            { to: "/", label: "Store", icon: Store }
+        ]
+    },
+    {
+        label: "Settings",
+        items: [
+            { to: "/kaluppa/settings", label: "Settings", icon: Settings },
+            { label: "Logout", icon: LogOut, action: "logout" }
+        ]
+    }
+];
 /* ---------------- ROLE MAP ---------------- */
 export const navSectionsByRole = {
     farmer: farmerNavSections,
     manager: managerNavSections,
     dti: dtiNavSections,
+    kaluppa: kaluppaNavSections,
 };
 
 export function resolveRoleKey(role, fallback = "farmer") {

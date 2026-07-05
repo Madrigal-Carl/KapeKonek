@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Check, ChevronsUpDown, FileText, Upload, X } from "lucide-react";
 import { PageHeader } from "@/components/dashboard";
 import { Button } from "@/components/ui";
+import useAuth from "@/hooks/useAuth";
+import { ROLES } from "@/constants/roles";
 
 const ASSOCIATIONS = [
   "Benguet Coffee Growers Association",
@@ -99,6 +101,9 @@ function Input({ className, ...props }) {
 // ---------------------------------------------------------------------------
 
 export function SettingsPage() {
+  const { role } = useAuth();
+  const isFarmer = role === ROLES.FARMER;
+
   return (
     <>
       <PageHeader
@@ -109,14 +114,18 @@ export function SettingsPage() {
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="mb-6">
           <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="organization">Organization</TabsTrigger>
+          {isFarmer && (
+            <TabsTrigger value="organization">Organization</TabsTrigger>
+          )}
         </TabsList>
         <TabsContent value="profile">
           <ProfileTab />
         </TabsContent>
-        <TabsContent value="organization">
-          <OrganizationTab />
-        </TabsContent>
+        {isFarmer && (
+          <TabsContent value="organization">
+            <OrganizationTab />
+          </TabsContent>
+        )}
       </Tabs>
     </>
   );

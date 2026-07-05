@@ -582,7 +582,7 @@ function ProductModal({ mode, initial, isFarmer, onClose, onSave }) {
                 placeholder="0"
               />
             </Field>
-            <Field label="Price (\u20B1)" full>
+            <Field label="Price">
               <TextInput
                 type="number"
                 value={String(form.price ?? 0)}
@@ -772,7 +772,7 @@ function PriceModal({ product, onClose, onSave }) {
         </div>
 
         <form onSubmit={submit} className="px-6 py-5">
-          <Field label="Price (\u20B1)" full>
+          <Field label="Price" full>
             <TextInput
               type="number"
               value={String(price)}
