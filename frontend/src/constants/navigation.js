@@ -1,4 +1,4 @@
-import { LayoutDashboard, Sprout, Bean, MessageCircle, Users, Store, Package, Settings, LogOut, ClipboardList, UserCog, SquareUser, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Sprout, Bean, MessageCircle, Users, Store, Package, Settings, LogOut, ClipboardList, UserCog, SquareUser, BarChart3, Map } from "lucide-react";
 
 export const farmerNavSections = [
     {
@@ -70,6 +70,12 @@ export const managerNavSections = [
         ]
     },
     {
+        label: "Mapping",
+        items: [
+            { to: "/manager/farm-maps", label: "Farm Map", icon: Map }
+        ]
+    },
+    {
         label: "Settings",
         items: [
             { to: "/manager/settings", label: "Settings", icon: Settings },
@@ -101,6 +107,12 @@ export const dtiNavSections = [
         label: "Marketplace",
         items: [
             { to: "/dti/inventory", label: "Inventory", icon: Package },
+        ]
+    },
+    {
+        label: "Mapping",
+        items: [
+            { to: "/dti/farm-maps", label: "Farm Map", icon: Map }
         ]
     },
     {
@@ -143,6 +155,12 @@ export const kaluppaNavSections = [
             { to: "/kaluppa/inventory", label: "Inventory", icon: Package },
             { to: "/kaluppa/orders", label: "Order", icon: ClipboardList, badge: 3 },
             { to: "/", label: "Store", icon: Store }
+        ]
+    },
+    {
+        label: "Mapping",
+        items: [
+            { to: "/kaluppa/farm-maps", label: "Farm Map", icon: Map }
         ]
     },
     {
