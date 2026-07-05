@@ -10,11 +10,12 @@ import {
 } from "lucide-react";
 
 const MEMBERS = [
-  { name: "Maria Santos", avatar: "MS", verified: true },
-  { name: "Juan Dela Cruz", avatar: "JD", verified: true },
-  { name: "Ana Reyes", avatar: "AR", verified: false },
-  { name: "You", avatar: "YO", verified: false },
+  { name: "Maria Santos", avatar: "MS", verified: true, role: "Farmer" },
+  { name: "Juan Dela Cruz", avatar: "JD", verified: true, role: "Farmer" },
+  { name: "Ana Reyes", avatar: "AR", verified: false, role: "Farmer" },
+  { name: "You", avatar: "YO", verified: false, role: "Farmer" },
 ];
+
 const SEED = [
   {
     id: "1",
@@ -58,6 +59,7 @@ const SEED = [
     at: "08:22",
   },
 ];
+
 function MemberAvatar({
   initials,
   verified,
@@ -92,6 +94,31 @@ function MemberAvatar({
     </div>
   );
 }
+
+function MemberList({ members }) {
+  return (
+    <ul className="space-y-2">
+      {members.map((m) => (
+        <li key={m.name} className="flex items-center gap-3">
+          <MemberAvatar
+            initials={m.avatar}
+            verified={m.verified}
+            className="h-10 w-10 text-sm"
+            badgeClassName="h-4 w-4"
+            iconClassName="h-2.5 w-2.5"
+          />
+          <div className="min-w-0">
+            <div className="truncate text-base text-foreground">{m.name}</div>
+            <div className="truncate text-xs text-muted-foreground">
+              {m.role}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function ChatPage() {
   const [messages, setMessages] = useState(SEED);
   const [text, setText] = useState("");
@@ -100,12 +127,21 @@ export function ChatPage() {
   const scrollRef = useRef(null);
   const fileRef = useRef(null);
   const imageRef = useRef(null);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
       behavior: "smooth",
     });
   }, [messages]);
+
+  useEffect(() => {
+    if (!membersOpen) return;
+    const onKey = (e) => e.key === "Escape" && setMembersOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [membersOpen]);
+
   const handleFiles = (files, kind) => {
     if (!files) return;
     const next = Array.from(files).map((f) => ({
@@ -115,10 +151,11 @@ export function ChatPage() {
     }));
     setPending((p) => [...p, ...next]);
   };
+
   const send = (e) => {
     e.preventDefault();
     if (!text.trim() && pending.length === 0) return;
-    const now = /* @__PURE__ */ new Date();
+    const now = new Date();
     const at = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     setMessages((m) => [
       ...m,
@@ -127,8 +164,8 @@ export function ChatPage() {
         author: "You",
         avatar: "YO",
         verified: false,
-        text: text.trim() || void 0,
-        attachments: pending.length ? pending : void 0,
+        text: text.trim() || undefined,
+        attachments: pending.length ? pending : undefined,
         at,
         self: true,
       },
@@ -136,6 +173,7 @@ export function ChatPage() {
     setText("");
     setPending([]);
   };
+
   return (
     <div className="-m-4 flex h-[calc(100dvh-3.5rem)] flex-col lg:-m-8 lg:h-screen">
       {/* Header */}
@@ -155,7 +193,7 @@ export function ChatPage() {
         </div>
         <button
           type="button"
-          onClick={() => setMembersOpen((v) => !v)}
+          onClick={() => setMembersOpen(true)}
           className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-muted"
         >
           <Users className="h-4 w-4" />
@@ -232,7 +270,7 @@ export function ChatPage() {
           </div>
         </div>
 
-        {/* Members panel */}
+        {/* Members panel — desktop (inline side panel) */}
         {membersOpen && (
           <aside className="hidden w-64 shrink-0 border-l border-border bg-card p-4 md:block">
             <div className="mb-3 flex items-center justify-between">
@@ -244,23 +282,37 @@ export function ChatPage() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <ul className="space-y-2">
-              {MEMBERS.map((m) => (
-                <li key={m.name} className="flex items-center gap-3">
-                  <MemberAvatar
-                    initials={m.avatar}
-                    verified={m.verified}
-                    className="h-10 w-10 text-sm"
-                    badgeClassName="h-4 w-4"
-                    iconClassName="h-2.5 w-2.5"
-                  />
-                  <span className="text-base text-foreground">{m.name}</span>
-                </li>
-              ))}
-            </ul>
+            <MemberList members={MEMBERS} />
           </aside>
         )}
       </div>
+
+      {/* Members panel — mobile (overlay modal) */}
+      {membersOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-foreground-40 md:hidden"
+          onClick={() => setMembersOpen(false)}
+        >
+          <div
+            className="max-h-[75vh] w-full overflow-y-auto rounded-t-2xl border-t border-border bg-card p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-foreground">
+                Members · {MEMBERS.length}
+              </h2>
+              <button
+                onClick={() => setMembersOpen(false)}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Close members"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <MemberList members={MEMBERS} />
+          </div>
+        </div>
+      )}
 
       {/* Composer */}
       <form
