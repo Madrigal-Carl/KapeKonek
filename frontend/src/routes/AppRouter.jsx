@@ -27,6 +27,7 @@ import {
   OrderPage,
   FarmersPage,
   ManagersPage,
+  ReportsPage,
 } from "@/pages/farmer";
 
 import UnauthorizedPage from "@/pages/shared/UnauthorizedPage";
@@ -131,6 +132,7 @@ export default function AppRouter() {
             <Route path="chat" element={<ChatPage />} />
             <Route path="inventory" element={<InventoryPage />} />
             <Route path="orders" element={<OrderPage />} />
+            <Route path="reports" element={<ReportsPage />} />
             <Route path="settings" element={<FarmerSettingsPage />} />
           </Route>
         </Route>
@@ -143,6 +145,7 @@ export default function AppRouter() {
             <Route path="farms" element={<FarmerFarmsPage />} />
             <Route path="harvests" element={<HarvestPage />} />
             <Route path="inventory" element={<InventoryPage />} />
+            <Route path="reports" element={<ReportsPage />} />
             <Route path="settings" element={<FarmerSettingsPage />} />
           </Route>
         </Route>
@@ -156,6 +159,7 @@ export default function AppRouter() {
             <Route path="harvests" element={<HarvestPage />} />
             <Route path="inventory" element={<InventoryPage />} />
             <Route path="orders" element={<OrderPage />} />
+            <Route path="reports" element={<ReportsPage />} />
             <Route path="settings" element={<FarmerSettingsPage />} />
           </Route>
         </Route>

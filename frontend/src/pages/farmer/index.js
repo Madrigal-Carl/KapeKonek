@@ -8,3 +8,4 @@ export { SettingsPage } from "./SettingsPage";
 export { OrderPage } from "./OrderPage";
 export { FarmersPage } from "./FarmersPage";
 export { ManagersPage } from "./ManagersPage";
+export { ReportsPage } from "./ReportsPage";
