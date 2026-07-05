@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronDown,
   ChevronLeft,
@@ -12,6 +12,8 @@ import {
   X,
 } from "lucide-react";
 import { IconButton, Field, TextInput, Button } from "@/components/ui";
+import useAuth from "@/hooks/useAuth";
+import { ROLES } from "@/constants/roles";
 
 const CATEGORIES = [
   "Coffee Seedlings",
@@ -21,6 +23,15 @@ const CATEGORIES = [
 ];
 
 const VARIETY_OPTIONS = ["Arabica", "Robusta", "Liberica", "Excelsa"];
+
+const FARMER_OPTIONS = [
+  "FR-001 \xB7 Lina Okoro",
+  "FR-002 \xB7 Samuel Mwangi",
+  "FR-003 \xB7 Aisha Bello",
+  "FR-004 \xB7 Chidi Okafor",
+  "FR-005 \xB7 Joseph Kamau",
+  "FR-006 \xB7 Mariam Diallo",
+];
 
 const SEED = [
   {
@@ -33,6 +44,7 @@ const SEED = [
     description: "Washed Arabica green beans from Marinduque highlands.",
     images: [],
     status: "active",
+    farmer: "FR-001 \xB7 Lina Okoro",
   },
   {
     id: "PD-002",
@@ -44,6 +56,7 @@ const SEED = [
     description: "Medium roast Robusta with chocolatey notes.",
     images: [],
     status: "active",
+    farmer: "FR-002 \xB7 Samuel Mwangi",
   },
   {
     id: "PD-003",
@@ -55,6 +68,7 @@ const SEED = [
     description: "Bold ground Liberica, woody and smoky.",
     images: [],
     status: "inactive",
+    farmer: "FR-004 \xB7 Chidi Okafor",
   },
   {
     id: "PD-004",
@@ -66,8 +80,10 @@ const SEED = [
     description: "Healthy Excelsa seedlings, 6 months old.",
     images: [],
     status: "active",
+    farmer: "FR-005 \xB7 Joseph Kamau",
   },
 ];
+
 function StatusPill({ status }) {
   const isActive = status === "active";
   return (
@@ -93,11 +109,17 @@ function StatusPill({ status }) {
     </span>
   );
 }
+
 export function InventoryPage() {
+  const { role } = useAuth();
+  const isFarmer = role === ROLES.FARMER;
+
   const [rows, setRows] = useState(SEED);
   const [modal, setModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+
   const nextId = () => `PD-${String(rows.length + 1).padStart(3, "0")}`;
+
   const openAdd = () =>
     setModal({
       mode: "add",
@@ -111,8 +133,10 @@ export function InventoryPage() {
         description: "",
         images: [],
         status: "active",
+        farmer: "",
       },
     });
+
   const handleSave = (data) => {
     setRows((r) => {
       const cleaned = {
@@ -126,6 +150,7 @@ export function InventoryPage() {
     });
     setModal(null);
   };
+
   return (
     <div className="py-8">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
@@ -153,6 +178,7 @@ export function InventoryPage() {
         <ProductModal
           mode={modal.mode}
           initial={modal.data}
+          isFarmer={isFarmer}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />
@@ -172,12 +198,14 @@ export function InventoryPage() {
     </div>
   );
 }
+
 function DataTable({ rows, onEdit, onDelete }) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [page, setPage] = useState(1);
   const pageSize = 5;
+
   const filtered = useMemo(() => {
     let r = rows;
     if (query) {
@@ -195,9 +223,12 @@ function DataTable({ rows, onEdit, onDelete }) {
       r = r.filter((x) => x.category === categoryFilter);
     return r;
   }, [rows, query, statusFilter, categoryFilter]);
+
   useEffect(() => setPage(1), [query, statusFilter, categoryFilter]);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
+
   return (
     <div className="border border-border bg-card">
       <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
@@ -356,15 +387,18 @@ function DataTable({ rows, onEdit, onDelete }) {
     </div>
   );
 }
-function ProductModal({ mode, initial, onClose, onSave }) {
+
+function ProductModal({ mode, initial, isFarmer, onClose, onSave }) {
   const [form, setForm] = useState(initial);
   const [uploads, setUploads] = useState([]);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
   const addImages = (files) => {
     if (!files) return;
     Array.from(files).forEach((file) => {
@@ -397,6 +431,7 @@ function ProductModal({ mode, initial, onClose, onSave }) {
       setTimeout(tick, 200);
     });
   };
+
   const removeImage = (url) =>
     setForm((f) => ({
       ...f,
@@ -406,12 +441,15 @@ function ProductModal({ mode, initial, onClose, onSave }) {
           ? f.images.filter((u) => u !== url)[0]
           : f.primaryImage,
     }));
+
   const setPrimary = (url) => set("primaryImage", url);
+
   const submit = (e) => {
     e?.preventDefault();
     if (!form.name.trim()) return;
     onSave(form);
   };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-foreground-40 p-4"
@@ -501,6 +539,19 @@ function ProductModal({ mode, initial, onClose, onSave }) {
                 placeholder="0"
               />
             </Field>
+
+            {!isFarmer && (
+              <Field label="Farmer" full>
+                <SearchSelect
+                  value={form.farmer}
+                  onChange={(v) => set("farmer", v)}
+                  options={FARMER_OPTIONS}
+                  placeholder="Select a farmer…"
+                  searchPlaceholder="Search farmers…"
+                />
+              </Field>
+            )}
+
             <Field label="Description" full>
               <textarea
                 value={form.description}
@@ -632,6 +683,101 @@ function ProductModal({ mode, initial, onClose, onSave }) {
     </div>
   );
 }
+
+function SearchSelect({
+  value,
+  onChange,
+  options,
+  placeholder = "Select…",
+  searchPlaceholder = "Search…",
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const h = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    window.addEventListener("mousedown", h);
+    return () => window.removeEventListener("mousedown", h);
+  }, []);
+
+  const filtered = useMemo(
+    () => options.filter((o) => o.toLowerCase().includes(q.toLowerCase())),
+    [q, options],
+  );
+
+  return (
+    <div ref={ref} className="relative w-full">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between gap-2 border border-border bg-background px-3 py-2.5 text-left text-sm hover:border-foreground/30"
+      >
+        <span
+          className={["truncate", !value && "text-muted-foreground"]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          {value || placeholder}
+        </span>
+        <ChevronDown
+          className={[
+            "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+            open && "rotate-180",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        />
+      </button>
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 border border-border bg-card shadow-lg">
+          <div className="relative border-b border-border">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="w-full bg-card py-2.5 pl-9 pr-3 text-sm outline-none"
+            />
+          </div>
+          <ul className="max-h-56 overflow-auto">
+            {filtered.length === 0 ? (
+              <li className="px-3 py-3 text-sm text-muted-foreground">
+                No results found.
+              </li>
+            ) : (
+              filtered.map((o) => (
+                <li key={o}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange(o);
+                      setOpen(false);
+                      setQ("");
+                    }}
+                    className={[
+                      "flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted",
+                      value === o && "bg-accent/10 font-semibold",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    {o}
+                    {value === o && <span className="h-1.5 w-1.5 bg-accent" />}
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DeleteConfirm({ id, name, onCancel, onConfirm }) {
   return (
     <div
