@@ -21,6 +21,8 @@ import {
   FormatDate,
   Button,
 } from "@/components/ui";
+import useAuth from "@/hooks/useAuth";
+import { ROLES } from "@/constants/roles";
 
 const EXISTING_FARM_REGISTRY = [
   {
@@ -136,6 +138,7 @@ const SEED = [
     ],
   },
 ];
+
 function StatusPill({ tone = "neutral", children }) {
   const map = {
     success: "border-accent bg-accent/10 text-foreground",
@@ -165,17 +168,24 @@ function StatusPill({ tone = "neutral", children }) {
     </span>
   );
 }
+
 function fmtCoord(n, pos, neg) {
   const dir = n >= 0 ? pos : neg;
   return `${Math.abs(n).toFixed(4)}\xB0 ${dir}`;
 }
+
 export function FarmsPage() {
+  const { role } = useAuth();
+  const isFarmer = role === ROLES.FARMER;
+
   const [rows, setRows] = useState(SEED);
   const [modal, setModal] = useState(null);
   const [addChooserOpen, setAddChooserOpen] = useState(false);
   const [existingOpen, setExistingOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
+
   const nextId = () => `FM-${String(rows.length + 1).padStart(3, "0")}`;
+
   const openAddNew = () =>
     setModal({
       mode: "add",
@@ -187,13 +197,14 @@ export function FarmsPage() {
         crops: [],
         yieldKg: 0,
         location: null,
-        joinedAt: /* @__PURE__ */ new Date().toISOString().slice(0, 10),
+        joinedAt: new Date().toISOString().slice(0, 10),
       },
     });
+
   const attachExisting = (registryId) => {
     const reg = EXISTING_FARM_REGISTRY.find((r) => r.id === registryId);
     if (!reg) return;
-    const today = /* @__PURE__ */ new Date().toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0, 10);
     setRows((r) => [
       ...r,
       {
@@ -213,9 +224,10 @@ export function FarmsPage() {
     ]);
     setExistingOpen(false);
   };
+
   const handleSave = (data) => {
     setRows((r) => {
-      const today = /* @__PURE__ */ new Date().toISOString().slice(0, 10);
+      const today = new Date().toISOString().slice(0, 10);
       const cleaned = {
         ...data,
         size: Number(data.size) || 0,
@@ -270,6 +282,7 @@ export function FarmsPage() {
     });
     setModal(null);
   };
+
   return (
     <div className="py-8">
       {/* Page header */}
@@ -283,7 +296,10 @@ export function FarmsPage() {
             Land assets, sizes, geotagged plots, and crop allocations.
           </p>
         </div>
-        <Button onClick={() => setAddChooserOpen(true)} className="gap-2">
+        <Button
+          onClick={() => (isFarmer ? setAddChooserOpen(true) : openAddNew())}
+          className="gap-2"
+        >
           <Plus className="h-4 w-4" /> Add Farm
         </Button>
       </div>
@@ -298,6 +314,7 @@ export function FarmsPage() {
         <FarmModal
           mode={modal.mode}
           initial={modal.data}
+          isFarmer={isFarmer}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />
@@ -341,6 +358,7 @@ export function FarmsPage() {
     </div>
   );
 }
+
 function DataTable({ rows, onEdit, onDelete }) {
   const [query, setQuery] = useState("");
   const [sizeFilter, setSizeFilter] = useState("all");
@@ -348,6 +366,7 @@ function DataTable({ rows, onEdit, onDelete }) {
   const [sortDir, setSortDir] = useState("asc");
   const [page, setPage] = useState(1);
   const pageSize = 5;
+
   const filtered = useMemo(() => {
     let r = rows;
     if (query) {
@@ -374,9 +393,12 @@ function DataTable({ rows, onEdit, onDelete }) {
     }
     return r;
   }, [rows, query, sizeFilter, sortKey, sortDir]);
+
   useEffect(() => setPage(1), [query, sizeFilter]);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
+
   const toggleSort = (k) => {
     if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else {
@@ -384,6 +406,7 @@ function DataTable({ rows, onEdit, onDelete }) {
       setSortDir("asc");
     }
   };
+
   const SortIcon = ({ k }) =>
     sortKey === k ? (
       sortDir === "asc" ? (
@@ -392,6 +415,7 @@ function DataTable({ rows, onEdit, onDelete }) {
         <ChevronDown className="h-3 w-3 text-accent" />
       )
     ) : null;
+
   return (
     <div className="border border-border bg-card">
       {/* Toolbar */}
@@ -538,19 +562,23 @@ function DataTable({ rows, onEdit, onDelete }) {
     </div>
   );
 }
-function FarmModal({ mode, initial, onClose, onSave }) {
+
+function FarmModal({ mode, initial, isFarmer, onClose, onSave }) {
   const [form, setForm] = useState(initial);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
   const submit = (e) => {
     e?.preventDefault();
     if (!form.address) return;
     onSave(form);
   };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-foreground-40 p-4"
@@ -587,6 +615,18 @@ function FarmModal({ mode, initial, onClose, onSave }) {
                 placeholder="Sitio, Barangay, Municipality"
               />
             </Field>
+
+            {!isFarmer && (
+              <Field label="Farmer(s)" full>
+                <MultiSelect
+                  values={form.farmers || []}
+                  onChange={(v) => set("farmers", v)}
+                  options={FARMER_OPTIONS}
+                  placeholder="Select farmer(s)…"
+                />
+              </Field>
+            )}
+
             <Field label="Geotag Location" full>
               <LocationPicker
                 value={form.location}
@@ -608,6 +648,7 @@ function FarmModal({ mode, initial, onClose, onSave }) {
     </div>
   );
 }
+
 function MultiSelect({
   values,
   onChange,
@@ -618,6 +659,7 @@ function MultiSelect({
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const ref = useRef(null);
+
   useEffect(() => {
     const h = (e) => {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -625,24 +667,29 @@ function MultiSelect({
     window.addEventListener("mousedown", h);
     return () => window.removeEventListener("mousedown", h);
   }, []);
+
   const filtered = useMemo(
     () => options.filter((o) => o.toLowerCase().includes(q.toLowerCase())),
     [q, options],
   );
+
   const trimmed = q.trim();
   const canCreate =
     allowCreate &&
     trimmed.length > 0 &&
     !options.some((o) => o.toLowerCase() === trimmed.toLowerCase());
+
   const toggle = (o) =>
     onChange(
       values.includes(o) ? values.filter((v) => v !== o) : [...values, o],
     );
+
   const handleCreate = () => {
     if (!canCreate) return;
     if (!values.includes(trimmed)) onChange([...values, trimmed]);
     setQ("");
   };
+
   return (
     <div ref={ref} className="relative w-full">
       <button
@@ -747,6 +794,7 @@ function MultiSelect({
     </div>
   );
 }
+
 function DeleteConfirm({ id, name, onCancel, onConfirm }) {
   return (
     <div
@@ -782,12 +830,14 @@ function DeleteConfirm({ id, name, onCancel, onConfirm }) {
     </div>
   );
 }
+
 const MARKER_ICON_URL =
   "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png";
 const MARKER_ICON_2X_URL =
   "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png";
 const MARKER_SHADOW_URL =
   "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png";
+
 function LeafletMap({
   location,
   onPick,
@@ -799,9 +849,11 @@ function LeafletMap({
   const markerRef = useRef(null);
   const onPickRef = useRef(onPick);
   const [ready, setReady] = useState(false);
+
   useEffect(() => {
     onPickRef.current = onPick;
   }, [onPick]);
+
   useEffect(() => {
     let cancelled = false;
     let cleanup = [];
@@ -885,6 +937,7 @@ function LeafletMap({
       markerRef.current = null;
     };
   }, []);
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
@@ -927,6 +980,7 @@ function LeafletMap({
       map.setView(latlng, Math.max(map.getZoom(), 13));
     })();
   }, [location?.lat, location?.lng, ready, interactive]);
+
   return (
     <div
       ref={containerRef}
@@ -939,9 +993,11 @@ function LeafletMap({
     />
   );
 }
+
 function LocationPicker({ value, onChange }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
   const useMyLocation = () => {
     if (!("geolocation" in navigator)) {
       setError("Geolocation is not supported in this browser.");
@@ -964,6 +1020,7 @@ function LocationPicker({ value, onChange }) {
       { enableHighAccuracy: true, timeout: 1e4 },
     );
   };
+
   return (
     <div className="space-y-3 border border-border bg-muted/30 p-3">
       <div className="flex items-start gap-2 text-xs text-muted-foreground">
@@ -1014,12 +1071,14 @@ function LocationPicker({ value, onChange }) {
     </div>
   );
 }
+
 function AddChooser({ onClose, onNew, onExisting }) {
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-foreground-40 p-4"
@@ -1072,16 +1131,19 @@ function AddChooser({ onClose, onNew, onExisting }) {
     </div>
   );
 }
+
 function ExistingFarmModal({ options, onClose, onSelect }) {
   const [selected, setSelected] = useState("");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
   useEffect(() => {
     const h = (e) => {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -1089,6 +1151,7 @@ function ExistingFarmModal({ options, onClose, onSelect }) {
     window.addEventListener("mousedown", h);
     return () => window.removeEventListener("mousedown", h);
   }, []);
+
   const filtered = useMemo(
     () =>
       options.filter(
@@ -1098,7 +1161,9 @@ function ExistingFarmModal({ options, onClose, onSelect }) {
       ),
     [q, options],
   );
+
   const selectedRow = options.find((o) => o.id === selected);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-foreground-40 p-4"
