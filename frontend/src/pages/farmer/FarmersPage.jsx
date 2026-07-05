@@ -19,6 +19,8 @@ import {
   TextInput,
   FormatDate,
 } from "@/components/ui";
+import useAuth from "@/hooks/useAuth";
+import { ROLES } from "@/constants/roles";
 
 const DEFAULT_PASSWORD = "KapeKonek123";
 
@@ -115,6 +117,13 @@ function StatusPill({ status }) {
 }
 
 export function FarmersPage() {
+  const { role } = useAuth();
+  const isManager = role === ROLES.MANAGER;
+  const isDti = role === ROLES.DTI;
+  // Manager: full CRUD only, no approve/deny. DTI: approve/deny only, no CRUD.
+  const canManage = isManager;
+  const canReview = isDti;
+
   const [rows, setRows] = useState(SEED);
   const [modal, setModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -152,30 +161,36 @@ export function FarmersPage() {
             Farmers
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Registered farmer profiles, approval status, and farm assignments.
+            {isDti
+              ? "Review and act on farmer applications."
+              : "Registered farmer profiles, approval status, and farm assignments."}
           </p>
         </div>
-        <Button
-          onClick={() =>
-            setModal({
-              mode: "add",
-              data: {
-                id: nextId(),
-                fullName: "",
-                email: "",
-                password: DEFAULT_PASSWORD,
-                files: [],
-              },
-            })
-          }
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" /> Add Farmer
-        </Button>
+        {canManage && (
+          <Button
+            onClick={() =>
+              setModal({
+                mode: "add",
+                data: {
+                  id: nextId(),
+                  fullName: "",
+                  email: "",
+                  password: DEFAULT_PASSWORD,
+                  files: [],
+                },
+              })
+            }
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" /> Add Farmer
+          </Button>
+        )}
       </div>
 
       <DataTable
         rows={rows}
+        canManage={canManage}
+        canReview={canReview}
         onEdit={(r) =>
           setModal({
             mode: "edit",
@@ -187,7 +202,7 @@ export function FarmersPage() {
         onDeny={(r) => setConfirmStatus({ row: r, action: "deny" })}
       />
 
-      {modal && (
+      {modal && canManage && (
         <FarmerModal
           mode={modal.mode}
           initial={modal.data}
@@ -196,7 +211,7 @@ export function FarmersPage() {
         />
       )}
 
-      {confirmDelete && (
+      {confirmDelete && canManage && (
         <DeleteConfirm
           name={confirmDelete.fullName}
           onCancel={() => setConfirmDelete(null)}
@@ -225,7 +240,15 @@ export function FarmersPage() {
   );
 }
 
-function DataTable({ rows, onEdit, onDelete, onApprove, onDeny }) {
+function DataTable({
+  rows,
+  canManage,
+  canReview,
+  onEdit,
+  onDelete,
+  onApprove,
+  onDeny,
+}) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
@@ -314,7 +337,8 @@ function DataTable({ rows, onEdit, onDelete, onApprove, onDeny }) {
                     No farmers found
                   </div>
                   <div className="mt-1 text-sm text-muted-foreground">
-                    Try adjusting your search or add a new farmer.
+                    Try adjusting your search
+                    {canManage ? " or add a new farmer." : "."}
                   </div>
                 </td>
               </tr>
@@ -341,7 +365,7 @@ function DataTable({ rows, onEdit, onDelete, onApprove, onDeny }) {
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center justify-end gap-1">
-                      {r.status === "pending" ? (
+                      {canReview && r.status === "pending" ? (
                         <>
                           <IconButton
                             icon={Check}
@@ -355,7 +379,7 @@ function DataTable({ rows, onEdit, onDelete, onApprove, onDeny }) {
                             onClick={() => onDeny(r)}
                           />
                         </>
-                      ) : (
+                      ) : canManage ? (
                         <>
                           <IconButton
                             icon={Pencil}
@@ -369,6 +393,8 @@ function DataTable({ rows, onEdit, onDelete, onApprove, onDeny }) {
                             onClick={() => onDelete(r)}
                           />
                         </>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </div>
                   </td>
