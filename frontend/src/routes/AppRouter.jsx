@@ -136,7 +136,14 @@ export default function AppRouter() {
 
         {/* DTI ONLY */}
         <Route element={<ProtectedRoute allowedRoles={[ROLES.DTI]} />}>
-          <Route path="/dti/overview" element={<div>DTI Page</div>} />
+          <Route path="/dti" element={<DashboardLayout />}>
+            <Route path="overview" element={<OverviewPage />} />
+            <Route path="farmers" element={<FarmersPage />} />
+            <Route path="farms" element={<FarmerFarmsPage />} />
+            <Route path="harvests" element={<HarvestPage />} />
+            <Route path="inventory" element={<InventoryPage />} />
+            <Route path="settings" element={<FarmerSettingsPage />} />
+          </Route>
         </Route>
 
         {/* KALUPPA ONLY */}

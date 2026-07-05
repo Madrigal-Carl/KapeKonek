@@ -177,6 +177,7 @@ function fmtCoord(n, pos, neg) {
 export function FarmsPage() {
   const { role } = useAuth();
   const isFarmer = role === ROLES.FARMER;
+  const isViewOnly = role === ROLES.DTI;
 
   const [rows, setRows] = useState(SEED);
   const [modal, setModal] = useState(null);
@@ -296,21 +297,24 @@ export function FarmsPage() {
             Land assets, sizes, geotagged plots, and crop allocations.
           </p>
         </div>
-        <Button
-          onClick={() => (isFarmer ? setAddChooserOpen(true) : openAddNew())}
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" /> Add Farm
-        </Button>
+        {!isViewOnly && (
+          <Button
+            onClick={() => (isFarmer ? setAddChooserOpen(true) : openAddNew())}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" /> Add Farm
+          </Button>
+        )}
       </div>
 
       <DataTable
         rows={rows}
+        isViewOnly={isViewOnly}
         onEdit={(r) => setModal({ mode: "edit", data: { ...r } })}
         onDelete={(r) => setConfirmDelete(r)}
       />
 
-      {modal && (
+      {modal && !isViewOnly && (
         <FarmModal
           mode={modal.mode}
           initial={modal.data}
@@ -320,7 +324,7 @@ export function FarmsPage() {
         />
       )}
 
-      {addChooserOpen && (
+      {addChooserOpen && !isViewOnly && (
         <AddChooser
           onClose={() => setAddChooserOpen(false)}
           onNew={() => {
@@ -334,7 +338,7 @@ export function FarmsPage() {
         />
       )}
 
-      {existingOpen && (
+      {existingOpen && !isViewOnly && (
         <ExistingFarmModal
           options={EXISTING_FARM_REGISTRY.filter(
             (reg) => !rows.some((r) => r.address === reg.address),
@@ -344,7 +348,7 @@ export function FarmsPage() {
         />
       )}
 
-      {confirmDelete && (
+      {confirmDelete && !isViewOnly && (
         <DeleteConfirm
           id={confirmDelete.id}
           name={confirmDelete.address}
@@ -359,7 +363,7 @@ export function FarmsPage() {
   );
 }
 
-function DataTable({ rows, onEdit, onDelete }) {
+function DataTable({ rows, isViewOnly = false, onEdit, onDelete }) {
   const [query, setQuery] = useState("");
   const [sizeFilter, setSizeFilter] = useState("all");
   const [sortKey, setSortKey] = useState(null);
@@ -514,21 +518,27 @@ function DataTable({ rows, onEdit, onDelete }) {
                     {FormatDate(r.joinedAt)}
                   </td>
                   <td className="px-4 py-3.5">
-                    <div className="flex items-center justify-end gap-1">
-                      {!r.isExisting && (
+                    {isViewOnly ? (
+                      <div className="flex items-center justify-end text-muted-foreground">
+                        —
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-end gap-1">
+                        {!r.isExisting && (
+                          <IconButton
+                            icon={Pencil}
+                            label="Edit"
+                            onClick={() => onEdit(r)}
+                          />
+                        )}
                         <IconButton
-                          icon={Pencil}
-                          label="Edit"
-                          onClick={() => onEdit(r)}
+                          icon={Trash2}
+                          label="Delete"
+                          tone="danger"
+                          onClick={() => onDelete(r)}
                         />
-                      )}
-                      <IconButton
-                        icon={Trash2}
-                        label="Delete"
-                        tone="danger"
-                        onClick={() => onDelete(r)}
-                      />
-                    </div>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))

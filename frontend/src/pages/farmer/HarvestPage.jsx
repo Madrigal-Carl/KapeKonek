@@ -83,6 +83,7 @@ const SEED = [
 export function HarvestPage() {
   const { role } = useAuth();
   const isFarmer = role === ROLES.FARMER;
+  const isViewOnly = role === ROLES.DTI;
 
   const [rows, setRows] = useState(SEED);
   const [modal, setModal] = useState(null);
@@ -130,18 +131,21 @@ export function HarvestPage() {
             Track yields and harvest history across your farms.
           </p>
         </div>
-        <Button onClick={openAdd} className="gap-2">
-          <Plus className="h-4 w-4" /> Add Harvest
-        </Button>
+        {!isViewOnly && (
+          <Button onClick={openAdd} className="gap-2">
+            <Plus className="h-4 w-4" /> Add Harvest
+          </Button>
+        )}
       </div>
 
       <DataTable
         rows={rows}
+        isViewOnly={isViewOnly}
         onEdit={(r) => setModal({ mode: "edit", data: { ...r } })}
         onDelete={(r) => setConfirmDelete(r)}
       />
 
-      {modal && (
+      {modal && !isViewOnly && (
         <HarvestModal
           mode={modal.mode}
           initial={modal.data}
@@ -151,7 +155,7 @@ export function HarvestPage() {
         />
       )}
 
-      {confirmDelete && (
+      {confirmDelete && !isViewOnly && (
         <DeleteConfirm
           id={confirmDelete.id}
           name={confirmDelete.name}
@@ -166,7 +170,7 @@ export function HarvestPage() {
   );
 }
 
-function DataTable({ rows, onEdit, onDelete }) {
+function DataTable({ rows, isViewOnly = false, onEdit, onDelete }) {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortKey, setSortKey] = useState(null);
@@ -321,19 +325,25 @@ function DataTable({ rows, onEdit, onDelete }) {
                     {FormatDate(r.harvestedAt)}
                   </td>
                   <td className="px-4 py-3.5">
-                    <div className="flex items-center justify-end gap-1">
-                      <IconButton
-                        icon={Pencil}
-                        label="Edit"
-                        onClick={() => onEdit(r)}
-                      />
-                      <IconButton
-                        icon={Trash2}
-                        label="Delete"
-                        tone="danger"
-                        onClick={() => onDelete(r)}
-                      />
-                    </div>
+                    {isViewOnly ? (
+                      <div className="flex items-center justify-end text-muted-foreground">
+                        —
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-end gap-1">
+                        <IconButton
+                          icon={Pencil}
+                          label="Edit"
+                          onClick={() => onEdit(r)}
+                        />
+                        <IconButton
+                          icon={Trash2}
+                          label="Delete"
+                          tone="danger"
+                          onClick={() => onDelete(r)}
+                        />
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))

@@ -72,10 +72,45 @@ export const managerNavSections = [
     }
 ];
 
+export const dtiNavSections = [
+    {
+        label: "Dashboard",
+        items: [{ to: "/dti/overview", label: "Overview", icon: LayoutDashboard, exact: true }]
+    },
+    {
+        label: "Records",
+        items: [
+            { to: "/dti/farmers", label: "Farmer", icon: UserCog },
+            { to: "/dti/farms", label: "Farm", icon: Sprout },
+            { to: "/dti/harvests", label: "Harvest", icon: Bean }
+        ]
+    },
+    {
+        label: "Community",
+        items: [
+            { to: "/knowledge-hub", label: "Hub", icon: Users, badge: 3 }
+        ]
+    },
+    {
+        label: "Marketplace",
+        items: [
+            { to: "/dti/inventory", label: "Inventory", icon: Package },
+        ]
+    },
+    {
+        label: "Settings",
+        items: [
+            { to: "/dti/settings", label: "Settings", icon: Settings },
+            { label: "Logout", icon: LogOut, action: "logout" }
+        ]
+    }
+];
+
 /* ---------------- ROLE MAP ---------------- */
 export const navSectionsByRole = {
     farmer: farmerNavSections,
     manager: managerNavSections,
+    dti: dtiNavSections,
 };
 
 export function resolveRoleKey(role, fallback = "farmer") {

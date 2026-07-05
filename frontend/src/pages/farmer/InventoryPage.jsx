@@ -8,6 +8,7 @@ import {
   Plus,
   Search,
   Star,
+  Tag,
   Trash2,
   X,
 } from "lucide-react";
@@ -41,6 +42,7 @@ const SEED = [
     variety: "Arabica",
     stock: 120,
     weightKg: 60,
+    price: 350,
     description: "Washed Arabica green beans from Marinduque highlands.",
     images: [],
     status: "active",
@@ -53,6 +55,7 @@ const SEED = [
     variety: "Robusta",
     stock: 45,
     weightKg: 22.5,
+    price: 220,
     description: "Medium roast Robusta with chocolatey notes.",
     images: [],
     status: "active",
@@ -65,6 +68,7 @@ const SEED = [
     variety: "Liberica",
     stock: 0,
     weightKg: 0,
+    price: 260,
     description: "Bold ground Liberica, woody and smoky.",
     images: [],
     status: "inactive",
@@ -77,6 +81,7 @@ const SEED = [
     variety: "Excelsa",
     stock: 320,
     weightKg: 96,
+    price: 45,
     description: "Healthy Excelsa seedlings, 6 months old.",
     images: [],
     status: "active",
@@ -110,12 +115,19 @@ function StatusPill({ status }) {
   );
 }
 
+function fmtPrice(price) {
+  if (price === null || price === undefined) return "—";
+  return `\u20B1${Number(price).toLocaleString()}`;
+}
+
 export function InventoryPage() {
   const { role } = useAuth();
   const isFarmer = role === ROLES.FARMER;
+  const isDTI = role === ROLES.DTI;
 
   const [rows, setRows] = useState(SEED);
   const [modal, setModal] = useState(null);
+  const [priceModal, setPriceModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   const nextId = () => `PD-${String(rows.length + 1).padStart(3, "0")}`;
@@ -130,6 +142,7 @@ export function InventoryPage() {
         variety: VARIETY_OPTIONS[0],
         stock: 0,
         weightKg: 0,
+        price: 0,
         description: "",
         images: [],
         status: "active",
@@ -143,12 +156,18 @@ export function InventoryPage() {
         ...data,
         stock: Number(data.stock) || 0,
         weightKg: Number(data.weightKg) || 0,
+        price: Number(data.price) || 0,
       };
       const exists = r.find((x) => x.id === data.id);
       if (exists) return r.map((x) => (x.id === data.id ? cleaned : x));
       return [...r, cleaned];
     });
     setModal(null);
+  };
+
+  const handleSavePrice = (id, price) => {
+    setRows((r) => r.map((x) => (x.id === id ? { ...x, price } : x)));
+    setPriceModal(null);
   };
 
   return (
@@ -163,18 +182,22 @@ export function InventoryPage() {
             Products, stock levels, weights, and pricing.
           </p>
         </div>
-        <Button onClick={openAdd} className="gap-2">
-          <Plus className="h-4 w-4" /> Add Product
-        </Button>
+        {!isDTI && (
+          <Button onClick={openAdd} className="gap-2">
+            <Plus className="h-4 w-4" /> Add Product
+          </Button>
+        )}
       </div>
 
       <DataTable
         rows={rows}
+        isDTI={isDTI}
         onEdit={(r) => setModal({ mode: "edit", data: { ...r } })}
+        onEditPrice={(r) => setPriceModal(r)}
         onDelete={(r) => setConfirmDelete(r)}
       />
 
-      {modal && (
+      {modal && !isDTI && (
         <ProductModal
           mode={modal.mode}
           initial={modal.data}
@@ -184,7 +207,15 @@ export function InventoryPage() {
         />
       )}
 
-      {confirmDelete && (
+      {priceModal && isDTI && (
+        <PriceModal
+          product={priceModal}
+          onClose={() => setPriceModal(null)}
+          onSave={(price) => handleSavePrice(priceModal.id, price)}
+        />
+      )}
+
+      {confirmDelete && !isDTI && (
         <DeleteConfirm
           id={confirmDelete.id}
           name={confirmDelete.name}
@@ -199,7 +230,7 @@ export function InventoryPage() {
   );
 }
 
-function DataTable({ rows, onEdit, onDelete }) {
+function DataTable({ rows, isDTI = false, onEdit, onEditPrice, onDelete }) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -337,23 +368,35 @@ function DataTable({ rows, onEdit, onDelete }) {
                   <td className="px-4 py-3.5 text-foreground">
                     {r.weightKg} kg
                   </td>
-                  <td className="px-4 py-3.5 text-muted-foreground">—</td>
+                  <td className="px-4 py-3.5 text-foreground">
+                    {fmtPrice(r.price)}
+                  </td>
                   <td className="px-4 py-3.5">
                     <StatusPill status={r.status} />
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center justify-end gap-1">
-                      <IconButton
-                        icon={Pencil}
-                        label="Edit"
-                        onClick={() => onEdit(r)}
-                      />
-                      <IconButton
-                        icon={Trash2}
-                        label="Delete"
-                        tone="danger"
-                        onClick={() => onDelete(r)}
-                      />
+                      {isDTI ? (
+                        <IconButton
+                          icon={Tag}
+                          label="Edit Price"
+                          onClick={() => onEditPrice(r)}
+                        />
+                      ) : (
+                        <>
+                          <IconButton
+                            icon={Pencil}
+                            label="Edit"
+                            onClick={() => onEdit(r)}
+                          />
+                          <IconButton
+                            icon={Trash2}
+                            label="Delete"
+                            tone="danger"
+                            onClick={() => onDelete(r)}
+                          />
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -531,11 +574,19 @@ function ProductModal({ mode, initial, isFarmer, onClose, onSave }) {
                 placeholder="0"
               />
             </Field>
-            <Field label="Weight (kg)" full>
+            <Field label="Weight (kg)">
               <TextInput
                 type="number"
                 value={String(form.weightKg)}
                 onChange={(v) => set("weightKg", Number(v))}
+                placeholder="0"
+              />
+            </Field>
+            <Field label="Price (\u20B1)" full>
+              <TextInput
+                type="number"
+                value={String(form.price ?? 0)}
+                onChange={(v) => set("price", Number(v))}
                 placeholder="0"
               />
             </Field>
@@ -677,6 +728,66 @@ function ProductModal({ mode, initial, isFarmer, onClose, onSave }) {
           </Button>
           <Button type="button" onClick={() => submit()}>
             {mode === "add" ? "Add Product" : "Save Changes"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PriceModal({ product, onClose, onSave }) {
+  const [price, setPrice] = useState(product.price ?? 0);
+
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const submit = (e) => {
+    e?.preventDefault();
+    onSave(Number(price) || 0);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground-40 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md border border-border bg-card shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <div>
+            <p className="label-mono mb-1 text-accent">Product</p>
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">
+              Set Price
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {product.name} <span className="label-mono">({product.id})</span>
+            </p>
+          </div>
+          <IconButton icon={X} label="Close" onClick={onClose} />
+        </div>
+
+        <form onSubmit={submit} className="px-6 py-5">
+          <Field label="Price (\u20B1)" full>
+            <TextInput
+              type="number"
+              value={String(price)}
+              onChange={(v) => setPrice(v)}
+              placeholder="0"
+            />
+          </Field>
+        </form>
+
+        <div className="flex items-center justify-end gap-2 border-t border-border bg-muted/40 px-6 py-4">
+          <Button variant="outline" type="button" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={() => submit()}>
+            Save Price
           </Button>
         </div>
       </div>
