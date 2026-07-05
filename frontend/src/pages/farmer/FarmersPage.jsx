@@ -4,6 +4,9 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  FileText,
+  Image as ImageIcon,
   Pencil,
   Plus,
   RotateCcw,
@@ -32,6 +35,15 @@ const SEED = [
     farmCount: 2,
     status: "approved",
     joinedAt: "2026-01-04",
+    files: [
+      {
+        name: "Valid_ID.jpg",
+        type: "image",
+        size: 184320,
+        url: "https://picsum.photos/seed/fr001-id/800/500",
+      },
+      { name: "Business_Permit.pdf", type: "pdf", size: 245760 },
+    ],
   },
   {
     id: "FR-002",
@@ -40,6 +52,14 @@ const SEED = [
     farmCount: 1,
     status: "approved",
     joinedAt: "2026-01-18",
+    files: [
+      {
+        name: "Valid_ID.jpg",
+        type: "image",
+        size: 176210,
+        url: "https://picsum.photos/seed/fr002-id/800/500",
+      },
+    ],
   },
   {
     id: "FR-003",
@@ -48,6 +68,21 @@ const SEED = [
     farmCount: 3,
     status: "pending",
     joinedAt: "2026-05-22",
+    files: [
+      {
+        name: "Valid_ID.jpg",
+        type: "image",
+        size: 201340,
+        url: "https://picsum.photos/seed/fr003-id/800/500",
+      },
+      { name: "Land_Title.pdf", type: "pdf", size: 512000 },
+      {
+        name: "Farm_Photo.jpg",
+        type: "image",
+        size: 298400,
+        url: "https://picsum.photos/seed/fr003-farm/800/500",
+      },
+    ],
   },
   {
     id: "FR-004",
@@ -56,6 +91,15 @@ const SEED = [
     farmCount: 1,
     status: "pending",
     joinedAt: "2026-06-01",
+    files: [
+      {
+        name: "Valid_ID.jpg",
+        type: "image",
+        size: 168900,
+        url: "https://picsum.photos/seed/fr004-id/800/500",
+      },
+      { name: "Business_Permit.pdf", type: "pdf", size: 233480 },
+    ],
   },
   {
     id: "FR-005",
@@ -64,6 +108,14 @@ const SEED = [
     farmCount: 2,
     status: "approved",
     joinedAt: "2025-11-14",
+    files: [
+      {
+        name: "Valid_ID.jpg",
+        type: "image",
+        size: 190220,
+        url: "https://picsum.photos/seed/fr005-id/800/500",
+      },
+    ],
   },
   {
     id: "FR-006",
@@ -72,6 +124,14 @@ const SEED = [
     farmCount: 0,
     status: "denied",
     joinedAt: "2026-03-09",
+    files: [
+      {
+        name: "Valid_ID.jpg",
+        type: "image",
+        size: 155600,
+        url: "https://picsum.photos/seed/fr006-id/800/500",
+      },
+    ],
   },
   {
     id: "FR-007",
@@ -80,6 +140,16 @@ const SEED = [
     farmCount: 1,
     status: "pending",
     joinedAt: "2026-06-20",
+    files: [
+      {
+        name: "Valid_ID.jpg",
+        type: "image",
+        size: 172000,
+        url: "https://picsum.photos/seed/fr007-id/800/500",
+      },
+      { name: "Business_Permit.pdf", type: "pdf", size: 264000 },
+      { name: "Land_Title.pdf", type: "pdf", size: 498000 },
+    ],
   },
 ];
 
@@ -223,8 +293,8 @@ export function FarmersPage() {
       )}
 
       {confirmStatus && (
-        <StatusConfirm
-          name={confirmStatus.row.fullName}
+        <ReviewModal
+          row={confirmStatus.row}
           action={confirmStatus.action}
           onCancel={() => setConfirmStatus(null)}
           onConfirm={() => {
@@ -654,46 +724,186 @@ function DeleteConfirm({ name, onCancel, onConfirm }) {
   );
 }
 
-function StatusConfirm({ name, action, onCancel, onConfirm }) {
+function ReviewModal({ row, action, onCancel, onConfirm }) {
   const isApprove = action === "approve";
+  const [preview, setPreview] = useState(null);
+  const files = row.files ?? [];
+
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && !preview && onCancel();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel, preview]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-foreground-40 p-4"
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-md border border-border bg-card p-6 shadow-xl"
+        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden border border-border bg-card shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="label-mono mb-1 text-accent">
-          {isApprove ? "Approve farmer" : "Deny farmer"}
-        </p>
-        <h2 className="mb-2 text-lg font-semibold text-foreground">
-          {isApprove ? "Approve this farmer?" : "Deny this farmer?"}
-        </h2>
-        <p className="mb-6 text-sm text-muted-foreground">
-          {isApprove ? (
-            <>
-              <span className="font-semibold text-foreground">{name}</span> will
-              be marked as approved and gain access to their account.
-            </>
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
+          <div>
+            <p className="label-mono mb-1 text-accent">
+              {isApprove ? "Approve Application" : "Deny Application"}
+            </p>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
+              Review Farmer Details
+            </h2>
+          </div>
+          <IconButton icon={X} label="Close" onClick={onCancel} />
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="grid grid-cols-2 gap-4 border border-border bg-muted/30 p-4">
+            <div>
+              <p className="label-mono mb-1 text-muted-foreground">Full Name</p>
+              <p className="text-sm font-semibold text-foreground">
+                {row.fullName}
+              </p>
+            </div>
+            <div>
+              <p className="label-mono mb-1 text-muted-foreground">Email</p>
+              <p className="text-sm font-semibold text-foreground">
+                {row.email}
+              </p>
+            </div>
+            <div>
+              <p className="label-mono mb-1 text-muted-foreground">Farmer ID</p>
+              <p className="text-sm font-semibold text-foreground">{row.id}</p>
+            </div>
+            <div>
+              <p className="label-mono mb-1 text-muted-foreground">Applied</p>
+              <p className="text-sm font-semibold text-foreground">
+                {FormatDate(row.joinedAt)}
+              </p>
+            </div>
+          </div>
+
+          <p className="label-mono mb-2 mt-5 text-muted-foreground">
+            Attachments ({files.length})
+          </p>
+          {files.length === 0 ? (
+            <div className="border border-dashed border-border bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
+              No attachments submitted
+            </div>
           ) : (
-            <>
-              <span className="font-semibold text-foreground">{name}</span> will
-              be denied and cannot access the platform.
-            </>
+            <ul className="space-y-2">
+              {files.map((f, i) => {
+                const Icon = f.type === "image" ? ImageIcon : FileText;
+                return (
+                  <li
+                    key={`${f.name}-${i}`}
+                    className="flex items-center justify-between gap-3 border border-border bg-background p-3"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="grid h-9 w-9 shrink-0 place-items-center border border-border bg-muted">
+                        <Icon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium text-foreground">
+                          {f.name}
+                        </div>
+                        <div className="label-mono text-muted-foreground">
+                          {(f.size / 1024).toFixed(1)} KB
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="h-8 gap-1.5 px-3 text-xs"
+                      onClick={() => setPreview(f)}
+                    >
+                      <Eye className="h-3.5 w-3.5" /> View
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
           )}
-        </p>
-        <div className="flex items-center justify-end gap-2">
-          <Button variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button
-            variant={isApprove ? "default" : "destructive"}
-            onClick={onConfirm}
-          >
-            {isApprove ? "Approve" : "Deny"}
-          </Button>
+        </div>
+
+        <div className="flex shrink-0 flex-col gap-3 border-t border-border bg-muted/40 px-6 py-4">
+          <p className="text-sm text-muted-foreground">
+            {isApprove ? (
+              <>
+                <span className="font-semibold text-foreground">
+                  {row.fullName}
+                </span>{" "}
+                will be marked as approved and granted full access to the
+                platform.
+              </>
+            ) : (
+              <>
+                <span className="font-semibold text-foreground">
+                  {row.fullName}
+                </span>{" "}
+                will be marked as denied and remain limited to basic platform
+                access.
+              </>
+            )}
+          </p>
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button
+              variant={isApprove ? "default" : "destructive"}
+              onClick={onConfirm}
+            >
+              {isApprove ? "Approve" : "Deny"}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {preview && (
+        <FilePreviewModal file={preview} onClose={() => setPreview(null)} />
+      )}
+    </div>
+  );
+}
+
+function FilePreviewModal({ file, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground-40 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="flex max-h-[85vh] w-full max-w-xl flex-col overflow-hidden border border-border bg-card shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-3">
+          <p className="truncate text-sm font-semibold text-foreground">
+            {file.name}
+          </p>
+          <IconButton icon={X} label="Close" onClick={onClose} />
+        </div>
+        <div className="flex-1 overflow-auto bg-muted/20 p-4">
+          {file.type === "image" ? (
+            <img
+              src={file.url}
+              alt={file.name}
+              className="mx-auto max-h-[60vh] w-auto border border-border object-contain"
+            />
+          ) : (
+            <div className="flex h-64 flex-col items-center justify-center gap-3 border border-dashed border-border text-center">
+              <FileText className="h-8 w-8 text-muted-foreground" />
+              <p className="text-sm font-medium text-foreground">{file.name}</p>
+              <p className="text-xs text-muted-foreground">
+                Preview not available for this file type
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
