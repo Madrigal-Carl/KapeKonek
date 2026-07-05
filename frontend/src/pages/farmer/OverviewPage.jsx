@@ -123,7 +123,7 @@ function StatCard({ label, value, sub, icon: Icon, to }) {
     >
       <div className="flex items-center justify-between">
         <p className="label-mono text-muted-foreground">{label}</p>
-        <Icon className="h-4 w-4 text-accent" />
+        <Icon className="h-6 w-6 text-accent" />
       </div>
       <p className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
         {value}
