@@ -18,6 +18,8 @@ import {
   FormatDate,
   Button,
 } from "@/components/ui";
+import useAuth from "@/hooks/useAuth";
+import { ROLES } from "@/constants/roles";
 
 const CATEGORY_OPTIONS = [
   "Coffee Seedlings",
@@ -35,6 +37,16 @@ const FARM_OPTIONS = [
   "FM-004 \xB7 Barangay Balogo, Mogpog, Marinduque",
   "FM-005 \xB7 Sitio Bayuti, Torrijos, Marinduque",
 ];
+
+const FARMER_OPTIONS = [
+  "FR-001 \xB7 Lina Okoro",
+  "FR-002 \xB7 Samuel Mwangi",
+  "FR-003 \xB7 Aisha Bello",
+  "FR-004 \xB7 Chidi Okafor",
+  "FR-005 \xB7 Joseph Kamau",
+  "FR-006 \xB7 Mariam Diallo",
+];
+
 const SEED = [
   {
     id: "HV-001",
@@ -43,6 +55,7 @@ const SEED = [
     variety: "Arabica",
     yieldKg: 820,
     farm: "FM-001 \xB7 Sitio Malusak, Boac, Marinduque",
+    farmer: "FR-001 \xB7 Lina Okoro",
     harvestedAt: "2026-05-12",
   },
   {
@@ -52,6 +65,7 @@ const SEED = [
     variety: "Robusta",
     yieldKg: 540,
     farm: "FM-002 \xB7 Barangay Tugos, Mogpog, Marinduque",
+    farmer: "FR-002 \xB7 Samuel Mwangi",
     harvestedAt: "2026-06-02",
   },
   {
@@ -61,14 +75,21 @@ const SEED = [
     variety: "Liberica",
     yieldKg: 310,
     farm: "FM-003 \xB7 Sitio Hinapulan, Gasan, Marinduque",
+    farmer: "FR-004 \xB7 Chidi Okafor",
     harvestedAt: "2026-04-18",
   },
 ];
+
 export function HarvestPage() {
+  const { role } = useAuth();
+  const isFarmer = role === ROLES.FARMER;
+
   const [rows, setRows] = useState(SEED);
   const [modal, setModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+
   const nextId = () => `HV-${String(rows.length + 1).padStart(3, "0")}`;
+
   const openAdd = () =>
     setModal({
       mode: "add",
@@ -79,9 +100,11 @@ export function HarvestPage() {
         variety: VARIETY_OPTIONS[0],
         yieldKg: 0,
         farm: "",
-        harvestedAt: /* @__PURE__ */ new Date().toISOString().slice(0, 10),
+        farmer: "",
+        harvestedAt: new Date().toISOString().slice(0, 10),
       },
     });
+
   const handleSave = (data) => {
     setRows((r) => {
       const cleaned = {
@@ -94,6 +117,7 @@ export function HarvestPage() {
     });
     setModal(null);
   };
+
   return (
     <div className="py-8">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
@@ -121,6 +145,7 @@ export function HarvestPage() {
         <HarvestModal
           mode={modal.mode}
           initial={modal.data}
+          isFarmer={isFarmer}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />
@@ -140,6 +165,7 @@ export function HarvestPage() {
     </div>
   );
 }
+
 function DataTable({ rows, onEdit, onDelete }) {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -147,6 +173,7 @@ function DataTable({ rows, onEdit, onDelete }) {
   const [sortDir, setSortDir] = useState("asc");
   const [page, setPage] = useState(1);
   const pageSize = 5;
+
   const filtered = useMemo(() => {
     let r = rows;
     if (query) {
@@ -170,9 +197,12 @@ function DataTable({ rows, onEdit, onDelete }) {
     }
     return r;
   }, [rows, query, categoryFilter, sortKey, sortDir]);
+
   useEffect(() => setPage(1), [query, categoryFilter]);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
+
   const toggleSort = (k) => {
     if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else {
@@ -180,6 +210,7 @@ function DataTable({ rows, onEdit, onDelete }) {
       setSortDir("asc");
     }
   };
+
   const SortIcon = ({ k }) =>
     sortKey === k ? (
       sortDir === "asc" ? (
@@ -188,6 +219,7 @@ function DataTable({ rows, onEdit, onDelete }) {
         <ChevronDown className="h-3 w-3 text-accent" />
       )
     ) : null;
+
   return (
     <div className="border border-border bg-card">
       <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:flex-wrap sm:items-center">
@@ -334,19 +366,23 @@ function DataTable({ rows, onEdit, onDelete }) {
     </div>
   );
 }
-function HarvestModal({ mode, initial, onClose, onSave }) {
+
+function HarvestModal({ mode, initial, isFarmer, onClose, onSave }) {
   const [form, setForm] = useState(initial);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
   const submit = (e) => {
     e?.preventDefault();
     if (!form.name || !form.farm) return;
     onSave(form);
   };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-foreground-40 p-4"
@@ -416,12 +452,26 @@ function HarvestModal({ mode, initial, onClose, onSave }) {
               />
             </Field>
             <Field label="Farm" full>
-              <FarmSelect
+              <SearchSelect
                 value={form.farm}
                 onChange={(v) => set("farm", v)}
                 options={FARM_OPTIONS}
+                placeholder="Select a farm…"
+                searchPlaceholder="Search farms…"
               />
             </Field>
+
+            {!isFarmer && (
+              <Field label="Farmer" full>
+                <SearchSelect
+                  value={form.farmer}
+                  onChange={(v) => set("farmer", v)}
+                  options={FARMER_OPTIONS}
+                  placeholder="Select a farmer…"
+                  searchPlaceholder="Search farmers…"
+                />
+              </Field>
+            )}
           </div>
         </form>
 
@@ -437,10 +487,18 @@ function HarvestModal({ mode, initial, onClose, onSave }) {
     </div>
   );
 }
-function FarmSelect({ value, onChange, options }) {
+
+function SearchSelect({
+  value,
+  onChange,
+  options,
+  placeholder = "Select…",
+  searchPlaceholder = "Search…",
+}) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const ref = useRef(null);
+
   useEffect(() => {
     const h = (e) => {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -448,10 +506,12 @@ function FarmSelect({ value, onChange, options }) {
     window.addEventListener("mousedown", h);
     return () => window.removeEventListener("mousedown", h);
   }, []);
+
   const filtered = useMemo(
     () => options.filter((o) => o.toLowerCase().includes(q.toLowerCase())),
     [q, options],
   );
+
   return (
     <div ref={ref} className="relative w-full">
       <button
@@ -464,7 +524,7 @@ function FarmSelect({ value, onChange, options }) {
             .filter(Boolean)
             .join(" ")}
         >
-          {value || "Select a farm\u2026"}
+          {value || placeholder}
         </span>
         <ChevronDown
           className={[
@@ -483,14 +543,14 @@ function FarmSelect({ value, onChange, options }) {
               autoFocus
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search farms…"
+              placeholder={searchPlaceholder}
               className="w-full bg-card py-2.5 pl-9 pr-3 text-sm outline-none"
             />
           </div>
           <ul className="max-h-56 overflow-auto">
             {filtered.length === 0 ? (
               <li className="px-3 py-3 text-sm text-muted-foreground">
-                No farms found.
+                No results found.
               </li>
             ) : (
               filtered.map((o) => (
@@ -521,6 +581,7 @@ function FarmSelect({ value, onChange, options }) {
     </div>
   );
 }
+
 function DeleteConfirm({ id, name, onCancel, onConfirm }) {
   return (
     <div
