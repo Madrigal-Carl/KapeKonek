@@ -101,7 +101,7 @@ function fmtPrice(price) {
 
 export function InventoryPage() {
   const { role } = useAuth();
-  const isFarmer = role === ROLES.FARMER;
+  const isManager = role === ROLES.MANAGER;
   const isDTI = role === ROLES.DTI;
 
   const [rows, setRows] = useState(SEED);
@@ -176,7 +176,7 @@ export function InventoryPage() {
         <ProductModal
           mode={modal.mode}
           initial={modal.data}
-          isFarmer={isFarmer}
+          isManager={isManager}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />
@@ -406,7 +406,7 @@ function DataTable({ rows, isDTI = false, onEdit, onEditPrice, onDelete }) {
   );
 }
 
-function ProductModal({ mode, initial, isFarmer, onClose, onSave }) {
+function ProductModal({ mode, initial, isManager, onClose, onSave }) {
   const [form, setForm] = useState(initial);
   const [uploads, setUploads] = useState([]);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -566,7 +566,7 @@ function ProductModal({ mode, initial, isFarmer, onClose, onSave }) {
               />
             </Field>
 
-            {!isFarmer && (
+            {isManager && (
               <Field label="Farmer" full>
                 <SearchSelect
                   value={form.farmer}

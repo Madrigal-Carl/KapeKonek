@@ -7,6 +7,10 @@ import {
   Eye,
   Search,
   X,
+  CircleDashed,
+  Bookmark,
+  CircleCheck,
+  CircleX,
 } from "lucide-react";
 import { IconButton, Button } from "@/components/ui";
 import {
@@ -87,6 +91,37 @@ const SEED = [
     items: [{ name: "Coffee Seedlings (Excelsa)", qty: 6, price: 90 }],
   },
 ];
+
+const STATUS_META = {
+  pending: {
+    label: "Pending",
+    icon: CircleDashed,
+    border: "border-amber-500",
+    dot: "bg-amber-500",
+    text: "text-amber-700",
+  },
+  reserved: {
+    label: "Reserved",
+    icon: Bookmark,
+    border: "border-sky-500",
+    dot: "bg-sky-500",
+    text: "text-sky-700",
+  },
+  completed: {
+    label: "Completed",
+    icon: CircleCheck,
+    border: "border-emerald-500",
+    dot: "bg-emerald-500",
+    text: "text-emerald-700",
+  },
+  cancelled: {
+    label: "Cancelled",
+    icon: CircleX,
+    border: "border-destructive",
+    dot: "bg-destructive",
+    text: "text-destructive",
+  },
+};
 
 function formatPeso(n) {
   return `₱${Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

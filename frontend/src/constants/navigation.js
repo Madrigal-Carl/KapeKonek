@@ -60,7 +60,6 @@ export const managerNavSections = [
         label: "Marketplace",
         items: [
             { to: "/manager/inventory", label: "Inventory", icon: Package },
-            { to: "/manager/orders", label: "Order", icon: ClipboardList, badge: 3 },
         ]
     },
     {

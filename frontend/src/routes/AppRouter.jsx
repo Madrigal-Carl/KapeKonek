@@ -132,7 +132,6 @@ export default function AppRouter() {
             <Route path="harvests" element={<HarvestPage />} />
             <Route path="chat" element={<ChatPage />} />
             <Route path="inventory" element={<InventoryPage />} />
-            <Route path="orders" element={<OrderPage />} />
             <Route path="farm-maps" element={<FarmMapPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="settings" element={<FarmerSettingsPage />} />
