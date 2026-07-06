@@ -22,6 +22,11 @@ import {
   TextInput,
   FormatDate,
 } from "@/components/ui";
+import {
+  DataTable as SharedDataTable,
+  PageSection,
+  StatusPill,
+} from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
 
@@ -152,39 +157,6 @@ const SEED = [
     ],
   },
 ];
-
-const STATUS_META = {
-  pending: {
-    label: "Pending",
-    cls: "border-[#b8860b] bg-[#fff7e6] text-foreground",
-    dot: "bg-[#b8860b]",
-  },
-  approved: {
-    label: "Approved",
-    cls: "border-accent bg-accent/10 text-foreground",
-    dot: "bg-accent",
-  },
-  denied: {
-    label: "Denied",
-    cls: "border-destructive bg-destructive/10 text-foreground",
-    dot: "bg-destructive",
-  },
-};
-
-function StatusPill({ status }) {
-  const m = STATUS_META[status] ?? STATUS_META.pending;
-  return (
-    <span
-      className={[
-        "inline-flex items-center gap-1.5 border-l-2 px-2.5 py-1 text-xs font-semibold",
-        m.cls,
-      ].join(" ")}
-    >
-      <span className={["h-1.5 w-1.5", m.dot].join(" ")} />
-      {m.label}
-    </span>
-  );
-}
 
 export function FarmersPage() {
   const { role } = useAuth();

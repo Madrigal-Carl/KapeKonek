@@ -18,6 +18,7 @@ import {
   FormatDate,
   Button,
 } from "@/components/ui";
+import { DataTable as SharedDataTable } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
 
@@ -82,7 +83,7 @@ const SEED = [
 
 export function HarvestPage() {
   const { role } = useAuth();
-  const isManager = role === ROLES.MANAGER || ROLES.KALUPPA;
+  const isManager = role === ROLES.MANAGER || role === ROLES.KALUPPA;
   const isViewOnly = role === ROLES.DTI;
 
   const [rows, setRows] = useState(SEED);
@@ -171,209 +172,99 @@ export function HarvestPage() {
 }
 
 function DataTable({ rows, isViewOnly = false, onEdit, onDelete }) {
-  const [query, setQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [sortKey, setSortKey] = useState(null);
-  const [sortDir, setSortDir] = useState("asc");
-  const [page, setPage] = useState(1);
-  const pageSize = 5;
-
-  const filtered = useMemo(() => {
-    let r = rows;
-    if (query) {
-      const q = query.toLowerCase();
-      r = r.filter(
-        (x) =>
-          x.name.toLowerCase().includes(q) || x.id.toLowerCase().includes(q),
-      );
-    }
-    if (categoryFilter !== "all") {
-      r = r.filter((x) => x.category === categoryFilter);
-    }
-    if (sortKey) {
-      const acc = (x) => x[sortKey];
-      r = [...r].sort((a, b) => {
-        const av = acc(a);
-        const bv = acc(b);
-        if (av === bv) return 0;
-        return (av > bv ? 1 : -1) * (sortDir === "asc" ? 1 : -1);
-      });
-    }
-    return r;
-  }, [rows, query, categoryFilter, sortKey, sortDir]);
-
-  useEffect(() => setPage(1), [query, categoryFilter]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
-
-  const toggleSort = (k) => {
-    if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(k);
-      setSortDir("asc");
-    }
-  };
-
-  const SortIcon = ({ k }) =>
-    sortKey === k ? (
-      sortDir === "asc" ? (
-        <ChevronUp className="h-3 w-3 text-accent" />
-      ) : (
-        <ChevronDown className="h-3 w-3 text-accent" />
-      )
-    ) : null;
-
   return (
-    <div className="border border-border bg-card">
-      <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:flex-wrap sm:items-center">
-        <div className="relative w-full flex-1 sm:min-w-[220px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name or ID…"
-            className="w-full border border-border bg-background py-2.5 pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus:border-foreground"
-          />
-        </div>
-        <div className="relative w-full sm:w-auto">
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="w-full appearance-none border border-border bg-background py-2.5 pl-3 pr-9 text-sm text-foreground outline-none focus:border-foreground sm:w-auto"
-          >
-            <option value="all">All Categories</option>
-            {CATEGORY_OPTIONS.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        </div>
-      </div>
-
-      <div className="relative w-full overflow-auto">
-        <table className="w-full min-w-[820px] caption-bottom border-collapse text-sm">
-          <thead className="bg-muted/60">
-            <tr>
-              {[
-                { k: "name", l: "Coffee", sortable: true },
-                { k: "category", l: "Category", sortable: true },
-                { k: "variety", l: "Variety", sortable: true },
-                { k: "yieldKg", l: "Yielded (kg)", sortable: true },
-                { k: "harvestedAt", l: "Harvested At", sortable: true },
-                { k: "actions", l: "", sortable: false },
-              ].map((c) => (
-                <th
-                  key={c.k}
-                  onClick={() => c.sortable && toggleSort(c.k)}
-                  className={[
-                    "label-mono px-4 py-3 text-left text-muted-foreground",
-                    c.sortable &&
-                      "cursor-pointer select-none hover:text-foreground",
-                    c.k === "actions" && "text-right",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                >
-                  <span className="inline-flex items-center gap-1">
-                    {c.l}
-                    {c.sortable && <SortIcon k={c.k} />}
-                  </span>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {paged.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-16 text-center">
-                  <div className="mx-auto mb-3 grid h-12 w-12 place-items-center border border-border bg-muted">
-                    <Search className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div className="font-semibold text-foreground">
-                    No harvests found
-                  </div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    Try adjusting your search or add a new harvest.
-                  </div>
-                </td>
-              </tr>
+    <SharedDataTable
+      rows={rows}
+      columns={[
+        {
+          key: "name",
+          label: "Coffee",
+          render: (row) => (
+            <div>
+              <div className="font-semibold text-foreground">{row.name}</div>
+              <div className="label-mono text-muted-foreground">{row.id}</div>
+            </div>
+          ),
+        },
+        {
+          key: "category",
+          label: "Category",
+          render: (row) => (
+            <span className="text-foreground">{row.category}</span>
+          ),
+        },
+        {
+          key: "variety",
+          label: "Variety",
+          render: (row) => (
+            <span className="text-foreground">{row.variety || "—"}</span>
+          ),
+        },
+        {
+          key: "yieldKg",
+          label: "Yielded (kg)",
+          render: (row) => (
+            <span className="text-foreground">
+              {row.yieldKg.toLocaleString()} kg
+            </span>
+          ),
+        },
+        {
+          key: "harvestedAt",
+          label: "Harvested At",
+          render: (row) => (
+            <span className="text-foreground">
+              {FormatDate(row.harvestedAt)}
+            </span>
+          ),
+        },
+        {
+          key: "actions",
+          label: "",
+          align: "right",
+          render: (row) =>
+            isViewOnly ? (
+              <div className="flex items-center justify-end text-muted-foreground">
+                —
+              </div>
             ) : (
-              paged.map((r) => (
-                <tr
-                  key={r.id}
-                  className="border-t border-border transition-colors hover:bg-muted/40"
-                >
-                  <td className="px-4 py-3.5">
-                    <div className="font-semibold text-foreground">
-                      {r.name}
-                    </div>
-                    <div className="label-mono text-muted-foreground">
-                      {r.id}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 text-foreground">{r.category}</td>
-                  <td className="px-4 py-3.5 text-foreground">
-                    {r.variety || "—"}
-                  </td>
-                  <td className="px-4 py-3.5 text-foreground">
-                    {r.yieldKg.toLocaleString()} kg
-                  </td>
-                  <td className="px-4 py-3.5 text-foreground">
-                    {FormatDate(r.harvestedAt)}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    {isViewOnly ? (
-                      <div className="flex items-center justify-end text-muted-foreground">
-                        —
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-end gap-1">
-                        <IconButton
-                          icon={Pencil}
-                          label="Edit"
-                          onClick={() => onEdit(r)}
-                        />
-                        <IconButton
-                          icon={Trash2}
-                          label="Delete"
-                          tone="danger"
-                          onClick={() => onDelete(r)}
-                        />
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3 text-sm">
-        <div className="text-muted-foreground">
-          Showing {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1}–
-          {Math.min(page * pageSize, filtered.length)} of {filtered.length}
-        </div>
-        <div className="flex items-center gap-1">
-          <IconButton
-            icon={ChevronLeft}
-            label="Previous"
-            onClick={() => setPage(Math.max(1, page - 1))}
-          />
-          <span className="px-3 font-semibold text-foreground">
-            {page} / {totalPages}
-          </span>
-          <IconButton
-            icon={ChevronRight}
-            label="Next"
-            onClick={() => setPage(Math.min(totalPages, page + 1))}
-          />
-        </div>
-      </div>
-    </div>
+              <div className="flex items-center justify-end gap-1">
+                <IconButton
+                  icon={Pencil}
+                  label="Edit"
+                  onClick={() => onEdit(row)}
+                />
+                <IconButton
+                  icon={Trash2}
+                  label="Delete"
+                  tone="danger"
+                  onClick={() => onDelete(row)}
+                />
+              </div>
+            ),
+        },
+      ]}
+      searchKeys={[
+        (row, query) =>
+          row.name.toLowerCase().includes(query) ||
+          row.id.toLowerCase().includes(query),
+      ]}
+      searchPlaceholder="Search by name or ID…"
+      filters={[
+        {
+          key: "category",
+          initialValue: "all",
+          options: [
+            { value: "all", label: "All Categories" },
+            ...CATEGORY_OPTIONS.map((value) => ({ value, label: value })),
+          ],
+          matcher: (row, value) => row.category === value,
+        },
+      ]}
+      emptyTitle="No harvests found"
+      emptyDescription="Try adjusting your search or add a new harvest."
+      minWidth="820px"
+    />
   );
 }
 

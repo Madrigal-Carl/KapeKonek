@@ -9,7 +9,6 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 
-// ---- Mirrors SEED data from farm/harvest/inventory pages ----
 const FARMS = [
   {
     id: "FM-001",
@@ -130,27 +129,6 @@ function StatCard({ label, value, sub, icon: Icon, to }) {
       </p>
       {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
     </Wrapper>
-  );
-}
-
-function SectionHeader({ eyebrow, title, to, linkLabel }) {
-  return (
-    <div className="mb-4 flex items-end justify-between gap-4">
-      <div>
-        <p className="label-mono text-accent">{eyebrow}</p>
-        <h2 className="mt-1 text-xl font-semibold tracking-tight text-foreground">
-          {title}
-        </h2>
-      </div>
-      {to && (
-        <Link
-          to={to}
-          className="inline-flex items-center gap-1 text-sm font-semibold text-foreground hover:text-accent"
-        >
-          {linkLabel || "View all"} <ArrowUpRight className="h-3.5 w-3.5" />
-        </Link>
-      )}
-    </div>
   );
 }
 
@@ -544,12 +522,9 @@ export function OverviewPage() {
                   {outOfStock} product{outOfStock === 1 ? "" : "s"} out of stock
                 </span>
               </div>
-              <Link
-                to="/inventory"
-                className="label-mono border border-primary-foreground/40 px-2 py-0.5 text-primary-foreground transition-colors hover:bg-primary-foreground hover:text-ledger-clay"
-              >
+              <div className="label-mono border border-primary-foreground/40 px-2 py-0.5 text-primary-foreground transition-colors">
                 Refill
-              </Link>
+              </div>
             </div>
           )}
         </div>

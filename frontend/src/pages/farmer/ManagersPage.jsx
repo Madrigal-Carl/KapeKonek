@@ -17,6 +17,7 @@ import {
   TextInput,
   FormatDate,
 } from "@/components/ui";
+import { DataTable as SharedDataTable } from "@/components/dashboard";
 
 const DEFAULT_PASSWORD = "KapeKonek123";
 
@@ -156,139 +157,63 @@ export function ManagersPage() {
 }
 
 function DataTable({ rows, onEdit, onDelete }) {
-  const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const pageSize = 5;
-
-  const filtered = useMemo(() => {
-    if (!query) return rows;
-    const q = query.toLowerCase();
-    return rows.filter(
-      (x) =>
-        x.fullName.toLowerCase().includes(q) ||
-        x.email.toLowerCase().includes(q) ||
-        x.id.toLowerCase().includes(q),
-    );
-  }, [rows, query]);
-
-  useEffect(() => setPage(1), [query]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
-
   return (
-    <div className="border border-border bg-card">
-      <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
-        <div className="relative min-w-[220px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name, email, or ID…"
-            className="w-full border border-border bg-background py-2.5 pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus:border-foreground"
-          />
-        </div>
-      </div>
-
-      <div className="relative w-full overflow-auto">
-        <table className="w-full min-w-[640px] caption-bottom border-collapse text-sm">
-          <thead className="bg-muted/60">
-            <tr>
-              {[
-                { k: "fullName", l: "Manager" },
-                { k: "joinedAt", l: "Joined At" },
-                { k: "actions", l: "", right: true },
-              ].map((c) => (
-                <th
-                  key={c.k}
-                  className={[
-                    "label-mono px-4 py-3 text-left text-muted-foreground",
-                    c.right && "text-right",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                >
-                  {c.l}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {paged.length === 0 ? (
-              <tr>
-                <td colSpan={3} className="px-4 py-16 text-center">
-                  <div className="mx-auto mb-3 grid h-12 w-12 place-items-center border border-border bg-muted">
-                    <Search className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div className="font-semibold text-foreground">
-                    No managers found
-                  </div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    Try adjusting your search or add a new manager.
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              paged.map((r) => (
-                <tr
-                  key={r.id}
-                  className="border-t border-border transition-colors hover:bg-muted/40"
-                >
-                  <td className="px-4 py-3.5">
-                    <div className="font-semibold text-foreground">
-                      {r.fullName}
-                    </div>
-                    <div className="label-mono text-muted-foreground">
-                      {r.id} · {r.email}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 text-foreground">
-                    {FormatDate(r.joinedAt)}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex items-center justify-end gap-1">
-                      <IconButton
-                        icon={Pencil}
-                        label="Edit"
-                        onClick={() => onEdit(r)}
-                      />
-                      <IconButton
-                        icon={Trash2}
-                        label="Delete"
-                        tone="danger"
-                        onClick={() => onDelete(r)}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3 text-sm">
-        <div className="text-muted-foreground">
-          Showing {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1}–
-          {Math.min(page * pageSize, filtered.length)} of {filtered.length}
-        </div>
-        <div className="flex items-center gap-1">
-          <IconButton
-            icon={ChevronLeft}
-            label="Previous"
-            onClick={() => setPage(Math.max(1, page - 1))}
-          />
-          <span className="px-3 font-semibold text-foreground">
-            {page} / {totalPages}
-          </span>
-          <IconButton
-            icon={ChevronRight}
-            label="Next"
-            onClick={() => setPage(Math.min(totalPages, page + 1))}
-          />
-        </div>
-      </div>
-    </div>
+    <SharedDataTable
+      rows={rows}
+      columns={[
+        {
+          key: "fullName",
+          label: "Manager",
+          render: (row) => (
+            <div>
+              <div className="font-semibold text-foreground">
+                {row.fullName}
+              </div>
+              <div className="label-mono text-muted-foreground">
+                {row.id} · {row.email}
+              </div>
+            </div>
+          ),
+        },
+        {
+          key: "joinedAt",
+          label: "Joined At",
+          render: (row) => (
+            <span className="text-foreground">{FormatDate(row.joinedAt)}</span>
+          ),
+        },
+        {
+          key: "actions",
+          label: "",
+          align: "right",
+          render: (row) => (
+            <div className="flex items-center justify-end gap-1">
+              <IconButton
+                icon={Pencil}
+                label="Edit"
+                onClick={() => onEdit(row)}
+              />
+              <IconButton
+                icon={Trash2}
+                label="Delete"
+                tone="danger"
+                onClick={() => onDelete(row)}
+              />
+            </div>
+          ),
+        },
+      ]}
+      searchKeys={[
+        (row, query) =>
+          row.fullName.toLowerCase().includes(query) ||
+          row.email.toLowerCase().includes(query) ||
+          row.id.toLowerCase().includes(query),
+      ]}
+      searchPlaceholder="Search by name, email, or ID…"
+      emptyTitle="No managers found"
+      emptyDescription="Try adjusting your search or add a new manager."
+      minWidth="640px"
+    />
   );
 }
 

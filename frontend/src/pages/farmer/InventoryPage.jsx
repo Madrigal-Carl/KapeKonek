@@ -13,6 +13,11 @@ import {
   X,
 } from "lucide-react";
 import { IconButton, Field, TextInput, Button } from "@/components/ui";
+import {
+  DataTable as SharedDataTable,
+  PageSection,
+  StatusPill,
+} from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
 
@@ -89,32 +94,6 @@ const SEED = [
   },
 ];
 
-function StatusPill({ status }) {
-  const isActive = status === "active";
-  return (
-    <span
-      className={[
-        "inline-flex items-center gap-1.5 border-l-2 px-2.5 py-1 text-xs font-semibold",
-        isActive
-          ? "border-accent bg-accent/10 text-foreground"
-          : "border-border bg-muted text-foreground",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <span
-        className={[
-          "h-1.5 w-1.5",
-          isActive ? "bg-accent" : "bg-muted-foreground",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      />
-      {isActive ? "Active" : "Inactive"}
-    </span>
-  );
-}
-
 function fmtPrice(price) {
   if (price === null || price === undefined) return "—";
   return `\u20B1${Number(price).toLocaleString()}`;
@@ -172,22 +151,18 @@ export function InventoryPage() {
 
   return (
     <div className="py-8">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
-        <div className="min-w-0">
-          <p className="label-mono mb-2 text-accent">Marketplace</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            Inventory
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Products, stock levels, weights, and pricing.
-          </p>
-        </div>
-        {!isDTI && (
-          <Button onClick={openAdd} className="gap-2">
-            <Plus className="h-4 w-4" /> Add Product
-          </Button>
-        )}
-      </div>
+      <PageSection
+        eyebrow="Marketplace"
+        title="Inventory"
+        description="Products, stock levels, weights, and pricing."
+        action={
+          !isDTI ? (
+            <Button onClick={openAdd} className="gap-2">
+              <Plus className="h-4 w-4" /> Add Product
+            </Button>
+          ) : null
+        }
+      />
 
       <DataTable
         rows={rows}

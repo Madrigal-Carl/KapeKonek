@@ -7,14 +7,14 @@ import {
   Eye,
   Search,
   X,
-  Wallet,
-  Banknote,
-  CircleDashed,
-  Bookmark,
-  CircleCheck,
-  CircleX,
 } from "lucide-react";
 import { IconButton, Button } from "@/components/ui";
+import {
+  DataTable as SharedDataTable,
+  MethodBadge,
+  PageSection,
+  StatusPill,
+} from "@/components/dashboard";
 import receipt1 from "@/assets/images/receipt-sample-1.jpg";
 import receipt2 from "@/assets/images/receipt-sample-2.jpg";
 
@@ -88,64 +88,6 @@ const SEED = [
   },
 ];
 
-const STATUS_META = {
-  pending: {
-    label: "Pending",
-    icon: CircleDashed,
-    border: "border-amber-500",
-    dot: "bg-amber-500",
-    text: "text-amber-700",
-  },
-  reserved: {
-    label: "Reserved",
-    icon: Bookmark,
-    border: "border-sky-500",
-    dot: "bg-sky-500",
-    text: "text-sky-700",
-  },
-  completed: {
-    label: "Completed",
-    icon: CircleCheck,
-    border: "border-emerald-500",
-    dot: "bg-emerald-500",
-    text: "text-emerald-700",
-  },
-  cancelled: {
-    label: "Cancelled",
-    icon: CircleX,
-    border: "border-destructive",
-    dot: "bg-destructive",
-    text: "text-destructive",
-  },
-};
-
-function StatusPill({ status }) {
-  const meta = STATUS_META[status] ?? STATUS_META.pending;
-  return (
-    <span
-      className={[
-        "inline-flex items-center gap-1.5 border-l-2 bg-muted/60 px-2.5 py-1 text-xs font-semibold",
-        meta.border,
-        meta.text,
-      ].join(" ")}
-    >
-      <span className={["h-1.5 w-1.5", meta.dot].join(" ")} />
-      {meta.label}
-    </span>
-  );
-}
-
-function MethodBadge({ method }) {
-  const isEwallet = method === "e-wallet";
-  const Icon = isEwallet ? Wallet : Banknote;
-  return (
-    <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
-      <Icon className="h-4 w-4 text-muted-foreground" />
-      {isEwallet ? "E-wallet" : "Cash"}
-    </span>
-  );
-}
-
 function formatPeso(n) {
   return `₱${Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -162,18 +104,11 @@ export function OrderPage() {
 
   return (
     <div className="py-8">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
-        <div className="min-w-0">
-          <p className="label-mono mb-2 text-accent">Marketplace</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            Orders
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Track incoming orders, mark them as reserved or completed, and
-            handle cancellations.
-          </p>
-        </div>
-      </div>
+      <PageSection
+        eyebrow="Marketplace"
+        title="Orders"
+        description="Track incoming orders, mark them as reserved or completed, and handle cancellations."
+      />
 
       <DataTable
         rows={rows}

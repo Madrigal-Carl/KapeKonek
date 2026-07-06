@@ -21,6 +21,11 @@ import {
   FormatDate,
   Button,
 } from "@/components/ui";
+import {
+  DataTable as SharedDataTable,
+  PageSection,
+  StatusPill,
+} from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
 
@@ -138,36 +143,6 @@ const SEED = [
     ],
   },
 ];
-
-function StatusPill({ tone = "neutral", children }) {
-  const map = {
-    success: "border-accent bg-accent/10 text-foreground",
-    warning: "border-[#b8860b] bg-[#fff7e6] text-foreground",
-    danger: "border-destructive bg-destructive/10 text-foreground",
-    neutral: "border-border bg-muted text-foreground",
-    info: "border-[#3b82f6] bg-[#e8f1ff] text-foreground",
-  };
-  const dot = {
-    success: "bg-accent",
-    warning: "bg-[#b8860b]",
-    danger: "bg-destructive",
-    neutral: "bg-muted-foreground",
-    info: "bg-[#3b82f6]",
-  };
-  return (
-    <span
-      className={[
-        "inline-flex items-center gap-1.5 border-l-2 px-2.5 py-1 text-xs font-semibold",
-        map[tone],
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <span className={["h-1.5 w-1.5", dot[tone]].filter(Boolean).join(" ")} />
-      {children}
-    </span>
-  );
-}
 
 function fmtCoord(n, pos, neg) {
   const dir = n >= 0 ? pos : neg;
