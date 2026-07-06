@@ -78,6 +78,14 @@ const FARMER_OPTIONS = [
   "FR-005 \xB7 Joseph Kamau",
   "FR-006 \xB7 Mariam Diallo",
 ];
+const ASSOCIATION_OPTIONS = [
+  "Boac Farmers Cooperative Association",
+  "Mogpog Growers Association",
+  "Torrijos Coffee Growers Association",
+  "Buenavista Agrarian Association",
+  "Santa Cruz Farmers Association",
+  "Marinduque Coffee Council",
+];
 const CROP_STATUS_LABEL = {
   planted: "Planted",
   growing: "Growing",
@@ -102,6 +110,7 @@ const SEED = [
     address: "Sitio Malusak, Boac, Marinduque",
     size: 4.2,
     farmers: ["FR-001 \xB7 Lina Okoro", "FR-002 \xB7 Samuel Mwangi"],
+    associations: ["Boac Farmers Cooperative Association"],
     crops: [
       { crop: "Arabica", status: "growing" },
       { crop: "Banana", status: "planted" },
@@ -119,6 +128,7 @@ const SEED = [
     address: "Barangay Tugos, Mogpog, Marinduque",
     size: 2.6,
     farmers: ["FR-003 \xB7 Aisha Bello"],
+    associations: ["Mogpog Growers Association"],
     crops: [{ crop: "Robusta", status: "harvested" }],
     yieldKg: 940,
     location: { lat: 13.4731, lng: 121.8612 },
@@ -130,6 +140,7 @@ const SEED = [
     address: "Sitio Hinapulan, Gasan, Marinduque",
     size: 6.8,
     farmers: ["FR-004 \xB7 Chidi Okafor", "FR-005 \xB7 Joseph Kamau"],
+    associations: [],
     crops: [
       { crop: "Liberica", status: "growing" },
       { crop: "Excelsa", status: "planted" },
@@ -171,6 +182,7 @@ export function FarmsPage() {
         address: "",
         size: 0,
         farmers: [],
+        associations: [],
         crops: [],
         yieldKg: 0,
         location: null,
@@ -189,6 +201,7 @@ export function FarmsPage() {
         address: reg.address,
         size: reg.size,
         farmers: [],
+        associations: [],
         crops: [],
         yieldKg: 0,
         location: reg.location,
@@ -612,6 +625,17 @@ function FarmModal({ mode, initial, isManager, isKaluppa, onClose, onSave }) {
                   onChange={(v) => set("farmers", v)}
                   options={FARMER_OPTIONS}
                   placeholder="Select farmer(s)…"
+                />
+              </Field>
+            )}
+
+            {isManager && (
+              <Field label="Association" full>
+                <MultiSelect
+                  values={form.associations || []}
+                  onChange={(v) => set("associations", v)}
+                  options={ASSOCIATION_OPTIONS}
+                  placeholder="Select association(s)…"
                 />
               </Field>
             )}
