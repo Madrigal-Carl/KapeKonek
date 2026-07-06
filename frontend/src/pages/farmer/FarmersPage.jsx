@@ -39,6 +39,7 @@ const SEED = [
     email: "lina.okoro@kapekonek.ph",
     farmCount: 2,
     status: "approved",
+    associationStatus: "approved",
     joinedAt: "2026-01-04",
     files: [
       {
@@ -56,6 +57,7 @@ const SEED = [
     email: "samuel.mwangi@kapekonek.ph",
     farmCount: 1,
     status: "approved",
+    associationStatus: "pending",
     joinedAt: "2026-01-18",
     files: [
       {
@@ -72,6 +74,7 @@ const SEED = [
     email: "aisha.bello@kapekonek.ph",
     farmCount: 3,
     status: "pending",
+    associationStatus: "pending",
     joinedAt: "2026-05-22",
     files: [
       {
@@ -95,6 +98,7 @@ const SEED = [
     email: "chidi.okafor@kapekonek.ph",
     farmCount: 1,
     status: "pending",
+    associationStatus: "pending",
     joinedAt: "2026-06-01",
     files: [
       {
@@ -112,6 +116,7 @@ const SEED = [
     email: "joseph.kamau@kapekonek.ph",
     farmCount: 2,
     status: "approved",
+    associationStatus: "approved",
     joinedAt: "2025-11-14",
     files: [
       {
@@ -128,6 +133,7 @@ const SEED = [
     email: "mariam.diallo@kapekonek.ph",
     farmCount: 0,
     status: "denied",
+    associationStatus: "denied",
     joinedAt: "2026-03-09",
     files: [
       {
@@ -144,6 +150,7 @@ const SEED = [
     email: "noah.santos@kapekonek.ph",
     farmCount: 1,
     status: "pending",
+    associationStatus: "pending",
     joinedAt: "2026-06-20",
     files: [
       {
@@ -162,14 +169,18 @@ export function FarmersPage() {
   const { role } = useAuth();
   const isManager = role === ROLES.MANAGER;
   const isDti = role === ROLES.DTI;
-  // Manager: full CRUD only, no approve/deny. DTI: approve/deny only, no CRUD.
+
+  // Manager: full CRUD + approve/deny the association application (simple confirm, no attachments).
+  // DTI: approve/deny the account application (full review w/ submitted documents), no CRUD.
   const canManage = isManager;
-  const canReview = isDti;
+  const canReviewAccount = isDti;
+  const canReviewAssociation = isManager;
 
   const [rows, setRows] = useState(SEED);
   const [modal, setModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [confirmStatus, setConfirmStatus] = useState(null);
+  const [confirmAccount, setConfirmAccount] = useState(null);
+  const [confirmAssociation, setConfirmAssociation] = useState(null);
 
   const nextId = () => `FR-${String(rows.length + 1).padStart(3, "0")}`;
 
@@ -184,6 +195,7 @@ export function FarmersPage() {
           ...data,
           farmCount: 0,
           status: "pending",
+          associationStatus: "pending",
           joinedAt: new Date().toISOString().slice(0, 10),
         },
       ];
@@ -193,6 +205,11 @@ export function FarmersPage() {
 
   const setStatus = (id, status) =>
     setRows((r) => r.map((x) => (x.id === id ? { ...x, status } : x)));
+
+  const setAssociationStatus = (id, associationStatus) =>
+    setRows((r) =>
+      r.map((x) => (x.id === id ? { ...x, associationStatus } : x)),
+    );
 
   return (
     <div className="py-8">
@@ -204,8 +221,10 @@ export function FarmersPage() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {isDti
-              ? "Review and act on farmer applications."
-              : "Registered farmer profiles, approval status, and farm assignments."}
+              ? "Review and act on farmer account applications."
+              : isManager
+                ? "Registered farmer profiles, association status, and farm assignments."
+                : "Registered farmer profiles, approval status, and farm assignments."}
           </p>
         </div>
         {canManage && (
@@ -232,7 +251,8 @@ export function FarmersPage() {
       <DataTable
         rows={rows}
         canManage={canManage}
-        canReview={canReview}
+        canReviewAccount={canReviewAccount}
+        canReviewAssociation={canReviewAssociation}
         onEdit={(r) =>
           setModal({
             mode: "edit",
@@ -240,8 +260,16 @@ export function FarmersPage() {
           })
         }
         onDelete={(r) => setConfirmDelete(r)}
-        onApprove={(r) => setConfirmStatus({ row: r, action: "approve" })}
-        onDeny={(r) => setConfirmStatus({ row: r, action: "deny" })}
+        onApproveAccount={(r) =>
+          setConfirmAccount({ row: r, action: "approve" })
+        }
+        onDenyAccount={(r) => setConfirmAccount({ row: r, action: "deny" })}
+        onApproveAssociation={(r) =>
+          setConfirmAssociation({ row: r, action: "approve" })
+        }
+        onDenyAssociation={(r) =>
+          setConfirmAssociation({ row: r, action: "deny" })
+        }
       />
 
       {modal && canManage && (
@@ -264,17 +292,32 @@ export function FarmersPage() {
         />
       )}
 
-      {confirmStatus && (
-        <ReviewModal
-          row={confirmStatus.row}
-          action={confirmStatus.action}
-          onCancel={() => setConfirmStatus(null)}
+      {confirmAccount && canReviewAccount && (
+        <AccountReviewModal
+          row={confirmAccount.row}
+          action={confirmAccount.action}
+          onCancel={() => setConfirmAccount(null)}
           onConfirm={() => {
             setStatus(
-              confirmStatus.row.id,
-              confirmStatus.action === "approve" ? "approved" : "denied",
+              confirmAccount.row.id,
+              confirmAccount.action === "approve" ? "approved" : "denied",
             );
-            setConfirmStatus(null);
+            setConfirmAccount(null);
+          }}
+        />
+      )}
+
+      {confirmAssociation && canReviewAssociation && (
+        <AssociationReviewModal
+          row={confirmAssociation.row}
+          action={confirmAssociation.action}
+          onCancel={() => setConfirmAssociation(null)}
+          onConfirm={() => {
+            setAssociationStatus(
+              confirmAssociation.row.id,
+              confirmAssociation.action === "approve" ? "approved" : "denied",
+            );
+            setConfirmAssociation(null);
           }}
         />
       )}
@@ -285,11 +328,14 @@ export function FarmersPage() {
 function DataTable({
   rows,
   canManage,
-  canReview,
+  canReviewAccount,
+  canReviewAssociation,
   onEdit,
   onDelete,
-  onApprove,
-  onDeny,
+  onApproveAccount,
+  onDenyAccount,
+  onApproveAssociation,
+  onDenyAssociation,
 }) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -344,13 +390,14 @@ function DataTable({
       </div>
 
       <div className="relative w-full overflow-auto">
-        <table className="w-full min-w-[720px] caption-bottom border-collapse text-sm">
+        <table className="w-full min-w-[860px] caption-bottom border-collapse text-sm">
           <thead className="bg-muted/60">
             <tr>
               {[
                 { k: "fullName", l: "Farmer" },
                 { k: "farmCount", l: "Farms" },
-                { k: "status", l: "Status" },
+                { k: "status", l: "Account" },
+                { k: "associationStatus", l: "Association" },
                 { k: "joinedAt", l: "Joined At" },
                 { k: "actions", l: "", right: true },
               ].map((c) => (
@@ -371,7 +418,7 @@ function DataTable({
           <tbody>
             {paged.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-16 text-center">
+                <td colSpan={6} className="px-4 py-16 text-center">
                   <div className="mx-auto mb-3 grid h-12 w-12 place-items-center border border-border bg-muted">
                     <Search className="h-5 w-5 text-muted-foreground" />
                   </div>
@@ -385,63 +432,97 @@ function DataTable({
                 </td>
               </tr>
             ) : (
-              paged.map((r) => (
-                <tr
-                  key={r.id}
-                  className="border-t border-border transition-colors hover:bg-muted/40"
-                >
-                  <td className="px-4 py-3.5">
-                    <div className="font-semibold text-foreground">
-                      {r.fullName}
-                    </div>
-                    <div className="label-mono text-muted-foreground">
-                      {r.id} · {r.email}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 text-foreground">{r.farmCount}</td>
-                  <td className="px-4 py-3.5">
-                    <StatusPill status={r.status} />
-                  </td>
-                  <td className="px-4 py-3.5 text-foreground">
-                    {FormatDate(r.joinedAt)}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex items-center justify-end gap-1">
-                      {canReview && r.status === "pending" ? (
-                        <>
-                          <IconButton
-                            icon={Check}
-                            label="Approve"
-                            onClick={() => onApprove(r)}
-                          />
-                          <IconButton
-                            icon={X}
-                            label="Deny"
-                            tone="danger"
-                            onClick={() => onDeny(r)}
-                          />
-                        </>
-                      ) : canManage ? (
-                        <>
-                          <IconButton
-                            icon={Pencil}
-                            label="Edit"
-                            onClick={() => onEdit(r)}
-                          />
-                          <IconButton
-                            icon={Trash2}
-                            label="Delete"
-                            tone="danger"
-                            onClick={() => onDelete(r)}
-                          />
-                        </>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
+              paged.map((r) => {
+                const showAccountActions =
+                  canReviewAccount && r.status === "pending";
+                const showAssociationActions =
+                  canReviewAssociation && r.associationStatus === "pending";
+                const hasAnyAction = showAccountActions || canManage;
+
+                return (
+                  <tr
+                    key={r.id}
+                    className="border-t border-border transition-colors hover:bg-muted/40"
+                  >
+                    <td className="px-4 py-3.5">
+                      <div className="font-semibold text-foreground">
+                        {r.fullName}
+                      </div>
+                      <div className="label-mono text-muted-foreground">
+                        {r.id} · {r.email}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5 text-foreground">
+                      {r.farmCount}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <StatusPill status={r.status} />
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <StatusPill status={r.associationStatus} />
+                    </td>
+                    <td className="px-4 py-3.5 text-foreground">
+                      {FormatDate(r.joinedAt)}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center justify-end gap-1">
+                        {showAccountActions && (
+                          <>
+                            <IconButton
+                              icon={Check}
+                              label="Approve account"
+                              onClick={() => onApproveAccount(r)}
+                            />
+                            <IconButton
+                              icon={X}
+                              label="Deny account"
+                              tone="danger"
+                              onClick={() => onDenyAccount(r)}
+                            />
+                          </>
+                        )}
+
+                        {canManage && (
+                          <>
+                            {showAssociationActions && (
+                              <>
+                                <IconButton
+                                  icon={Check}
+                                  label="Approve association"
+                                  onClick={() => onApproveAssociation(r)}
+                                />
+                                <IconButton
+                                  icon={X}
+                                  label="Deny association"
+                                  tone="danger"
+                                  onClick={() => onDenyAssociation(r)}
+                                />
+                              </>
+                            )}
+                            <IconButton
+                              icon={Pencil}
+                              label="Edit"
+                              onClick={() => onEdit(r)}
+                            />
+                            <IconButton
+                              icon={Trash2}
+                              label="Delete"
+                              tone="danger"
+                              onClick={() => onDelete(r)}
+                            />
+                          </>
+                        )}
+
+                        {!hasAnyAction && (
+                          <span className="text-xs text-muted-foreground">
+                            —
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -696,7 +777,12 @@ function DeleteConfirm({ name, onCancel, onConfirm }) {
   );
 }
 
-function ReviewModal({ row, action, onCancel, onConfirm }) {
+/**
+ * DTI: reviews the farmer's ACCOUNT application. Shows full details and
+ * submitted attachments so DTI can verify identity/documents before
+ * approving or denying the account itself.
+ */
+function AccountReviewModal({ row, action, onCancel, onConfirm }) {
   const isApprove = action === "approve";
   const [preview, setPreview] = useState(null);
   const files = row.files ?? [];
@@ -719,7 +805,7 @@ function ReviewModal({ row, action, onCancel, onConfirm }) {
         <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
           <div>
             <p className="label-mono mb-1 text-accent">
-              {isApprove ? "Approve Application" : "Deny Application"}
+              {isApprove ? "Approve Account" : "Deny Account"}
             </p>
             <h2 className="text-lg font-semibold tracking-tight text-foreground">
               Review Farmer Details
@@ -834,6 +920,59 @@ function ReviewModal({ row, action, onCancel, onConfirm }) {
       {preview && (
         <FilePreviewModal file={preview} onClose={() => setPreview(null)} />
       )}
+    </div>
+  );
+}
+
+/**
+ * Manager: reviews the farmer's ASSOCIATION application only. This is a
+ * lightweight confirmation — no attachments, no account-level details —
+ * since the account itself was already handled by DTI.
+ */
+function AssociationReviewModal({ row, action, onCancel, onConfirm }) {
+  const isApprove = action === "approve";
+
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && onCancel();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground-40 p-4"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-md border border-border bg-card p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="label-mono mb-1 text-accent">
+          {isApprove ? "Approve Association" : "Deny Association"}
+        </p>
+        <h2 className="mb-2 text-lg font-semibold text-foreground">
+          {isApprove
+            ? "Approve association application?"
+            : "Deny association application?"}
+        </h2>
+        <p className="mb-6 text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">{row.fullName}</span>{" "}
+          {isApprove
+            ? "will be approved for association with the cooperative."
+            : "will be denied association with the cooperative."}
+        </p>
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button
+            variant={isApprove ? "default" : "destructive"}
+            onClick={onConfirm}
+          >
+            {isApprove ? "Approve" : "Deny"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

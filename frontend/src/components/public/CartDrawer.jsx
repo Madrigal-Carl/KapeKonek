@@ -94,7 +94,7 @@ export function CartDrawer() {
                       </button>
                     </div>
                     <p className="label-mono mt-1 text-muted-foreground">
-                      {formatPrice(it.product.price)} / {it.product.weightKg}kg{" "}
+                      {formatPrice(it.product.price)}
                       <span aria-hidden="true">·</span> {it.product.stock} stock
                     </p>
                     <div className="mt-3 flex items-center justify-between">
