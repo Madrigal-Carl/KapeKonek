@@ -9,6 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Inbox,
+  X,
+  Check,
 } from "lucide-react";
 
 const STATUS_META = {
@@ -27,11 +29,16 @@ const STATUS_META = {
     dot: "bg-[var(--color-accent)]",
     text: "text-[var(--color-accent)]",
   },
+  cancelled: {
+    label: "Cancelled",
+    dot: "bg-destructive",
+    text: "text-destructive",
+  },
 };
 
-const STATUS_FILTERS = ["all", "pending", "reserved", "completed"];
+const STATUS_FILTERS = ["all", "pending", "reserved", "completed", "cancelled"];
 
-const ORDERS = [
+const INITIAL_ORDERS = [
   {
     id: "ORD-1042",
     status: "pending",
@@ -96,19 +103,21 @@ function getItemCount(items) {
 }
 
 export function OrdersPage() {
+  const [orders, setOrders] = useState(INITIAL_ORDERS);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [confirmingId, setConfirmingId] = useState(null);
 
-  const lifetimeTotal = ORDERS.reduce(
-    (sum, o) => sum + getOrderTotal(o.items),
+  const lifetimeTotal = orders.reduce(
+    (sum, o) => sum + (o.status !== "cancelled" ? getOrderTotal(o.items) : 0),
     0,
   );
 
   const filteredOrders = useMemo(() => {
     const q = query.trim().toLowerCase();
 
-    return ORDERS.filter((order) => {
+    return orders.filter((order) => {
       const matchesStatus =
         statusFilter === "all" || order.status === statusFilter;
 
@@ -119,7 +128,7 @@ export function OrdersPage() {
 
       return matchesStatus && matchesQuery;
     });
-  }, [query, statusFilter]);
+  }, [orders, query, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -136,6 +145,13 @@ export function OrdersPage() {
   function handleStatusChange(value) {
     setStatusFilter(value);
     setPage(1);
+  }
+
+  function handleCancelOrder(orderId) {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: "cancelled" } : o)),
+    );
+    setConfirmingId(null);
   }
 
   return (
@@ -157,7 +173,7 @@ export function OrdersPage() {
             Your orders
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {ORDERS.length} orders · track status and review what you bought.
+            {orders.length} orders · track status and review what you bought.
           </p>
         </div>
 
@@ -220,6 +236,7 @@ export function OrdersPage() {
           {paginatedOrders.map((order) => {
             const status = STATUS_META[order.status];
             const total = getOrderTotal(order.items);
+            const isConfirming = confirmingId === order.id;
 
             return (
               <div
@@ -297,6 +314,45 @@ export function OrdersPage() {
                     ₱{total.toFixed(2)}
                   </span>
                 </div>
+
+                {/* Cancel action for pending orders */}
+                {order.status === "pending" && (
+                  <div className="border-t border-border px-5 py-3">
+                    {isConfirming ? (
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Cancel this order?
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setConfirmingId(null)}
+                            className="label-mono inline-flex items-center gap-1 border border-border px-3 py-1.5 text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+                          >
+                            <X size={12} />
+                            Keep it
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCancelOrder(order.id)}
+                            className="label-mono inline-flex items-center gap-1 border border-destructive bg-destructive px-3 py-1.5 text-destructive-foreground transition-colors hover:opacity-90"
+                          >
+                            <Check size={12} />
+                            Yes, cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmingId(order.id)}
+                        className="label-mono w-full border border-border py-2 text-center text-destructive transition-colors hover:border-destructive hover:bg-destructive/5"
+                      >
+                        Cancel Order
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
