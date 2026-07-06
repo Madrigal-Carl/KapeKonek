@@ -239,7 +239,7 @@ export function HubPage() {
   const lbImages = lbPost?.images ?? (lbPost?.image ? [lbPost.image] : []);
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-border bg-background">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex h-9 w-9 items-center justify-center bg-accent text-primary-foreground">

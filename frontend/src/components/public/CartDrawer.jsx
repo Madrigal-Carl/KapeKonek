@@ -2,13 +2,11 @@ import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
-import useProtectedAction from "@/hooks/useProtectedAction";
 
 export function CartDrawer() {
   const { items, open, setOpen, setQty, remove, count, subtotal, formatPrice } =
     useCart();
   const navigate = useNavigate();
-  const protectedAction = useProtectedAction();
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -18,13 +16,8 @@ export function CartDrawer() {
   }, [open]);
 
   const handleCheckout = () => {
-    protectedAction({
-      role: ["buyer", "farmer", "kaluppa"],
-      onSuccess: () => {
-        setOpen(false);
-        navigate("/checkout");
-      },
-    });
+    setOpen(false);
+    navigate("/checkout");
   };
 
   return (

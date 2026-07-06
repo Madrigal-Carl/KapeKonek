@@ -7,7 +7,7 @@ export function SettingsPage() {
   return (
     <div className="kk-container py-12">
       <span className="label-mono text-[var(--color-accent)]">Account</span>
-      <h1 className="mt-3 text-3xl font-extrabold">Settings</h1>
+      <h1 className="mt-3 text-3xl font-extrabold">Profile</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         Update your personal details and password.
       </p>

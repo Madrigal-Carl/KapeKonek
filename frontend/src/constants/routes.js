@@ -1,5 +1,5 @@
 export const ROLE_ROUTES = {
-  buyer: "/",
+  buyer: "/products",
   farmer: "/farmer/overview",
   manager: "/manager/overview",
   dti: "/dti/overview",

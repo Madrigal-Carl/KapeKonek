@@ -91,7 +91,7 @@ export default function AppRouter() {
         <Route element={<ProtectedRoute allowedRoles={[ROLES.BUYER]} />}>
           <Route element={<PublicLayout />}>
             <Route path="/orders" element={<OrdersPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/profile" element={<SettingsPage />} />
           </Route>
         </Route>
 

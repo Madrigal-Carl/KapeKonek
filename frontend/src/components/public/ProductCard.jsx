@@ -1,9 +1,18 @@
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import useProtectedAction from "@/hooks/useProtectedAction";
 
 export function ProductCard({ product, variant = "grid" }) {
   const { add, formatPrice } = useCart();
+  const protectedAction = useProtectedAction();
+
+  const handleAdd = () => {
+    protectedAction({
+      role: ["buyer", "farmer", "kaluppa"],
+      onSuccess: () => add(product),
+    });
+  };
 
   if (variant === "list") {
     return (
@@ -37,7 +46,7 @@ export function ProductCard({ product, variant = "grid" }) {
             {formatPrice(product.price)}
           </span>
           <button
-            onClick={() => add(product)}
+            onClick={handleAdd}
             className="label-mono mt-3 inline-flex items-center gap-2 bg-[var(--color-accent)] px-4 py-2.5 text-[var(--color-accent-foreground)] transition-colors hover:bg-[var(--color-foreground)] hover:text-[var(--color-background)]"
           >
             <Plus size={14} /> Add
@@ -81,7 +90,7 @@ export function ProductCard({ product, variant = "grid" }) {
             {formatPrice(product.price)}
           </span>
           <button
-            onClick={() => add(product)}
+            onClick={handleAdd}
             className="label-mono inline-flex items-center gap-2 bg-[var(--color-accent)] px-6 py-2.5 text-sm text-[var(--color-accent-foreground)] transition-colors hover:bg-[var(--color-foreground)] hover:text-[var(--color-background)]"
           >
             <Plus size={14} /> Add
