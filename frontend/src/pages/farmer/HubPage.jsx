@@ -239,27 +239,7 @@ export function HubPage() {
   const lbImages = lbPost?.images ?? (lbPost?.image ? [lbPost.image] : []);
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-30 border-b border-border bg-background">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-9 w-9 items-center justify-center bg-accent text-primary-foreground">
-              <Coffee className="h-5 w-5" />
-            </div>
-            <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">
-              Knowledge Hub
-            </h1>
-          </div>
-          <Link
-            to={`${role}/overview`}
-            className="label-mono inline-flex items-center gap-2 border border-accent bg-accent px-4 py-2.5 text-accent-foreground transition-colors hover:bg-foreground hover:border-foreground hover:text-background"
-          >
-            <LayoutDashboard size={14} />
-            <span className="hidden sm:inline">Dashboard</span>
-          </Link>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-2xl px-4 py-6 space-y-4">
+      <main className="mx-auto max-w-4xl px-4 space-y-4">
         {/* Composer */}
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
           <div className="flex items-start gap-3">
