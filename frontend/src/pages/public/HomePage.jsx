@@ -12,8 +12,11 @@ import hero from "@/assets/images/hero-coffee.jpg";
 import community from "@/assets/images/community.jpg";
 import { ProductCard } from "@/components/public";
 import { PRODUCTS } from "@/constants/products";
+import useAuth from "@/hooks/useAuth";
 
 export function HomePage() {
+  const { user } = useAuth();
+
   const featured = PRODUCTS.slice(0, 4);
   return (
     <div>
@@ -218,7 +221,8 @@ export function HomePage() {
             06 · Start
           </span>
           <h2 className="mx-auto mt-6 max-w-2xl text-3xl font-extrabold sm:text-4xl">
-            Explore the marketplace or create an account to begin.
+            Explore the marketplace
+            {!user && <span>or create an account to begin.</span>}
           </h2>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link
@@ -227,12 +231,14 @@ export function HomePage() {
             >
               Browse Products
             </Link>
-            <Link
-              to="/register"
-              className="label-mono border border-foreground px-6 py-4 text-foreground hover:bg-foreground hover:text-background"
-            >
-              Create Account
-            </Link>
+            {!user && (
+              <Link
+                to="/register"
+                className="label-mono border border-foreground px-6 py-4 text-foreground hover:bg-foreground hover:text-background"
+              >
+                Create Account
+              </Link>
+            )}
           </div>
         </div>
       </section>
