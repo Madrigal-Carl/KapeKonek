@@ -549,7 +549,7 @@ function ProductModal({ mode, initial, isManager, onClose, onSave }) {
                 placeholder="0"
               />
             </Field>
-            <Field label="Weight (kg)">
+            <Field label="Weight (kg) (Optional)">
               <TextInput
                 type="number"
                 value={String(form.weightKg)}
