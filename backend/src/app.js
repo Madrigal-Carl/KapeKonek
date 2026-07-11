@@ -5,6 +5,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 
 import { errorHandler } from "./middlewares/error.middleware.js";
+import uploadRoutes from "./routes/upload.routes.js";
 
 import authRoutes from "./routes/auth.routes.js";
 
@@ -38,6 +39,7 @@ app.use(helmet());
 app.use(morgan("dev"));
 
 app.use("/api/auth", authRoutes);
+app.use("/api/uploads", uploadRoutes);
 
 app.use(errorHandler);
 
