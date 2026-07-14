@@ -1,9 +1,7 @@
 import { Worker } from "bullmq";
-import { bullRedisConnection } from "../../config/redis.js";
+import { valkeyConnection } from "../../config/valkey.js";
 import { sendEmail } from "../../services/email.service.js";
 import { EMAIL_JOBS } from "../email.jobs.js";
-
-import { verifyEmailTemplate } from "../../templates/email/verify.template.js";
 import { accountApprovedTemplate } from "../../templates/email/account-approved.template.js";
 
 const emailWorker = new Worker(
@@ -12,14 +10,6 @@ const emailWorker = new Worker(
     const { type, data } = job.data;
 
     const handlers = {
-      [EMAIL_JOBS.VERIFY_EMAIL]: async () => {
-        return sendEmail({
-          to: data.to,
-          subject: "Verify Your Email",
-          html: verifyEmailTemplate({ verifyUrl: data.verifyUrl }),
-        });
-      },
-
       [EMAIL_JOBS.ACCOUNT_APPROVED]: async () => {
         return sendEmail({
           to: data.to,
@@ -38,7 +28,7 @@ const emailWorker = new Worker(
     return handler();
   },
   {
-    connection: bullRedisConnection,
+    connection: valkeyConnection,
   },
 );
 
