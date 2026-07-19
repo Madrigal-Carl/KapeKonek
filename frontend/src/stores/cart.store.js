@@ -27,7 +27,7 @@ export const useCartStore = create(
                             : state.items.map((i, index) =>
                                 index === idx ? { ...i, qty: i.qty + qty } : i
                             );
-                    return { items, open: true };
+                    return { items }; // no longer forces open: true
                 }),
 
             remove: (id) =>

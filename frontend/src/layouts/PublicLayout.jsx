@@ -1,4 +1,4 @@
-import { Navbar, Footer, CartDrawer } from "@/components/public";
+import { Navbar, Footer, CartDrawer, Toast } from "@/components/public";
 import { Outlet } from "react-router-dom";
 
 export default function PublicLayout() {
@@ -10,6 +10,7 @@ export default function PublicLayout() {
       </main>
       <Footer />
       <CartDrawer />
+      <Toast />
     </div>
   );
 }

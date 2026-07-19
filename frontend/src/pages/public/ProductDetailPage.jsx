@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { getProduct } from "@/constants/products";
 import { useCart } from "@/hooks/useCart";
+import { useToastStore } from "@/stores/toast.store";
 
 const REVIEWS_PER_PAGE = 3;
 
@@ -174,6 +175,7 @@ export function ProductDetailPage() {
   const { productId } = useParams();
   const product = getProduct(productId);
   const { add, setOpen, formatPrice } = useCart();
+  const showToast = useToastStore((s) => s.show);
   const [qty, setQty] = useState(1);
   const [active, setActive] = useState(0);
 
@@ -235,6 +237,14 @@ export function ProductDetailPage() {
     setVisibleCount((c) => c + 1);
     setNewRating(0);
     setNewComment("");
+  };
+
+  const handleAddToCart = () => {
+    add(product, qty);
+    showToast(`${product.name} added to cart`, {
+      actionLabel: "View Cart",
+      onAction: () => setOpen(true),
+    });
   };
 
   return (
@@ -365,7 +375,7 @@ export function ProductDetailPage() {
           {/* Actions */}
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <button
-              onClick={() => add(product, qty)}
+              onClick={handleAddToCart}
               className="label-mono inline-flex w-full items-center justify-center gap-2 bg-[var(--color-accent)] px-6 py-4 text-[var(--color-accent-foreground)] transition-transform active:scale-[0.98] sm:w-auto sm:flex-1"
             >
               <ShoppingBag size={16} /> Add to Cart

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Plus, Star } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import useProtectedAction from "@/hooks/useProtectedAction";
+import { useToastStore } from "@/stores/toast.store";
 
 function StarRating({ rating = 0, size = 14 }) {
   const stars = [1, 2, 3, 4, 5];
@@ -38,13 +39,20 @@ function StarRating({ rating = 0, size = 14 }) {
 }
 
 export function ProductCard({ product, variant = "grid" }) {
-  const { add, formatPrice } = useCart();
+  const { add, setOpen, formatPrice } = useCart();
   const protectedAction = useProtectedAction();
+  const showToast = useToastStore((s) => s.show);
 
   const handleAdd = () => {
     protectedAction({
       role: ["buyer", "farmer", "kaluppa"],
-      onSuccess: () => add(product),
+      onSuccess: () => {
+        add(product);
+        showToast(`${product.name} added to cart`, {
+          actionLabel: "View Cart",
+          onAction: () => setOpen(true),
+        });
+      },
     });
   };
 

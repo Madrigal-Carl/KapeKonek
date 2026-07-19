@@ -4,3 +4,4 @@ export { Footer } from "./Footer";
 export { ProductCard } from "./ProductCard";
 export { LeafletMap } from "./LeafletMap";
 export { LocationPicker } from "./LocationPicker";
+export { Toast } from "./Toast";
