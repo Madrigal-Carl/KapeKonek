@@ -1,12 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { X, Minus, Plus, ShoppingBag } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { Button } from "@/components/ui";
 
 export function CartDrawer() {
   const { items, open, setOpen, setQty, remove, count, subtotal, formatPrice } =
     useCart();
   const navigate = useNavigate();
+  const [removeTarget, setRemoveTarget] = useState(null); // { id, name } | null
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -18,6 +20,15 @@ export function CartDrawer() {
   const handleCheckout = () => {
     setOpen(false);
     navigate("/checkout");
+  };
+
+  const handleRemoveClick = (item) => {
+    setRemoveTarget({ id: item.product.id, name: item.product.name });
+  };
+
+  const handleRemoveConfirm = () => {
+    if (removeTarget) remove(removeTarget.id);
+    setRemoveTarget(null);
   };
 
   return (
@@ -86,7 +97,7 @@ export function CartDrawer() {
                         {it.product.name}
                       </h4>
                       <button
-                        onClick={() => remove(it.product.id)}
+                        onClick={() => handleRemoveClick(it)}
                         className="text-muted-foreground hover:text-foreground"
                         aria-label="Remove"
                       >
@@ -162,6 +173,41 @@ export function CartDrawer() {
           </footer>
         )}
       </aside>
+
+      {/* Remove confirmation modal — rendered as a sibling of <aside>, not
+          inside it, so it isn't clipped/transformed by the drawer's own
+          translate-x transition and instead centers in the viewport. */}
+      {removeTarget && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground-40 p-4"
+          onClick={() => setRemoveTarget(null)}
+        >
+          <div
+            className="w-full max-w-md border border-border bg-card p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold text-foreground">
+              <Trash2 className="h-5 w-5 text-muted-foreground" />
+              Remove item?
+            </h2>
+            <p className="mb-6 text-sm text-muted-foreground">
+              Are you sure you want to remove{" "}
+              <span className="font-semibold text-foreground">
+                {removeTarget.name}
+              </span>{" "}
+              from your cart?
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <Button variant="outline" onClick={() => setRemoveTarget(null)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleRemoveConfirm}>
+                Remove
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
