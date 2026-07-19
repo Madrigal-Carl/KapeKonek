@@ -1,6 +1,9 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Compass,
   Users,
   ShieldCheck,
@@ -14,16 +17,104 @@ import { ProductCard } from "@/components/public";
 import { PRODUCTS } from "@/constants/products";
 import useAuth from "@/hooks/useAuth";
 
+const AUTOPLAY_MS = 6000;
+
+const HERO_SLIDES = [
+  { src: hero, alt: "Hands holding freshly harvested coffee cherries" },
+  { src: community, alt: "Farmers sorting coffee cherries" },
+  // Add more slides here, e.g. { src: someImage, alt: "..." }
+];
+
+function HeroCarousel() {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  const goTo = (i) =>
+    setIndex(
+      ((i % HERO_SLIDES.length) + HERO_SLIDES.length) % HERO_SLIDES.length,
+    );
+  const goPrev = () => goTo(index - 1);
+  const goNext = () => goTo(index + 1);
+
+  useEffect(() => {
+    if (paused || HERO_SLIDES.length <= 1) return;
+    const t = setInterval(() => goTo(index + 1), AUTOPLAY_MS);
+    return () => clearInterval(t);
+  }, [index, paused]);
+
+  return (
+    <div
+      className="relative h-[70vh] min-h-[420px] w-full overflow-hidden"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      {/* Slides */}
+      {HERO_SLIDES.map((s, i) => (
+        <img
+          key={s.src}
+          src={s.src}
+          alt={s.alt}
+          className={`absolute inset-0 h-full w-full object-cover grayscale transition-opacity duration-700 ${
+            i === index ? "opacity-100 z-10" : "opacity-0 z-0"
+          }`}
+        />
+      ))}
+
+      {HERO_SLIDES.length > 1 && (
+        <>
+          {/* Prev / Next */}
+          <button
+            type="button"
+            onClick={goPrev}
+            aria-label="Previous slide"
+            className="absolute left-4 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-[var(--color-on-primary)]/50 bg-black/25 text-[var(--color-on-primary)] backdrop-blur-sm transition-colors hover:bg-[var(--color-on-primary)] hover:text-foreground sm:left-8"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            aria-label="Next slide"
+            className="absolute right-4 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-[var(--color-on-primary)]/50 bg-black/25 text-[var(--color-on-primary)] backdrop-blur-sm transition-colors hover:bg-[var(--color-on-primary)] hover:text-foreground sm:right-8"
+          >
+            <ChevronRight size={20} />
+          </button>
+
+          {/* Dots */}
+          <div className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+            {HERO_SLIDES.map((s, i) => (
+              <button
+                key={s.src}
+                type="button"
+                onClick={() => goTo(i)}
+                aria-label={`Go to slide ${i + 1}`}
+                className={`h-1.5 transition-all ${
+                  i === index
+                    ? "w-8 bg-[var(--color-accent)]"
+                    : "w-4 bg-[var(--color-on-primary)]/60"
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function HomePage() {
   const { user } = useAuth();
 
   const featured = PRODUCTS.slice(0, 4);
   return (
     <div>
-      {/* HERO */}
+      {/* HERO — image-only carousel */}
+      <HeroCarousel />
+
+      {/* HERO CTA — moved below the carousel */}
       <section className="border-b border-border bg-[var(--color-surface)]">
-        <div className="kk-container grid gap-10 py-16 md:grid-cols-[1.05fr_1fr] md:gap-16 md:py-24">
-          <div className="flex flex-col justify-center">
+        <div className="kk-container py-16 md:py-20">
+          <div className="max-w-2xl">
             <span className="label-mono text-[var(--color-accent)]">
               01 · Coffee Ecosystem
             </span>
@@ -51,15 +142,6 @@ export function HomePage() {
                 Learn More
               </Link>
             </div>
-          </div>
-          <div className="relative">
-            <img
-              src={hero}
-              alt="Hands holding freshly harvested coffee cherries"
-              width={1600}
-              height={1200}
-              className="aspect-[4/5] w-full object-cover grayscale"
-            />
           </div>
         </div>
       </section>
@@ -222,7 +304,7 @@ export function HomePage() {
           </span>
           <h2 className="mx-auto mt-6 max-w-2xl text-3xl font-extrabold sm:text-4xl">
             Explore the marketplace
-            {!user && <span>or create an account to begin.</span>}
+            {!user && <span> or create an account to begin.</span>}
           </h2>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link
