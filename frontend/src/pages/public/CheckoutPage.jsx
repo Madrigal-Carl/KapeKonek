@@ -9,26 +9,27 @@ import {
   ShoppingBag,
   Eye,
   X,
+  Store,
+  Truck,
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 
 const EWALLETS = [
   { id: "gcash", name: "GCash" },
   { id: "maya", name: "Maya" },
-  { id: "grabpay", name: "GrabPay" },
 ];
 
 export function CheckoutPage() {
   const { items, count, subtotal, setQty, remove, formatPrice } = useCart();
   const [method, setMethod] = useState("ewallet");
   const [wallet, setWallet] = useState("gcash");
+  const [delivery, setDelivery] = useState("pickup"); // "pickup" | "delivery"
   const [receipt, setReceipt] = useState(null); // { file, url, progress, uploading }
   const [preview, setPreview] = useState(false);
   const [placed, setPlaced] = useState(false);
   const timerRef = useRef(null);
 
-  const fees = Math.round(subtotal * 0.05);
-  const total = subtotal + fees;
+  const total = subtotal;
 
   const canPlace =
     items.length > 0 &&
@@ -122,7 +123,7 @@ export function CheckoutPage() {
         </h1>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:gap-14">
-          {/* Left: Products + Payment */}
+          {/* Left: Products + Delivery + Payment */}
           <div className="space-y-12">
             {/* Products */}
             <div>
@@ -207,6 +208,40 @@ export function CheckoutPage() {
               </div>
             </div>
 
+            {/* Delivery Method */}
+            <div>
+              <h2 className="label-mono text-[var(--color-accent)]">
+                Delivery Method
+              </h2>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <MethodCard
+                  active={delivery === "pickup"}
+                  onClick={() => setDelivery("pickup")}
+                  icon={<Store size={20} />}
+                  title="Pickup"
+                  desc="Collect at the farm or coop"
+                />
+                <MethodCard
+                  active={delivery === "delivery"}
+                  onClick={() => setDelivery("delivery")}
+                  icon={<Truck size={20} />}
+                  title="Delivery"
+                  desc="Delivered to your address"
+                />
+              </div>
+
+              {delivery === "delivery" && (
+                <div className="mt-6 border border-border p-5 text-base text-muted-foreground sm:p-6">
+                  Delivery fee is not included in the total below — it will be
+                  assessed and{" "}
+                  <span className="font-semibold text-foreground">
+                    paid upon receiving
+                  </span>{" "}
+                  your order.
+                </div>
+              )}
+            </div>
+
             {/* Payment Method */}
             <div>
               <h2 className="label-mono text-[var(--color-accent)]">
@@ -218,7 +253,7 @@ export function CheckoutPage() {
                   onClick={() => setMethod("ewallet")}
                   icon={<Wallet size={20} />}
                   title="E-Wallet"
-                  desc="GCash, Maya, GrabPay"
+                  desc="GCash, Maya"
                 />
                 <MethodCard
                   active={method === "cash"}
@@ -358,11 +393,16 @@ export function CheckoutPage() {
               <dl className="mt-5 space-y-3">
                 <Row label="Total Items" value={String(count)} />
                 <Row label="Subtotal" value={formatPrice(subtotal)} />
-                <Row label="Estimated Fees" value={formatPrice(fees)} muted />
                 <div className="border-t border-border pt-3">
                   <Row label="Total" value={formatPrice(total)} bold />
                 </div>
               </dl>
+
+              {delivery === "delivery" && (
+                <p className="label-mono mt-3 text-muted-foreground">
+                  + delivery fee, payable upon receiving
+                </p>
+              )}
 
               <button
                 onClick={placeOrder}
