@@ -29,7 +29,7 @@ import {
   ManagersPage,
   ReportsPage,
   FarmMapPage,
-} from "@/pages/farmer";
+} from "@/pages/dashboard";
 
 import UnauthorizedPage from "@/pages/shared/UnauthorizedPage";
 

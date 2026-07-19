@@ -1,6 +1,6 @@
+import { ChevronDown, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { IconButton } from "@/components/ui";
+import { Pagination } from "./Pagination";
 
 function getValue(record, path) {
   if (!path) return "";
@@ -17,11 +17,13 @@ export function DataTable({
   searchKeys = [],
   searchPlaceholder = "Search…",
   filters = [],
-  pageSize = 5,
+  pageSize = 10,
   emptyTitle = "No records found",
   emptyDescription = "Try adjusting your search or filters.",
-  getRowKey = (row) => row.id,
+  getRowKey = (row) => row.id ?? row._id,
   minWidth = "640px",
+  loading = false,
+  rightAction,
 }) {
   const [query, setQuery] = useState("");
   const [filterValues, setFilterValues] = useState(() =>
@@ -77,6 +79,7 @@ export function DataTable({
 
   return (
     <div className="border border-border bg-card">
+      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
         {searchKeys.length > 0 && (
           <div className="relative min-w-[220px] flex-1">
@@ -114,8 +117,11 @@ export function DataTable({
             <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           </div>
         ))}
+
+        {rightAction}
       </div>
 
+      {/* Table */}
       <div className="relative w-full overflow-auto">
         <table
           className="w-full caption-bottom border-collapse text-sm"
@@ -140,7 +146,19 @@ export function DataTable({
             </tr>
           </thead>
           <tbody>
-            {paged.length === 0 ? (
+            {loading ? (
+              Array.from({ length: pageSize > 5 ? 5 : pageSize }).map(
+                (_, i) => (
+                  <tr key={i} className="border-t border-border">
+                    {columns.map((column) => (
+                      <td key={column.key} className="px-4 py-4">
+                        <div className="h-3 w-24 animate-pulse rounded-sm bg-muted" />
+                      </td>
+                    ))}
+                  </tr>
+                ),
+              )
+            ) : paged.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-16 text-center">
                   <div className="mx-auto mb-3 grid h-12 w-12 place-items-center border border-border bg-muted">
@@ -183,29 +201,14 @@ export function DataTable({
         </table>
       </div>
 
-      <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3 text-sm">
-        <div className="text-muted-foreground">
-          Showing {filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1}–
-          {Math.min(safePage * pageSize, filtered.length)} of {filtered.length}
-        </div>
-        <div className="flex items-center gap-1">
-          <IconButton
-            icon={ChevronLeft}
-            label="Previous"
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
-          />
-          <span className="px-3 font-semibold text-foreground">
-            {safePage} / {totalPages}
-          </span>
-          <IconButton
-            icon={ChevronRight}
-            label="Next"
-            onClick={() =>
-              setPage((current) => Math.min(totalPages, current + 1))
-            }
-          />
-        </div>
-      </div>
+      {!loading && filtered.length > 0 && (
+        <Pagination
+          page={safePage}
+          pageSize={pageSize}
+          total={filtered.length}
+          onPage={setPage}
+        />
+      )}
     </div>
   );
 }
