@@ -13,3 +13,8 @@ export function fmtDate(s) {
         day: "numeric",
     });
 }
+
+export function fmtPrice(price) {
+    if (price === null || price === undefined) return "—";
+    return `\u20B1${Number(price).toLocaleString()}`;
+}

@@ -6,3 +6,5 @@ export { AddChooserModal } from "./AddChooserModal";
 export { ExistingFarmModal } from "./ExistingFarmModal";
 export { FarmModal } from "./FarmModal";
 export { HarvestModal } from "./HarvestModal";
+export { ProductModal } from "./ProductModal";
+export { PriceModal } from "./PriceModal";

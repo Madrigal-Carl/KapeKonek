@@ -316,3 +316,67 @@ export const HARVESTS = [
         harvestedAt: "2026-04-18",
     },
 ];
+
+export const PRODUCT_CATEGORY_OPTIONS = [
+    "Coffee Seedlings",
+    "Coffee Cherries",
+    "Fertilizer",
+    "Coffee Beans",
+];
+
+export const PRODUCT_VARIETY_OPTIONS = ["Arabica", "Robusta", "Liberica", "Excelsa"];
+
+export const PRODUCTS = [
+    {
+        id: "PD-001",
+        name: "Arabica Green Beans",
+        category: "Coffee Beans",
+        variety: "Arabica",
+        stock: 120,
+        weightKg: 60,
+        price: 350,
+        description: "Washed Arabica green beans from Marinduque highlands.",
+        images: [],
+        status: "active",
+        farmer: "FR-001 \xB7 Lina Okoro",
+    },
+    {
+        id: "PD-002",
+        name: "Robusta Roasted Medium",
+        category: "Coffee Beans",
+        variety: "Robusta",
+        stock: 45,
+        weightKg: 22.5,
+        price: 220,
+        description: "Medium roast Robusta with chocolatey notes.",
+        images: [],
+        status: "active",
+        farmer: "FR-002 \xB7 Samuel Mwangi",
+    },
+    {
+        id: "PD-003",
+        name: "Liberica Ground",
+        category: "Coffee Beans",
+        variety: "Liberica",
+        stock: 0,
+        weightKg: 0,
+        price: 260,
+        description: "Bold ground Liberica, woody and smoky.",
+        images: [],
+        status: "inactive",
+        farmer: "FR-004 \xB7 Chidi Okafor",
+    },
+    {
+        id: "PD-004",
+        name: "Coffee Seedlings (Excelsa)",
+        category: "Coffee Seedlings",
+        variety: "Excelsa",
+        stock: 320,
+        weightKg: 96,
+        price: 45,
+        description: "Healthy Excelsa seedlings, 6 months old.",
+        images: [],
+        status: "active",
+        farmer: "FR-005 \xB7 Joseph Kamau",
+    },
+];
