@@ -1,7 +1,41 @@
 import { Link } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, Star } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import useProtectedAction from "@/hooks/useProtectedAction";
+
+function StarRating({ rating = 0, size = 14 }) {
+  const stars = [1, 2, 3, 4, 5];
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex items-center">
+        {stars.map((n) => {
+          const filled = rating >= n;
+          const half = !filled && rating >= n - 0.5;
+          return (
+            <span key={n} className="relative inline-flex">
+              <Star
+                size={size}
+                className="text-[var(--color-border)]"
+                fill="currentColor"
+              />
+              {(filled || half) && (
+                <Star
+                  size={size}
+                  className="absolute inset-0 text-[var(--color-accent)]"
+                  fill="currentColor"
+                  style={half ? { clipPath: "inset(0 50% 0 0)" } : undefined}
+                />
+              )}
+            </span>
+          );
+        })}
+      </div>
+      <span className="label-mono text-[var(--color-muted-foreground)]">
+        {rating.toFixed(1)}
+      </span>
+    </div>
+  );
+}
 
 export function ProductCard({ product, variant = "grid" }) {
   const { add, formatPrice } = useCart();
@@ -37,6 +71,11 @@ export function ProductCard({ product, variant = "grid" }) {
           <p className="mt-2 line-clamp-2 text-sm text-[var(--color-muted-foreground)]">
             {product.description}
           </p>
+          {typeof product.sellerRating === "number" && (
+            <div className="mt-2">
+              <StarRating rating={product.sellerRating} />
+            </div>
+          )}
           <p className="label-mono mt-auto pt-3 text-[var(--color-muted-foreground)]">
             By {product.seller}
           </p>
@@ -82,6 +121,11 @@ export function ProductCard({ product, variant = "grid" }) {
         <p className="mt-2 line-clamp-2 text-sm text-[var(--color-muted-foreground)]">
           {product.description}
         </p>
+        {typeof product.sellerRating === "number" && (
+          <div className="mt-2">
+            <StarRating rating={product.sellerRating} />
+          </div>
+        )}
         <p className="label-mono mt-3 text-[var(--color-muted-foreground)]">
           {product.seller}
         </p>
