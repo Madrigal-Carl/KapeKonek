@@ -47,9 +47,26 @@ export function SettingsPage({ onBack }) {
         </div>
 
         <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-          <Field label="Full Name">
+          {/* Name */}
+          <div className="grid gap-6 sm:grid-cols-2">
+            <Field label="Last Name">
+              <input
+                defaultValue="Dela Cruz"
+                className="h-12 w-full border border-border bg-background px-3 text-sm outline-none focus:border-foreground"
+              />
+            </Field>
+
+            <Field label="First Name">
+              <input
+                defaultValue="Juan"
+                className="h-12 w-full border border-border bg-background px-3 text-sm outline-none focus:border-foreground"
+              />
+            </Field>
+          </div>
+
+          <Field label="Middle Name (Optional)">
             <input
-              defaultValue="Juan Dela Cruz"
+              defaultValue=""
               className="h-12 w-full border border-border bg-background px-3 text-sm outline-none focus:border-foreground"
             />
           </Field>
@@ -58,6 +75,23 @@ export function SettingsPage({ onBack }) {
             <input
               type="email"
               defaultValue="buyer@kapekonek.com"
+              className="h-12 w-full border border-border bg-background px-3 text-sm outline-none focus:border-foreground"
+            />
+          </Field>
+
+          <Field label="Contact Number">
+            <input
+              type="tel"
+              defaultValue=""
+              placeholder="09XX XXX XXXX"
+              className="h-12 w-full border border-border bg-background px-3 text-sm outline-none focus:border-foreground"
+            />
+          </Field>
+
+          <Field label="Address">
+            <input
+              defaultValue=""
+              placeholder="Street, Barangay, City/Municipality, Province"
               className="h-12 w-full border border-border bg-background px-3 text-sm outline-none focus:border-foreground"
             />
           </Field>

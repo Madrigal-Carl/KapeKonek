@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
-import emailQueue from "../queues/email.queue.js"
-import { EMAIL_JOBS } from "../queues/email.jobs.js"
+import emailQueue from "../queues/email.queue.js";
+import { EMAIL_JOBS } from "../queues/email.jobs.js";
 
 import {
   generateAccessToken,
@@ -10,19 +10,39 @@ import {
   generateVerifyToken,
 } from "../utils/generateToken.js";
 
-export const registerUser = async ({ email, password, fullname, role }) => {
-  const existingUser = await User.findOne({ email });
+export const registerUser = async ({
+  lastName,
+  firstName,
+  middleName,
+  username,
+  email,
+  contactNumber,
+  address,
+  password,
+  role,
+}) => {
+  const existingUser = await User.findOne({
+    $or: [{ email }, { username }],
+  });
 
   if (existingUser) {
-    throw new Error("Email already exists");
+    if (existingUser.email === email) {
+      throw new Error("Email already exists");
+    }
+    throw new Error("Username already taken");
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
 
   const user = await User.create({
+    lastName,
+    firstName,
+    middleName,
+    username,
     email,
+    contactNumber,
+    address,
     password: hashedPassword,
-    fullname,
     role,
     isVerified: false,
   });

@@ -63,16 +63,55 @@ export function RegisterPage() {
           )}
 
           <div className="mt-10 space-y-5">
-            <Field label="Full Name">
+            {/* Name */}
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Last Name">
+                <input
+                  placeholder="Dela Cruz"
+                  aria-invalid={!!errors.lastName}
+                  className={`h-12 w-full border bg-background px-3 text-sm outline-none focus:border-foreground ${
+                    errors.lastName ? "border-red-400" : "border-border"
+                  }`}
+                  {...register("lastName")}
+                />
+                <FieldError message={errors.lastName?.message} />
+              </Field>
+
+              <Field label="First Name">
+                <input
+                  placeholder="Juan"
+                  aria-invalid={!!errors.firstName}
+                  className={`h-12 w-full border bg-background px-3 text-sm outline-none focus:border-foreground ${
+                    errors.firstName ? "border-red-400" : "border-border"
+                  }`}
+                  {...register("firstName")}
+                />
+                <FieldError message={errors.firstName?.message} />
+              </Field>
+            </div>
+
+            <Field label="Middle Name (Optional)">
               <input
-                placeholder="Your full name"
-                aria-invalid={!!errors.fullname}
+                placeholder="Santos"
+                aria-invalid={!!errors.middleName}
                 className={`h-12 w-full border bg-background px-3 text-sm outline-none focus:border-foreground ${
-                  errors.fullname ? "border-red-400" : "border-border"
+                  errors.middleName ? "border-red-400" : "border-border"
                 }`}
-                {...register("fullname")}
+                {...register("middleName")}
               />
-              <FieldError message={errors.fullname?.message} />
+              <FieldError message={errors.middleName?.message} />
+            </Field>
+
+            <Field label="Username">
+              <input
+                placeholder="juandelacruz"
+                aria-invalid={!!errors.username}
+                className={`h-12 w-full border bg-background px-3 text-sm outline-none focus:border-foreground ${
+                  errors.username ? "border-red-400" : "border-border"
+                }`}
+                {...register("username")}
+              />
+              <FieldError message={errors.username?.message} />
             </Field>
 
             <Field label="Email">
@@ -86,6 +125,31 @@ export function RegisterPage() {
                 {...register("email")}
               />
               <FieldError message={errors.email?.message} />
+            </Field>
+
+            <Field label="Contact Number">
+              <input
+                type="tel"
+                placeholder="09XX XXX XXXX"
+                aria-invalid={!!errors.contactNumber}
+                className={`h-12 w-full border bg-background px-3 text-sm outline-none focus:border-foreground ${
+                  errors.contactNumber ? "border-red-400" : "border-border"
+                }`}
+                {...register("contactNumber")}
+              />
+              <FieldError message={errors.contactNumber?.message} />
+            </Field>
+
+            <Field label="Address">
+              <input
+                placeholder="Street, Barangay, City/Municipality, Province"
+                aria-invalid={!!errors.address}
+                className={`h-12 w-full border bg-background px-3 text-sm outline-none focus:border-foreground ${
+                  errors.address ? "border-red-400" : "border-border"
+                }`}
+                {...register("address")}
+              />
+              <FieldError message={errors.address?.message} />
             </Field>
 
             <Field label="Password">
