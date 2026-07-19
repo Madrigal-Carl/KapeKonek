@@ -1,8 +1,9 @@
 import cloudinary from "../config/cloudinary.js";
 
 const SUBFOLDER_MAP = {
-    farmer: "products",
-    report: "farmers",
+    farmer: "farmers",
+    product: "products",
+    receipt: "receipts",
 };
 
 export const createUploadSignature = ({ type }) => {
