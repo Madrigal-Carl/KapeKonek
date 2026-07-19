@@ -8,6 +8,16 @@ import {
   PackageX,
   ArrowUpRight,
 } from "lucide-react";
+import useAuth from "@/hooks/useAuth";
+import { ROLES } from "@/constants/roles";
+
+const ROLE_LABELS = {
+  [ROLES.BUYER]: "Buyer",
+  [ROLES.FARMER]: "Farmer",
+  [ROLES.MANAGER]: "Manager",
+  [ROLES.DTI]: "DTI",
+  [ROLES.KALUPPA]: "Kaluppa",
+};
 
 const FARMS = [
   {
@@ -316,6 +326,14 @@ function fmtDate(s) {
 }
 
 export function OverviewPage() {
+  const { user, role } = useAuth();
+
+  const roleLabel = ROLE_LABELS[role] ?? "";
+  const firstName = user?.name?.split(" ")[0] || user?.firstName;
+  const welcomeTitle = roleLabel
+    ? `Welcome back, ${roleLabel}${firstName ? ` ${firstName}` : ""}`
+    : "Welcome back";
+
   // Aggregates
   const totalFarms = FARMS.length;
   const totalHectares = FARMS.reduce((s, f) => s + f.size, 0);
@@ -403,7 +421,7 @@ export function OverviewPage() {
     <div className="py-8 space-y-10">
       <PageHeader
         eyebrow="Overview"
-        title="Welcome back"
+        title={welcomeTitle}
         description="Visual snapshot of farms, harvests, and inventory."
       />
 
