@@ -450,3 +450,36 @@ export const ORDERS = [
         items: [{ name: "Coffee Seedlings (Excelsa)", qty: 6, price: 90 }],
     },
 ];
+
+export const MANAGERS = [
+    {
+        id: "MG-001",
+        fullName: "Rosario Villanueva",
+        email: "rosario.villanueva@kapekonek.ph",
+        joinedAt: "2025-10-02",
+    },
+    {
+        id: "MG-002",
+        fullName: "Emmanuel Torres",
+        email: "emmanuel.torres@kapekonek.ph",
+        joinedAt: "2025-12-11",
+    },
+    {
+        id: "MG-003",
+        fullName: "Grace Fernandez",
+        email: "grace.fernandez@kapekonek.ph",
+        joinedAt: "2026-02-19",
+    },
+    {
+        id: "MG-004",
+        fullName: "Peter Uzoma",
+        email: "peter.uzoma@kapekonek.ph",
+        joinedAt: "2026-04-07",
+    },
+    {
+        id: "MG-005",
+        fullName: "Clarita Mendoza",
+        email: "clarita.mendoza@kapekonek.ph",
+        joinedAt: "2026-05-30",
+    },
+];

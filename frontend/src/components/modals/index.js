@@ -11,3 +11,4 @@ export { PriceModal } from "./PriceModal";
 export { OrderDetailsModal } from "./OrderDetailsModal";
 export { UpdateStatusModal } from "./UpdateStatusModal";
 export { CancelOrderModal } from "./CancelOrderModal";
+export { ManagerModal } from "./ManagerModal";
