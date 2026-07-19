@@ -266,3 +266,53 @@ export const CROP_STATUS_OPTIONS = [
     { value: "harvested", label: "Harvested" },
     { value: "fallow", label: "Fallow" },
 ];
+
+export const HARVEST_CATEGORY_OPTIONS = [
+    "Coffee Seedlings",
+    "Coffee Cherries",
+    "Fertilizer",
+    "Coffee Beans",
+];
+
+export const HARVEST_VARIETY_OPTIONS = ["Arabica", "Robusta", "Liberica", "Excelsa"];
+
+export const HARVEST_FARM_OPTIONS = [
+    "FM-001 \xB7 Sitio Malusak, Boac, Marinduque",
+    "FM-002 \xB7 Barangay Tugos, Mogpog, Marinduque",
+    "FM-003 \xB7 Sitio Hinapulan, Gasan, Marinduque",
+    "FM-004 \xB7 Barangay Balogo, Mogpog, Marinduque",
+    "FM-005 \xB7 Sitio Bayuti, Torrijos, Marinduque",
+];
+
+export const HARVESTS = [
+    {
+        id: "HV-001",
+        name: "Spring Arabica Lot A",
+        category: "Coffee Seedlings",
+        variety: "Arabica",
+        yieldKg: 820,
+        farm: "FM-001 \xB7 Sitio Malusak, Boac, Marinduque",
+        farmer: "FR-001 \xB7 Lina Okoro",
+        harvestedAt: "2026-05-12",
+    },
+    {
+        id: "HV-002",
+        name: "Robusta Cycle 2",
+        category: "Coffee Cherries",
+        variety: "Robusta",
+        yieldKg: 540,
+        farm: "FM-002 \xB7 Barangay Tugos, Mogpog, Marinduque",
+        farmer: "FR-002 \xB7 Samuel Mwangi",
+        harvestedAt: "2026-06-02",
+    },
+    {
+        id: "HV-003",
+        name: "Liberica Field Pick",
+        category: "Fertilizer",
+        variety: "Liberica",
+        yieldKg: 310,
+        farm: "FM-003 \xB7 Sitio Hinapulan, Gasan, Marinduque",
+        farmer: "FR-004 \xB7 Chidi Okafor",
+        harvestedAt: "2026-04-18",
+    },
+];

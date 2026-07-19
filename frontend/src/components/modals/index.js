@@ -5,3 +5,4 @@ export { FarmerModal } from "./FarmerModal";
 export { AddChooserModal } from "./AddChooserModal";
 export { ExistingFarmModal } from "./ExistingFarmModal";
 export { FarmModal } from "./FarmModal";
+export { HarvestModal } from "./HarvestModal";
