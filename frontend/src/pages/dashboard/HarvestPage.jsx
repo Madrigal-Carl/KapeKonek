@@ -11,13 +11,8 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import {
-  IconButton,
-  Field,
-  TextInput,
-  FormatDate,
-  Button,
-} from "@/components/ui";
+import { IconButton, Field, TextInput, Button } from "@/components/ui";
+import { fmtDate } from "@/utils/format";
 import { DataTable as SharedDataTable } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
@@ -213,9 +208,7 @@ function DataTable({ rows, isViewOnly = false, onEdit, onDelete }) {
           key: "harvestedAt",
           label: "Harvested At",
           render: (row) => (
-            <span className="text-foreground">
-              {FormatDate(row.harvestedAt)}
-            </span>
+            <span className="text-foreground">{fmtDate(row.harvestedAt)}</span>
           ),
         },
         {

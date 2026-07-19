@@ -10,13 +10,8 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import {
-  Button,
-  Field,
-  IconButton,
-  TextInput,
-  FormatDate,
-} from "@/components/ui";
+import { Button, Field, IconButton, TextInput } from "@/components/ui";
+import { fmtDate } from "@/utils/format";
 import { DataTable as SharedDataTable } from "@/components/dashboard";
 
 const DEFAULT_PASSWORD = "KapeKonek123";
@@ -179,7 +174,7 @@ function DataTable({ rows, onEdit, onDelete }) {
           key: "joinedAt",
           label: "Joined At",
           render: (row) => (
-            <span className="text-foreground">{FormatDate(row.joinedAt)}</span>
+            <span className="text-foreground">{fmtDate(row.joinedAt)}</span>
           ),
         },
         {

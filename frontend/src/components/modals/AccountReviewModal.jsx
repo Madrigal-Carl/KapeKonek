@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Eye, FileText, Image as ImageIcon, X } from "lucide-react";
-import { Button, IconButton, FormatDate } from "@/components/ui";
+import { Button, IconButton } from "@/components/ui";
+import { fmtDate } from "@/utils/format";
 
 /**
  * DTI: reviews the farmer's ACCOUNT application. Shows full details and
@@ -60,7 +61,7 @@ export function AccountReviewModal({ row, action, onCancel, onConfirm }) {
             <div>
               <p className="label-mono mb-1 text-muted-foreground">Applied</p>
               <p className="text-sm font-semibold text-foreground">
-                {FormatDate(row.joinedAt)}
+                {fmtDate(row.joinedAt)}
               </p>
             </div>
           </div>

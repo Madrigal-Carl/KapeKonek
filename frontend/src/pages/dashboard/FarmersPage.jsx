@@ -1,149 +1,17 @@
 import { useState } from "react";
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
-import { Button, IconButton, FormatDate } from "@/components/ui";
+import { Button, IconButton } from "@/components/ui";
+import { fmtDate } from "@/utils/format";
 import { DataTable, PageSection, StatusPill } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
-import { DEFAULT_PASSWORD } from "@/constants/data";
+import { DEFAULT_PASSWORD, FARMERS } from "@/constants/data";
 import {
   FarmerModal,
   DeleteConfirmModal,
   AccountReviewModal,
   AssociationReviewModal,
 } from "@/components/modals";
-
-const SEED = [
-  {
-    id: "FR-001",
-    fullName: "Lina Okoro",
-    email: "lina.okoro@kapekonek.ph",
-    farmCount: 2,
-    status: "approved",
-    associationStatus: "approved",
-    joinedAt: "2026-01-04",
-    files: [
-      {
-        name: "Valid_ID.jpg",
-        type: "image",
-        size: 184320,
-        url: "https://picsum.photos/seed/fr001-id/800/500",
-      },
-      { name: "Business_Permit.pdf", type: "pdf", size: 245760 },
-    ],
-  },
-  {
-    id: "FR-002",
-    fullName: "Samuel Mwangi",
-    email: "samuel.mwangi@kapekonek.ph",
-    farmCount: 1,
-    status: "approved",
-    associationStatus: "pending",
-    joinedAt: "2026-01-18",
-    files: [
-      {
-        name: "Valid_ID.jpg",
-        type: "image",
-        size: 176210,
-        url: "https://picsum.photos/seed/fr002-id/800/500",
-      },
-    ],
-  },
-  {
-    id: "FR-003",
-    fullName: "Aisha Bello",
-    email: "aisha.bello@kapekonek.ph",
-    farmCount: 3,
-    status: "pending",
-    associationStatus: "pending",
-    joinedAt: "2026-05-22",
-    files: [
-      {
-        name: "Valid_ID.jpg",
-        type: "image",
-        size: 201340,
-        url: "https://picsum.photos/seed/fr003-id/800/500",
-      },
-      { name: "Land_Title.pdf", type: "pdf", size: 512000 },
-      {
-        name: "Farm_Photo.jpg",
-        type: "image",
-        size: 298400,
-        url: "https://picsum.photos/seed/fr003-farm/800/500",
-      },
-    ],
-  },
-  {
-    id: "FR-004",
-    fullName: "Chidi Okafor",
-    email: "chidi.okafor@kapekonek.ph",
-    farmCount: 1,
-    status: "pending",
-    associationStatus: "pending",
-    joinedAt: "2026-06-01",
-    files: [
-      {
-        name: "Valid_ID.jpg",
-        type: "image",
-        size: 168900,
-        url: "https://picsum.photos/seed/fr004-id/800/500",
-      },
-      { name: "Business_Permit.pdf", type: "pdf", size: 233480 },
-    ],
-  },
-  {
-    id: "FR-005",
-    fullName: "Joseph Kamau",
-    email: "joseph.kamau@kapekonek.ph",
-    farmCount: 2,
-    status: "approved",
-    associationStatus: "approved",
-    joinedAt: "2025-11-14",
-    files: [
-      {
-        name: "Valid_ID.jpg",
-        type: "image",
-        size: 190220,
-        url: "https://picsum.photos/seed/fr005-id/800/500",
-      },
-    ],
-  },
-  {
-    id: "FR-006",
-    fullName: "Mariam Diallo",
-    email: "mariam.diallo@kapekonek.ph",
-    farmCount: 0,
-    status: "denied",
-    associationStatus: "denied",
-    joinedAt: "2026-03-09",
-    files: [
-      {
-        name: "Valid_ID.jpg",
-        type: "image",
-        size: 155600,
-        url: "https://picsum.photos/seed/fr006-id/800/500",
-      },
-    ],
-  },
-  {
-    id: "FR-007",
-    fullName: "Noah Santos",
-    email: "noah.santos@kapekonek.ph",
-    farmCount: 1,
-    status: "pending",
-    associationStatus: "pending",
-    joinedAt: "2026-06-20",
-    files: [
-      {
-        name: "Valid_ID.jpg",
-        type: "image",
-        size: 172000,
-        url: "https://picsum.photos/seed/fr007-id/800/500",
-      },
-      { name: "Business_Permit.pdf", type: "pdf", size: 264000 },
-      { name: "Land_Title.pdf", type: "pdf", size: 498000 },
-    ],
-  },
-];
 
 export function FarmersPage() {
   const { role } = useAuth();
@@ -156,7 +24,7 @@ export function FarmersPage() {
   const canReviewAccount = isDti;
   const canReviewAssociation = isManager;
 
-  const [rows, setRows] = useState(SEED);
+  const [rows, setRows] = useState(FARMERS);
   const [modal, setModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [confirmAccount, setConfirmAccount] = useState(null);
@@ -232,7 +100,7 @@ export function FarmersPage() {
     {
       key: "joinedAt",
       label: "Joined At",
-      render: (r) => FormatDate(r.joinedAt),
+      render: (r) => fmtDate(r.joinedAt),
     },
     {
       key: "actions",
@@ -381,7 +249,16 @@ export function FarmersPage() {
 
       {confirmDelete && canManage && (
         <DeleteConfirmModal
-          name={confirmDelete.fullName}
+          title="Delete farmer?"
+          description={
+            <>
+              This will permanently remove{" "}
+              <span className="font-semibold text-foreground">
+                {confirmDelete.fullName}
+              </span>
+              . This action cannot be undone.
+            </>
+          }
           onCancel={() => setConfirmDelete(null)}
           onConfirm={() => {
             setRows((r) => r.filter((x) => x.id !== confirmDelete.id));
