@@ -10,14 +10,7 @@ import {
 import { FARMER_OPTIONS, ASSOCIATION_OPTIONS } from "@/constants/data";
 import { LocationPicker } from "@/components/public";
 
-export function FarmModal({
-  mode,
-  initial,
-  isManager,
-  isKaluppa,
-  onClose,
-  onSave,
-}) {
+export function FarmModal({ mode, initial, isManager, onClose, onSave }) {
   const [form, setForm] = useState(initial);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -70,26 +63,26 @@ export function FarmModal({
               />
             </Field>
 
-            {isManager && !isKaluppa && (
-              <Field label="Farmer(s)" full>
-                <MultiSelect
-                  values={form.farmers || []}
-                  onChange={(v) => set("farmers", v)}
-                  options={FARMER_OPTIONS}
-                  placeholder="Select farmer(s)…"
-                />
-              </Field>
-            )}
-
             {isManager && (
-              <Field label="Association" full>
-                <MultiSelect
-                  values={form.associations || []}
-                  onChange={(v) => set("associations", v)}
-                  options={ASSOCIATION_OPTIONS}
-                  placeholder="Select association(s)…"
-                />
-              </Field>
+              <>
+                <Field label="Association" full>
+                  <MultiSelect
+                    values={form.associations || []}
+                    onChange={(v) => set("associations", v)}
+                    options={ASSOCIATION_OPTIONS}
+                    placeholder="Select association(s)…"
+                  />
+                </Field>
+
+                <Field label="Farmer(s)" full>
+                  <MultiSelect
+                    values={form.farmers || []}
+                    onChange={(v) => set("farmers", v)}
+                    options={FARMER_OPTIONS}
+                    placeholder="Select farmer(s)…"
+                  />
+                </Field>
+              </>
             )}
 
             <Field label="Geotag Location" full>

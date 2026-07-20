@@ -15,9 +15,8 @@ import {
 
 export function FarmsPage() {
   const { role } = useAuth();
-  const isManager = role === ROLES.MANAGER;
+  const isManager = role === ROLES.MANAGER || role === ROLES.KALUPPA;
   const isViewOnly = role === ROLES.DTI;
-  const isKaluppa = role === ROLES.KALUPPA;
 
   const [rows, setRows] = useState(FARMS);
   const [modal, setModal] = useState(null);
@@ -245,7 +244,6 @@ export function FarmsPage() {
           mode={modal.mode}
           initial={modal.data}
           isManager={isManager}
-          isKaluppa={isKaluppa}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />
