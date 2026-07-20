@@ -190,6 +190,15 @@ export function FarmerModal({ mode, initial, onClose, onSave }) {
               </div>
             </SectionGroup>
 
+            {/* Denial remarks — only present if this farmer's account was previously denied */}
+            {form.status === "denied" && form.denyRemarks && (
+              <SectionGroup title="Denial Remarks">
+                <div className="border border-border bg-muted/30 p-4">
+                  <p className="text-sm text-foreground">{form.denyRemarks}</p>
+                </div>
+              </SectionGroup>
+            )}
+
             {/* Attachments section */}
             <SectionGroup title="Attachments">
               <div

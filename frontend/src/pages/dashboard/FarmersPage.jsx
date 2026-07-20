@@ -51,8 +51,18 @@ export function FarmersPage() {
     setModal(null);
   };
 
-  const setStatus = (id, status) =>
-    setRows((r) => r.map((x) => (x.id === id ? { ...x, status } : x)));
+  const setStatus = (id, status, remarks) =>
+    setRows((r) =>
+      r.map((x) =>
+        x.id === id
+          ? {
+              ...x,
+              status,
+              denyRemarks: status === "denied" ? (remarks ?? "") : undefined,
+            }
+          : x,
+      ),
+    );
 
   const setAssociationStatus = (id, associationStatus) =>
     setRows((r) =>
@@ -272,10 +282,11 @@ export function FarmersPage() {
           row={confirmAccount.row}
           action={confirmAccount.action}
           onCancel={() => setConfirmAccount(null)}
-          onConfirm={() => {
+          onConfirm={(remarks) => {
             setStatus(
               confirmAccount.row.id,
               confirmAccount.action === "approve" ? "approved" : "denied",
+              remarks,
             );
             setConfirmAccount(null);
           }}

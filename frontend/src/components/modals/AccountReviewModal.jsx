@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Eye, FileText, Image as ImageIcon, X } from "lucide-react";
 import { Button, IconButton } from "@/components/ui";
 import { fmtDate } from "@/utils/format";
@@ -12,12 +12,21 @@ import { fmtDate } from "@/utils/format";
 export function AccountReviewModal({ row, action, onCancel, onConfirm }) {
   const isApprove = action === "approve";
   const files = row.files ?? [];
+  const [remarks, setRemarks] = useState("");
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onCancel();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onCancel]);
+
+  const remarksRequired = !isApprove;
+  const canConfirm = !remarksRequired || remarks.trim().length > 0;
+
+  const handleConfirm = () => {
+    if (!canConfirm) return;
+    onConfirm(remarksRequired ? remarks.trim() : undefined);
+  };
 
   return (
     <div
@@ -114,6 +123,28 @@ export function AccountReviewModal({ row, action, onCancel, onConfirm }) {
               })}
             </ul>
           )}
+
+          {remarksRequired && (
+            <div className="mt-5">
+              <label
+                htmlFor="deny-remarks"
+                className="label-mono mb-1.5 block text-muted-foreground"
+              >
+                Remarks
+              </label>
+              <textarea
+                id="deny-remarks"
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                rows={3}
+                placeholder="Explain why this account is being denied…"
+                className="w-full resize-none border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/20"
+              />
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                This will be shared with the farmer so they know what to fix.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="flex shrink-0 flex-col gap-3 border-t border-border bg-muted/40 px-6 py-4">
@@ -142,7 +173,8 @@ export function AccountReviewModal({ row, action, onCancel, onConfirm }) {
             </Button>
             <Button
               variant={isApprove ? "default" : "destructive"}
-              onClick={onConfirm}
+              onClick={handleConfirm}
+              disabled={!canConfirm}
             >
               {isApprove ? "Approve" : "Deny"}
             </Button>
