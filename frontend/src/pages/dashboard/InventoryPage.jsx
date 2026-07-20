@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Plus, Tag, Trash2 } from "lucide-react";
+import { Pencil, Plus, Star, Tag, Trash2 } from "lucide-react";
 import { IconButton, Button } from "@/components/ui";
 import { fmtPrice } from "@/utils/format";
 import { DataTable, PageSection, StatusPill } from "@/components/dashboard";
@@ -35,6 +35,7 @@ export function InventoryPage() {
         stock: 0,
         weightKg: 0,
         price: 0,
+        rating: 0,
         description: "",
         images: [],
         status: "active",
@@ -49,6 +50,7 @@ export function InventoryPage() {
         stock: Number(data.stock) || 0,
         weightKg: Number(data.weightKg) || 0,
         price: Number(data.price) || 0,
+        rating: Math.min(5, Math.max(0, Number(data.rating) || 0)),
       };
       const exists = r.find((x) => x.id === data.id);
       if (exists) return r.map((x) => (x.id === data.id ? cleaned : x));
@@ -93,11 +95,9 @@ export function InventoryPage() {
       ),
     },
     {
-      key: "weightKg",
-      label: "Weight (kg)",
-      render: (row) => (
-        <span className="text-foreground">{row.weightKg} kg</span>
-      ),
+      key: "rating",
+      label: "Rating",
+      render: (row) => <RatingStars value={row.rating ?? 0} />,
     },
     {
       key: "price",
@@ -170,7 +170,7 @@ export function InventoryPage() {
       <PageSection
         eyebrow="Marketplace"
         title="Inventory"
-        description="Products, stock levels, weights, and pricing."
+        description="Products, stock levels, ratings, and pricing."
         action={
           !isDTI ? (
             <Button onClick={openAdd} className="gap-2">
@@ -235,6 +235,31 @@ export function InventoryPage() {
             setConfirmDelete(null);
           }}
         />
+      )}
+    </div>
+  );
+}
+
+function RatingStars({ value }) {
+  const rounded = Math.round(value);
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Star
+            key={i}
+            className={
+              i < rounded
+                ? "h-4 w-4 fill-accent text-accent"
+                : "h-4 w-4 text-muted-foreground/40"
+            }
+          />
+        ))}
+      </div>
+      {value > 0 && (
+        <span className="label-mono ml-1 text-muted-foreground">
+          {value.toFixed(1)}
+        </span>
       )}
     </div>
   );

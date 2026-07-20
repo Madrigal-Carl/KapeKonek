@@ -11,6 +11,7 @@ import {
   PRODUCT_CATEGORY_OPTIONS,
   PRODUCT_VARIETY_OPTIONS,
   FARMER_OPTIONS,
+  HARVEST_FARM_OPTIONS,
 } from "@/constants/data";
 
 export function ProductModal({ mode, initial, isManager, onClose, onSave }) {
@@ -104,6 +105,16 @@ export function ProductModal({ mode, initial, isManager, onClose, onSave }) {
               />
             </Field>
 
+            <Field label="Farm" full>
+              <SingleSelect
+                value={form.farm}
+                onChange={(v) => set("farm", v)}
+                options={HARVEST_FARM_OPTIONS}
+                placeholder="Select a farm…"
+                searchPlaceholder="Search farms…"
+              />
+            </Field>
+
             <Field label="Category">
               <div className="relative">
                 <select
@@ -138,6 +149,15 @@ export function ProductModal({ mode, initial, isManager, onClose, onSave }) {
               </div>
             </Field>
 
+            <Field label="Stock">
+              <TextInput
+                type="number"
+                value={String(form.stock)}
+                onChange={(v) => set("stock", Number(v))}
+                placeholder="0"
+              />
+            </Field>
+
             <Field label="Status">
               <div className="relative">
                 <select
@@ -152,29 +172,11 @@ export function ProductModal({ mode, initial, isManager, onClose, onSave }) {
               </div>
             </Field>
 
-            <Field label="Stock">
-              <TextInput
-                type="number"
-                value={String(form.stock)}
-                onChange={(v) => set("stock", Number(v))}
-                placeholder="0"
-              />
-            </Field>
-
-            <Field label="Weight (kg) (Optional)">
+            <Field label="Weight (kg) (Optional)" full>
               <TextInput
                 type="number"
                 value={String(form.weightKg)}
                 onChange={(v) => set("weightKg", Number(v))}
-                placeholder="0"
-              />
-            </Field>
-
-            <Field label="Price">
-              <TextInput
-                type="number"
-                value={String(form.price ?? 0)}
-                onChange={(v) => set("price", Number(v))}
                 placeholder="0"
               />
             </Field>
