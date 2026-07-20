@@ -2,14 +2,10 @@ import { z } from "zod";
 
 export const loginSchema = z.object({
     email: z
-        .string({
-            required_error: "Email is required",
-        })
+        .string({ required_error: "Email is required" })
         .email("Invalid email format"),
     password: z
-        .string({
-            required_error: "Password is required",
-        })
+        .string({ required_error: "Password is required" })
         .min(6, "Password must be at least 6 characters")
         .max(100, "Password must not exceed 100 characters"),
 });
@@ -18,13 +14,23 @@ export const registerSchema = z
     .object({
         lastName: z
             .string({ required_error: "Last name is required" })
-            .min(2, "Last name must be at least 2 characters"),
+            .trim()
+            .min(2, "Last name must be at least 2 characters")
+            .max(100, "Last name must not exceed 100 characters"),
         firstName: z
             .string({ required_error: "First name is required" })
-            .min(2, "First name must be at least 2 characters"),
-        middleName: z.string().optional(),
+            .trim()
+            .min(2, "First name must be at least 2 characters")
+            .max(100, "First name must not exceed 100 characters"),
+        middleName: z
+            .string()
+            .trim()
+            .max(100, "Middle name must not exceed 100 characters")
+            .optional()
+            .or(z.literal("")),
         username: z
             .string({ required_error: "Username is required" })
+            .trim()
             .min(3, "Username must be at least 3 characters")
             .max(30, "Username must not exceed 30 characters")
             .regex(
@@ -36,6 +42,7 @@ export const registerSchema = z
             .email("Invalid email format"),
         contactNumber: z
             .string({ required_error: "Contact number is required" })
+            .trim()
             .min(10, "Contact number must be at least 10 digits")
             .max(15, "Contact number must not exceed 15 digits")
             .regex(
@@ -44,7 +51,9 @@ export const registerSchema = z
             ),
         address: z
             .string({ required_error: "Address is required" })
-            .min(5, "Address must be at least 5 characters"),
+            .trim()
+            .min(5, "Address must be at least 5 characters")
+            .max(255, "Address must not exceed 255 characters"),
         password: z
             .string({ required_error: "Password is required" })
             .min(6, "Password must be at least 6 characters")

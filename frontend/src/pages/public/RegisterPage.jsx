@@ -28,8 +28,7 @@ export function RegisterPage() {
   const onSubmit = async (data) => {
     setServerError("");
     try {
-      const { confirmPassword, ...payload } = data;
-      await registerUser(payload);
+      await registerUser(data);
       navigate("/login");
     } catch (err) {
       setServerError(

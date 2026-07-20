@@ -39,6 +39,7 @@ const userSchema = new mongoose.Schema(
         contactNumber: {
             type: String,
             required: true,
+            unique: true,
             trim: true,
         },
         address: {
@@ -48,6 +49,7 @@ const userSchema = new mongoose.Schema(
         },
         password: {
             type: String,
+            required: true,
             minlength: 6,
             select: false,
         },

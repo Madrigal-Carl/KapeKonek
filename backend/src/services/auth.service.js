@@ -70,13 +70,13 @@ export const verifyUserEmail = async (token) => {
     throw new Error("User not found");
   }
 
-  if (user.isVerified) {
-    return user;
+  if (!user.isVerified) {
+    user.isVerified = true;
+    await user.save();
   }
 
-  user.isVerified = true;
-  await user.save();
-
+  // Always issue tokens, whether this is a fresh verification
+  // or a repeat click on an already-verified link.
   const accessToken = generateAccessToken(user._id);
   const refreshToken = generateRefreshToken(user._id);
 
@@ -96,7 +96,7 @@ export const loginUser = async ({ email, password }) => {
     throw new Error("Password is incorrect");
   }
 
-  if (!user.isVerified && user.role === "buyer") {
+  if (!user.isVerified || user.role === "buyer") {
     throw new Error("Please verify your email first");
   }
 
