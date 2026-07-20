@@ -43,6 +43,20 @@ export function ManagersPage() {
       ),
     },
     {
+      key: "association",
+      label: "Association",
+      render: (row) => (
+        <span className="text-foreground">{row.association || "—"}</span>
+      ),
+    },
+    {
+      key: "farmers",
+      label: "Farmer(s)",
+      render: (row) => (
+        <span className="text-foreground">{(row.farmers || []).length}</span>
+      ),
+    },
+    {
       key: "joinedAt",
       label: "Joined At",
       render: (row) => (
@@ -64,6 +78,7 @@ export function ManagersPage() {
                 data: {
                   ...row,
                   password: DEFAULT_PASSWORD,
+                  association: row.association || "",
                   farmers: row.farmers || [],
                 },
               })
@@ -101,6 +116,7 @@ export function ManagersPage() {
                 fullName: "",
                 email: "",
                 password: DEFAULT_PASSWORD,
+                association: "",
                 farmers: [],
               },
             })
@@ -123,7 +139,7 @@ export function ManagersPage() {
         searchPlaceholder="Search by name, email, or ID…"
         emptyTitle="No managers found"
         emptyDescription="Try adjusting your search or add a new manager."
-        minWidth="640px"
+        minWidth="760px"
       />
 
       {modal && (
