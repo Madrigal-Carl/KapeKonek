@@ -5,7 +5,7 @@ export { ChatPage } from "./ChatPage";
 export { HubPage } from "./HubPage";
 export { InventoryPage } from "./InventoryPage";
 export { SettingsPage } from "./SettingsPage";
-export { OrderPage } from "./OrderPage";
+export { OrdersPage } from "./OrdersPage";
 export { FarmersPage } from "./FarmersPage";
 export { ManagersPage } from "./ManagersPage";
 export { ReportsPage } from "./ReportsPage";

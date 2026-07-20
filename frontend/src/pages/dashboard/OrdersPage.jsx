@@ -1,12 +1,7 @@
 import { useState } from "react";
 import { Check, Eye, X } from "lucide-react";
 import { IconButton } from "@/components/ui";
-import {
-  DataTable,
-  MethodBadge,
-  PageSection,
-  StatusPill,
-} from "@/components/dashboard";
+import { DataTable, PageSection, StatusPill } from "@/components/dashboard";
 import { fmtPrice } from "@/utils/format";
 import { ORDERS } from "@/constants/data";
 import {
@@ -15,7 +10,7 @@ import {
   CancelOrderModal,
 } from "@/components/modals";
 
-export function OrderPage() {
+export function OrdersPage() {
   const [rows, setRows] = useState(ORDERS);
   const [view, setView] = useState(null);
   const [completeDialog, setCompleteDialog] = useState(null);
@@ -39,7 +34,12 @@ export function OrderPage() {
     {
       key: "method",
       label: "Payment Method",
-      render: (row) => <MethodBadge method={row.method} />,
+      render: (row) => <StatusPill status={row.method} />,
+    },
+    {
+      key: "deliveryMethod",
+      label: "Delivery Method",
+      render: (row) => <StatusPill status={row.deliveryMethod} />,
     },
     {
       key: "total",
@@ -128,7 +128,7 @@ export function OrderPage() {
         getRowKey={(row) => row.ref}
         emptyTitle="No orders found"
         emptyDescription="Try adjusting your search or filters."
-        minWidth="820px"
+        minWidth="900px"
       />
 
       {view && <OrderDetailsModal order={view} onClose={() => setView(null)} />}
@@ -137,8 +137,8 @@ export function OrderPage() {
         <UpdateStatusModal
           order={completeDialog.order}
           onClose={() => setCompleteDialog(null)}
-          onSelect={(next) => {
-            updateStatus(completeDialog.order.ref, { status: next });
+          onSelect={(next, extra) => {
+            updateStatus(completeDialog.order.ref, { status: next, ...extra });
             setCompleteDialog(null);
           }}
         />

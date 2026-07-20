@@ -31,6 +31,27 @@ const STATUS_META = {
     label: "Denied",
     tone: "danger",
   },
+  cash: {
+    label: "Cash",
+    tone: "warning",
+  },
+  "e-wallet": {
+    label: "E-Wallet",
+    tone: "info",
+  },
+  delivery: {
+    label: "Delivery",
+    tone: "info",
+  },
+  pickup: {
+    label: "Pickup",
+    tone: "warning",
+  },
+};
+
+const FALLBACK_META = {
+  label: "Unknown",
+  tone: "neutral",
 };
 
 export function StatusPill({ status, children, tone }) {
@@ -41,7 +62,7 @@ export function StatusPill({ status, children, tone }) {
         text: "text-foreground",
         tone,
       }
-    : (STATUS_META[status] ?? STATUS_META.inactive);
+    : (STATUS_META[status] ?? FALLBACK_META);
 
   const map = {
     success: "border-accent bg-accent/10 text-foreground",

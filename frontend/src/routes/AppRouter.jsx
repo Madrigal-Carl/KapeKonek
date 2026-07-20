@@ -24,7 +24,7 @@ import {
   HubPage,
   InventoryPage,
   SettingsPage as FarmerSettingsPage,
-  OrderPage,
+  OrdersPage as DashboardOrdersPage,
   FarmersPage,
   ManagersPage,
   ReportsPage,
@@ -104,7 +104,7 @@ export default function AppRouter() {
             <Route path="chat" element={<ChatPage />} />
             <Route path="knowledge-hub" element={<HubPage />} />
             <Route path="inventory" element={<InventoryPage />} />
-            <Route path="orders" element={<OrderPage />} />
+            <Route path="orders" element={<DashboardOrdersPage />} />
             <Route path="settings" element={<FarmerSettingsPage />} />
           </Route>
         </Route>
@@ -149,7 +149,7 @@ export default function AppRouter() {
             <Route path="harvests" element={<HarvestPage />} />
             <Route path="knowledge-hub" element={<HubPage />} />
             <Route path="inventory" element={<InventoryPage />} />
-            <Route path="orders" element={<OrderPage />} />
+            <Route path="orders" element={<DashboardOrdersPage />} />
             <Route path="farm-maps" element={<FarmMapPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="settings" element={<FarmerSettingsPage />} />
