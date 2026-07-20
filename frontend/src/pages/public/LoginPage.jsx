@@ -51,7 +51,7 @@ export function LoginPage() {
         >
           <ArrowLeft size={14} /> Return home
         </Link>
-        <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-sm">
+        <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-lg">
           <span className="label-mono text-[var(--color-accent)]">Account</span>
           <h1 className="mt-4 text-3xl font-extrabold">Welcome back.</h1>
           <p className="mt-2 text-sm text-muted-foreground">
