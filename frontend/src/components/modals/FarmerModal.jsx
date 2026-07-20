@@ -61,13 +61,32 @@ export function FarmerModal({ mode, initial, onClose, onSave }) {
 
   const submit = (e) => {
     e?.preventDefault();
-    if (!form.fullName?.trim() || !form.email?.trim()) return;
+    if (
+      !form.lastName?.trim() ||
+      !form.firstName?.trim() ||
+      !form.email?.trim()
+    )
+      return;
     onSave({
       ...form,
-      fullName: form.fullName.trim(),
+      lastName: form.lastName.trim(),
+      firstName: form.firstName.trim(),
+      middleName: form.middleName?.trim() || "",
+      username: form.username?.trim() || "",
       email: form.email.trim(),
+      contactNumber: form.contactNumber?.trim() || "",
+      address: form.address?.trim() || "",
+      fullName: [form.firstName, form.middleName, form.lastName]
+        .filter(Boolean)
+        .join(" ")
+        .trim(),
     });
   };
+
+  const modalTitle =
+    mode === "add"
+      ? "Add New Farmer"
+      : `Edit ${initial.fullName || initial.firstName || "Farmer"}`;
 
   return (
     <div
@@ -82,49 +101,97 @@ export function FarmerModal({ mode, initial, onClose, onSave }) {
           <div>
             <p className="label-mono mb-1 text-accent">Farmer</p>
             <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              {mode === "add" ? "Add New Farmer" : `Edit ${initial.fullName}`}
+              {modalTitle}
             </h2>
           </div>
           <IconButton icon={X} label="Close" onClick={onClose} />
         </div>
 
         <form onSubmit={submit} className="flex-1 overflow-y-auto px-6 py-5">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Full Name" full>
-              <TextInput
-                value={form.fullName}
-                onChange={(e) => set("fullName", e.target.value)}
-                placeholder="Juan dela Cruz"
-              />
-            </Field>
-            <Field label="Email" full>
-              <TextInput
-                type="email"
-                value={form.email}
-                onChange={(e) => set("email", e.target.value)}
-                placeholder="name@kapekonek.ph"
-              />
-            </Field>
-            <Field label="Default Password" full>
-              <TextInput
-                value={form.password}
-                readOnly
-                disabled
-                className="bg-muted/40"
-              />
-              {mode === "edit" && (
-                <button
-                  type="button"
-                  onClick={() => set("password", DEFAULT_PASSWORD)}
-                  className="mt-2 inline-flex items-center gap-1.5 self-start text-xs font-semibold text-accent hover:underline"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" /> Reset to default
-                  password
-                </button>
-              )}
-            </Field>
+          <div className="space-y-8">
+            {/* Personal information section */}
+            <SectionGroup title="Personal Information">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="Last Name">
+                  <TextInput
+                    value={form.lastName}
+                    onChange={(e) => set("lastName", e.target.value)}
+                    placeholder="Dela Cruz"
+                  />
+                </Field>
+                <Field label="First Name">
+                  <TextInput
+                    value={form.firstName}
+                    onChange={(e) => set("firstName", e.target.value)}
+                    placeholder="Juan"
+                  />
+                </Field>
+                <Field label="Middle Name (Optional)">
+                  <TextInput
+                    value={form.middleName}
+                    onChange={(e) => set("middleName", e.target.value)}
+                    placeholder="Santos"
+                  />
+                </Field>
+                <Field label="Contact Number">
+                  <TextInput
+                    type="tel"
+                    value={form.contactNumber}
+                    onChange={(e) => set("contactNumber", e.target.value)}
+                    placeholder="09XX XXX XXXX"
+                  />
+                </Field>
+                <Field label="Address" full>
+                  <TextInput
+                    value={form.address}
+                    onChange={(e) => set("address", e.target.value)}
+                    placeholder="Street, Barangay, City/Municipality, Province"
+                  />
+                </Field>
+              </div>
+            </SectionGroup>
 
-            <Field label="Attachments" full>
+            {/* Account section */}
+            <SectionGroup title="Account">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="Username" full>
+                  <TextInput
+                    value={form.username}
+                    onChange={(e) => set("username", e.target.value)}
+                    placeholder="juandelacruz"
+                  />
+                </Field>
+                <Field label="Email" full>
+                  <TextInput
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => set("email", e.target.value)}
+                    placeholder="name@kapekonek.ph"
+                  />
+                </Field>
+                <Field label="Default Password" full>
+                  <TextInput
+                    value={form.password}
+                    readOnly
+                    disabled
+                    className="bg-muted/40"
+                  />
+                  {mode === "edit" && (
+                    <button
+                      type="button"
+                      onClick={() => set("password", DEFAULT_PASSWORD)}
+                      className="mt-2 inline-flex items-center gap-1.5 self-start text-xs font-semibold text-accent hover:underline"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" /> Reset to default
+                      password
+                    </button>
+                  )}
+                </Field>
+              </div>
+            </SectionGroup>
+
+            {/* Attachments section */}
+            <SectionGroup title="Attachments">
               <div
                 onClick={() => fileInputRef.current?.click()}
                 className="flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed border-border bg-muted/30 px-4 py-6 text-center hover:bg-muted/50"
@@ -179,7 +246,7 @@ export function FarmerModal({ mode, initial, onClose, onSave }) {
                   ))}
                 </ul>
               )}
-            </Field>
+            </SectionGroup>
           </div>
         </form>
 
@@ -192,6 +259,20 @@ export function FarmerModal({ mode, initial, onClose, onSave }) {
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SectionGroup({ title, children }) {
+  return (
+    <div>
+      <div className="mb-4 flex items-center gap-3">
+        <span className="label-mono shrink-0 text-muted-foreground">
+          {title}
+        </span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+      {children}
     </div>
   );
 }

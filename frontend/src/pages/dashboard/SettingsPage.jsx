@@ -1,8 +1,16 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { Check, ChevronsUpDown, FileText, Upload, X } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  FileText,
+  Upload,
+  X,
+  Loader2,
+} from "lucide-react";
 import { PageHeader } from "@/components/dashboard";
 import { Button } from "@/components/ui";
 import useAuth from "@/hooks/useAuth";
+import useAuthStore from "@/stores/auth.store";
 import { ROLES } from "@/constants/roles";
 
 const ASSOCIATIONS = [
@@ -98,6 +106,38 @@ function Input({ className, ...props }) {
   );
 }
 
+// Small inline status message shown after a save attempt.
+function FormStatus({ status }) {
+  if (!status) return null;
+  const isError = status.type === "error";
+  return (
+    <p
+      role="status"
+      className={[
+        "text-sm",
+        isError ? "text-rose-600" : "text-emerald-600",
+      ].join(" ")}
+    >
+      {status.message}
+    </p>
+  );
+}
+
+// Section divider used to group related fields, matching FarmerModal/ManagerModal.
+function SectionGroup({ title, children }) {
+  return (
+    <section className="space-y-5">
+      <div className="flex items-center gap-3">
+        <span className="label-mono shrink-0 text-muted-foreground">
+          {title}
+        </span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+      {children}
+    </section>
+  );
+}
+
 // ---------------------------------------------------------------------------
 
 export function SettingsPage() {
@@ -132,112 +172,271 @@ export function SettingsPage() {
 }
 
 function ProfileTab() {
-  const [fullName, setFullName] = useState("Juan Dela Cruz");
-  const [email, setEmail] = useState("juan@kapekonek.ph");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  function handleSubmit(e) {
-    e.preventDefault();
+  const { user, loading } = useAuth();
+  // NOTE: assumes an `updateProfile` action exists on the auth store
+  // alongside login/register/logout. Add it there if missing — see the
+  // note at the end of this response.
+  const updateProfile = useAuthStore((s) => s.updateProfile);
+
+  const [form, setForm] = useState({
+    lastName: "",
+    firstName: "",
+    middleName: "",
+    contactNumber: "",
+    address: "",
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const [initialForm, setInitialForm] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState(null);
+
+  // Populate the form once the logged-in user is available.
+  useEffect(() => {
+    if (!user) return;
+    const populated = {
+      lastName: user.lastName ?? "",
+      firstName: user.firstName ?? "",
+      middleName: user.middleName ?? "",
+      contactNumber: user.contactNumber ?? "",
+      address: user.address ?? "",
+      username: user.username ?? "",
+      email: user.email ?? "",
+      password: "",
+      confirmPassword: "",
+    };
+    setForm(populated);
+    setInitialForm(populated);
+  }, [user]);
+
+  const dirty =
+    initialForm &&
+    Object.keys(initialForm).some((k) => {
+      if (k === "password" || k === "confirmPassword") return form[k] !== "";
+      return form[k] !== initialForm[k];
+    });
+
+  function resetForm() {
+    if (!initialForm) return;
+    setForm(initialForm);
+    setStatus(null);
   }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!form.lastName.trim() || !form.firstName.trim() || !form.email.trim()) {
+      setStatus({
+        type: "error",
+        message: "Last name, first name, and email are required.",
+      });
+      return;
+    }
+    if (form.password || form.confirmPassword) {
+      if (form.password.length < 8) {
+        setStatus({
+          type: "error",
+          message: "Password must be at least 8 characters.",
+        });
+        return;
+      }
+      if (form.password !== form.confirmPassword) {
+        setStatus({ type: "error", message: "Passwords don't match." });
+        return;
+      }
+    }
+
+    setSaving(true);
+    setStatus(null);
+    try {
+      if (typeof updateProfile !== "function") {
+        throw new Error("Profile updates aren't wired up yet.");
+      }
+      const payload = {
+        lastName: form.lastName.trim(),
+        firstName: form.firstName.trim(),
+        middleName: form.middleName.trim(),
+        contactNumber: form.contactNumber.trim(),
+        address: form.address.trim(),
+        username: form.username.trim(),
+        email: form.email.trim(),
+      };
+      if (form.password) payload.password = form.password;
+
+      await updateProfile(payload);
+      setStatus({ type: "success", message: "Profile updated." });
+      setForm((f) => ({ ...f, password: "", confirmPassword: "" }));
+      setInitialForm((f) => ({
+        ...f,
+        ...payload,
+        password: "",
+        confirmPassword: "",
+      }));
+    } catch (err) {
+      setStatus({
+        type: "error",
+        message: err?.message || "Couldn't update your profile.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading && !user) {
+    return (
+      <div className="border border-border bg-card p-6 md:p-8">
+        <p className="text-sm text-muted-foreground">Loading your profile…</p>
+      </div>
+    );
+  }
+
   return (
     <form
       onSubmit={handleSubmit}
       className="border border-border bg-card p-6 md:p-8 space-y-8"
     >
-      <section className="space-y-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">
-              Personal information
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Update your name and contact email.
-            </p>
-          </div>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Profile</h2>
+          <p className="text-sm text-muted-foreground">
+            Update your personal details and account credentials.
+          </p>
+        </div>
+        {user?.emailVerified !== false && (
           <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
             <Check className="h-3.5 w-3.5" />
             Verified
           </span>
-        </div>
+        )}
+      </div>
 
+      <SectionGroup title="Personal Information">
         <div className="grid gap-5 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="fullName">Full name</Label>
+            <Label htmlFor="lastName">Last Name</Label>
             <Input
-              id="fullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Your full name"
+              id="lastName"
+              value={form.lastName}
+              onChange={(e) => set("lastName", e.target.value)}
+              placeholder="Dela Cruz"
             />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="firstName">First Name</Label>
+            <Input
+              id="firstName"
+              value={form.firstName}
+              onChange={(e) => set("firstName", e.target.value)}
+              placeholder="Juan"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="middleName">Middle Name (Optional)</Label>
+            <Input
+              id="middleName"
+              value={form.middleName}
+              onChange={(e) => set("middleName", e.target.value)}
+              placeholder="Santos"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="contactNumber">Contact Number</Label>
+            <Input
+              id="contactNumber"
+              type="tel"
+              value={form.contactNumber}
+              onChange={(e) => set("contactNumber", e.target.value)}
+              placeholder="09XX XXX XXXX"
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="address">Address</Label>
+            <Input
+              id="address"
+              value={form.address}
+              onChange={(e) => set("address", e.target.value)}
+              placeholder="Street, Barangay, City/Municipality, Province"
+            />
+          </div>
+        </div>
+      </SectionGroup>
+
+      <SectionGroup title="Account">
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              value={form.username}
+              onChange={(e) => set("username", e.target.value)}
+              placeholder="juandelacruz"
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={form.email}
+              onChange={(e) => set("email", e.target.value)}
               placeholder="you@example.com"
             />
           </div>
-        </div>
-      </section>
-
-      <div className="h-px bg-border" />
-
-      <section className="space-y-5">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Password</h2>
-          <p className="text-sm text-muted-foreground">
-            Use a strong password you don't reuse elsewhere.
-          </p>
-        </div>
-        <div className="grid gap-5 md:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="currentPassword">Current password</Label>
+            <Label htmlFor="password">Password</Label>
             <Input
-              id="currentPassword"
+              id="password"
               type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              autoComplete="current-password"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="newPassword">New password</Label>
-            <Input
-              id="newPassword"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              value={form.password}
+              onChange={(e) => set("password", e.target.value)}
+              placeholder="Leave blank to keep current password"
               autoComplete="new-password"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm new password</Label>
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input
               id="confirmPassword"
               type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              value={form.confirmPassword}
+              onChange={(e) => set("confirmPassword", e.target.value)}
+              placeholder="Repeat new password"
               autoComplete="new-password"
             />
           </div>
         </div>
-      </section>
+      </SectionGroup>
 
-      <div className="flex justify-end gap-3 border-t border-border pt-6">
-        <Button type="button" variant="outline">
-          Cancel
-        </Button>
-        <Button type="submit">Save changes</Button>
+      <div className="flex items-center justify-between gap-3 border-t border-border pt-6">
+        <FormStatus status={status} />
+        <div className="ml-auto flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={resetForm}
+            disabled={saving || !dirty}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={saving || !dirty}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save changes
+          </Button>
+        </div>
       </div>
     </form>
   );
 }
 
 function OrganizationTab() {
+  const { user } = useAuth();
+  // NOTE: same assumption as ProfileTab — add `updateOrganization` to the
+  // auth store (or swap in whatever endpoint owns this data).
+  const updateOrganization = useAuthStore((s) => s.updateOrganization);
+
   const [association, setAssociation] = useState("");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -245,6 +444,13 @@ function OrganizationTab() {
   const fileInputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const comboRef = useRef(null);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState(null);
+
+  useEffect(() => {
+    if (user?.association) setAssociation(user.association);
+  }, [user]);
+
   useEffect(() => {
     if (!open) return;
     function onDocClick(e) {
@@ -272,6 +478,7 @@ function OrganizationTab() {
       name: f.name,
       size: f.size,
       progress: 0,
+      file: f,
     }));
     setFiles((prev) => [...prev, ...next]);
     next.forEach((file) => simulateUpload(file.id));
@@ -298,9 +505,34 @@ function OrganizationTab() {
   function removeFile(id) {
     setFiles((prev) => prev.filter((f) => f.id !== id));
   }
-  function handleSubmit(e) {
+
+  async function handleSubmit(e) {
     e.preventDefault();
+    if (!association) {
+      setStatus({ type: "error", message: "Select an association first." });
+      return;
+    }
+    setSaving(true);
+    setStatus(null);
+    try {
+      if (typeof updateOrganization !== "function") {
+        throw new Error("Organization updates aren't wired up yet.");
+      }
+      await updateOrganization({
+        association,
+        files: files.map((f) => f.file),
+      });
+      setStatus({ type: "success", message: "Organization details saved." });
+    } catch (err) {
+      setStatus({
+        type: "error",
+        message: err?.message || "Couldn't save organization details.",
+      });
+    } finally {
+      setSaving(false);
+    }
   }
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -477,11 +709,17 @@ function OrganizationTab() {
         )}
       </section>
 
-      <div className="flex justify-end gap-3 border-t border-border pt-6">
-        <Button type="button" variant="outline">
-          Cancel
-        </Button>
-        <Button type="submit">Save organization</Button>
+      <div className="flex items-center justify-between gap-3 border-t border-border pt-6">
+        <FormStatus status={status} />
+        <div className="ml-auto flex gap-3">
+          <Button type="button" variant="outline" disabled={saving}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={saving}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save organization
+          </Button>
+        </div>
       </div>
     </form>
   );

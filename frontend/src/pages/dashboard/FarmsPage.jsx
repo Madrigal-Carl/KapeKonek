@@ -217,7 +217,7 @@ export function FarmsPage() {
         {!isViewOnly && (
           <Button
             onClick={() =>
-              !isManager && !isKaluppa ? setAddChooserOpen(true) : openAddNew()
+              !isManager ? setAddChooserOpen(true) : openAddNew()
             }
             className="gap-2"
           >
