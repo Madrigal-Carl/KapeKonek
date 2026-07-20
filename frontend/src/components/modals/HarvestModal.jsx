@@ -26,7 +26,7 @@ export function HarvestModal({ mode, initial, isManager, onClose, onSave }) {
 
   const submit = (e) => {
     e?.preventDefault();
-    if (!form.name || !form.farm) return;
+    if (!form.farm) return;
     onSave(form);
   };
 
@@ -43,7 +43,7 @@ export function HarvestModal({ mode, initial, isManager, onClose, onSave }) {
           <div>
             <p className="label-mono mb-1 text-accent">Harvest</p>
             <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              {mode === "add" ? "Add New Harvest" : `Edit ${initial.name}`}
+              {mode === "add" ? "Add New Harvest" : `Edit ${initial.id}`}
             </h2>
           </div>
           <IconButton icon={X} label="Close" onClick={onClose} />
@@ -51,14 +51,6 @@ export function HarvestModal({ mode, initial, isManager, onClose, onSave }) {
 
         <form onSubmit={submit} className="flex-1 overflow-y-auto px-6 py-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Name" full>
-              <TextInput
-                value={form.name}
-                onChange={(v) => set("name", v)}
-                placeholder="e.g. Spring Arabica Lot A"
-              />
-            </Field>
-
             <Field label="Category">
               <div className="relative">
                 <select

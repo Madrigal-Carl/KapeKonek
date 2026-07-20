@@ -24,7 +24,6 @@ export function HarvestPage() {
       mode: "add",
       data: {
         id: nextId(),
-        name: "",
         category: HARVEST_CATEGORY_OPTIONS[0],
         variety: "Arabica",
         yieldKg: 0,
@@ -46,13 +45,10 @@ export function HarvestPage() {
 
   const columns = [
     {
-      key: "name",
-      label: "Coffee",
+      key: "farm",
+      label: "Farm",
       render: (row) => (
-        <div>
-          <div className="font-semibold text-foreground">{row.name}</div>
-          <div className="label-mono text-muted-foreground">{row.id}</div>
-        </div>
+        <div className="font-semibold text-foreground">{row.farm}</div>
       ),
     },
     {
@@ -145,11 +141,9 @@ export function HarvestPage() {
         rows={rows}
         columns={columns}
         searchKeys={[
-          (row, query) =>
-            row.name.toLowerCase().includes(query) ||
-            row.id.toLowerCase().includes(query),
+          (row, query) => (row.farm || "").toLowerCase().includes(query),
         ]}
-        searchPlaceholder="Search by name or ID…"
+        searchPlaceholder="Search by farm…"
         filters={filters}
         emptyTitle="No harvests found"
         emptyDescription="Try adjusting your search or add a new harvest."
@@ -173,7 +167,7 @@ export function HarvestPage() {
             <>
               This will permanently remove{" "}
               <span className="font-semibold text-foreground">
-                {confirmDelete.id} ({confirmDelete.name})
+                {confirmDelete.id}
               </span>
               . This action cannot be undone.
             </>
