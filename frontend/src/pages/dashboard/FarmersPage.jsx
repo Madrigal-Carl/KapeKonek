@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Archive, Check, Pencil, Plus, X } from "lucide-react";
 import { Button, IconButton } from "@/components/ui";
 import { fmtDate } from "@/utils/format";
 import { DataTable, PageSection, StatusPill } from "@/components/dashboard";
@@ -8,7 +8,7 @@ import { ROLES } from "@/constants/roles";
 import { DEFAULT_PASSWORD, FARMERS } from "@/constants/data";
 import {
   FarmerModal,
-  DeleteConfirmModal,
+  ArchiveConfirmModal,
   AccountReviewModal,
   AssociationReviewModal,
 } from "@/components/modals";
@@ -163,9 +163,8 @@ export function FarmersPage() {
                   onClick={() => onEdit(r)}
                 />
                 <IconButton
-                  icon={Trash2}
-                  label="Delete"
-                  tone="danger"
+                  icon={Archive}
+                  label="Archive"
                   onClick={() => onDelete(r)}
                 />
               </>
@@ -258,15 +257,15 @@ export function FarmersPage() {
       )}
 
       {confirmDelete && canManage && (
-        <DeleteConfirmModal
-          title="Delete farmer?"
+        <ArchiveConfirmModal
+          title="Archive farmer?"
           description={
             <>
-              This will permanently remove{" "}
+              This will archive{" "}
               <span className="font-semibold text-foreground">
                 {confirmDelete.fullName}
               </span>
-              . This action cannot be undone.
+              . It will no longer appear in active lists.
             </>
           }
           onCancel={() => setConfirmDelete(null)}

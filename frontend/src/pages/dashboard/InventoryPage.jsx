@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Plus, Star, Tag, Trash2 } from "lucide-react";
+import { Archive, Pencil, Plus, Star, Tag } from "lucide-react";
 import { IconButton, Button } from "@/components/ui";
 import { fmtPrice } from "@/utils/format";
 import { DataTable, PageSection, StatusPill } from "@/components/dashboard";
@@ -9,7 +9,7 @@ import { PRODUCTS, PRODUCT_CATEGORY_OPTIONS } from "@/constants/data";
 import {
   ProductModal,
   PriceModal,
-  DeleteConfirmModal,
+  ArchiveConfirmModal,
 } from "@/components/modals";
 
 export function InventoryPage() {
@@ -131,9 +131,8 @@ export function InventoryPage() {
                 onClick={() => setModal({ mode: "edit", data: { ...row } })}
               />
               <IconButton
-                icon={Trash2}
-                label="Delete"
-                tone="danger"
+                icon={Archive}
+                label="Archive"
                 onClick={() => setConfirmDelete(row)}
               />
             </>
@@ -217,16 +216,16 @@ export function InventoryPage() {
       )}
 
       {confirmDelete && !isDTI && (
-        <DeleteConfirmModal
-          title="Remove product?"
+        <ArchiveConfirmModal
+          title="Archive product?"
           description={
             <>
-              You're about to delete{" "}
+              You're about to archive{" "}
               <span className="font-semibold text-foreground">
                 {confirmDelete.name}
               </span>{" "}
-              <span className="label-mono">({confirmDelete.id})</span>. This
-              action cannot be undone.
+              <span className="label-mono">({confirmDelete.id})</span>. It will
+              no longer appear in active lists.
             </>
           }
           onCancel={() => setConfirmDelete(null)}

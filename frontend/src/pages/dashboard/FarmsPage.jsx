@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Archive, Pencil, Plus } from "lucide-react";
 import { Button, IconButton } from "@/components/ui";
 import { DataTable } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
@@ -10,7 +10,7 @@ import {
   FarmModal,
   AddChooserModal,
   ExistingFarmModal,
-  DeleteConfirmModal,
+  ArchiveConfirmModal,
 } from "@/components/modals";
 
 export function FarmsPage() {
@@ -171,9 +171,8 @@ export function FarmsPage() {
               />
             )}
             <IconButton
-              icon={Trash2}
-              label="Delete"
-              tone="danger"
+              icon={Archive}
+              label="Archive"
               onClick={() => onDelete(r)}
             />
           </div>
@@ -274,15 +273,15 @@ export function FarmsPage() {
       )}
 
       {confirmDelete && !isViewOnly && (
-        <DeleteConfirmModal
-          title="Delete farm?"
+        <ArchiveConfirmModal
+          title="Archive farm?"
           description={
             <>
-              Are you sure you want to delete{" "}
+              Are you sure you want to archive{" "}
               <strong className="text-foreground">
                 {confirmDelete.id} ({confirmDelete.address})
               </strong>
-              ? This action cannot be undone.
+              ? It will no longer appear in active lists.
             </>
           }
           onCancel={() => setConfirmDelete(null)}

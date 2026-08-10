@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Archive, Pencil, Plus } from "lucide-react";
 import { Button, IconButton } from "@/components/ui";
 import { fmtDate } from "@/utils/format";
 import { DataTable } from "@/components/dashboard";
 import { DEFAULT_PASSWORD, MANAGERS } from "@/constants/data";
-import { ManagerModal, DeleteConfirmModal } from "@/components/modals";
+import { ManagerModal, ArchiveConfirmModal } from "@/components/modals";
 
 export function ManagersPage() {
   const [rows, setRows] = useState(MANAGERS);
@@ -85,9 +85,8 @@ export function ManagersPage() {
             }
           />
           <IconButton
-            icon={Trash2}
-            label="Delete"
-            tone="danger"
+            icon={Archive}
+            label="Archive"
             onClick={() => setConfirmDelete(row)}
           />
         </div>
@@ -152,15 +151,15 @@ export function ManagersPage() {
       )}
 
       {confirmDelete && (
-        <DeleteConfirmModal
-          title="Delete manager?"
+        <ArchiveConfirmModal
+          title="Archive manager?"
           description={
             <>
-              This will permanently remove{" "}
+              This will archive{" "}
               <span className="font-semibold text-foreground">
                 {confirmDelete.fullName}
               </span>
-              . This action cannot be undone.
+              . It will no longer appear in active lists.
             </>
           }
           onCancel={() => setConfirmDelete(null)}

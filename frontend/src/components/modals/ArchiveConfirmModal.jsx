@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui";
 
-export function DeleteConfirmModal({
-  title = "Delete item?",
+export function ArchiveConfirmModal({
+  title = "Archive item?",
   description,
-  confirmLabel = "Delete",
+  confirmLabel = "Archive",
   onCancel,
   onConfirm,
 }) {

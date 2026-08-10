@@ -1,6 +1,6 @@
 export { AccountReviewModal } from "./AccountReviewModal";
 export { AssociationReviewModal } from "./AssociationReviewModal";
-export { DeleteConfirmModal } from "./DeleteConfirmModal";
+export { ArchiveConfirmModal } from "./ArchiveConfirmModal";
 export { FarmerModal } from "./FarmerModal";
 export { AddChooserModal } from "./AddChooserModal";
 export { ExistingFarmModal } from "./ExistingFarmModal";

@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Archive, Pencil, Plus } from "lucide-react";
 import { IconButton, Button } from "@/components/ui";
 import { fmtDate } from "@/utils/format";
 import { DataTable } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
 import { HARVESTS, HARVEST_CATEGORY_OPTIONS } from "@/constants/data";
-import { HarvestModal, DeleteConfirmModal } from "@/components/modals";
+import { HarvestModal, ArchiveConfirmModal } from "@/components/modals";
 
 export function HarvestPage() {
   const { role } = useAuth();
@@ -96,9 +96,8 @@ export function HarvestPage() {
               onClick={() => setModal({ mode: "edit", data: { ...row } })}
             />
             <IconButton
-              icon={Trash2}
-              label="Delete"
-              tone="danger"
+              icon={Archive}
+              label="Archive"
               onClick={() => setConfirmDelete(row)}
             />
           </div>
@@ -161,15 +160,15 @@ export function HarvestPage() {
       )}
 
       {confirmDelete && !isViewOnly && (
-        <DeleteConfirmModal
-          title="Delete harvest?"
+        <ArchiveConfirmModal
+          title="Archive harvest?"
           description={
             <>
-              This will permanently remove{" "}
+              This will archive{" "}
               <span className="font-semibold text-foreground">
                 {confirmDelete.id}
               </span>
-              . This action cannot be undone.
+              . It will no longer appear in active lists.
             </>
           }
           onCancel={() => setConfirmDelete(null)}
