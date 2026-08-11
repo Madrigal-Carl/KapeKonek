@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import {
   Download,
   TrendingUp,
@@ -7,7 +7,6 @@ import {
   Sprout,
   Bean,
   DollarSign,
-  ChevronDown,
   X,
   SlidersHorizontal,
 } from "lucide-react";
@@ -202,20 +201,13 @@ const TABS = [
   { id: "harvest", label: "Harvest", icon: Bean },
 ];
 
-const DATE_RANGE_OPTIONS = [
-  { value: "all", label: "All Time" },
-  { value: "today", label: "This Day" },
-  { value: "month", label: "This Month" },
-  { value: "semiannual", label: "This Semiannual" },
-  { value: "year", label: "This Year" },
-];
-
 const ASSOCIATION_FILTER_OPTIONS = ["All Associations", ...ASSOCIATION_OPTIONS];
 const CATEGORY_FILTER_OPTIONS = ["All Categories", ...CATEGORIES];
 const FARMER_FILTER_OPTIONS = ["All Farmers", ...FARMER_NAMES];
 
 const DEFAULT_FILTERS = {
-  dateRange: "all",
+  dateFrom: "",
+  dateTo: "",
   association: "All Associations",
   category: "All Categories",
   farmer: "All Farmers",
@@ -233,11 +225,15 @@ export function ReportsPage() {
 
   const activeFilterChips = useMemo(() => {
     const chips = [];
-    if (filters.dateRange !== "all") {
+    if (filters.dateFrom || filters.dateTo) {
       chips.push({
         key: "dateRange",
-        label: DATE_RANGE_OPTIONS.find((o) => o.value === filters.dateRange)
-          ?.label,
+        label: [
+          filters.dateFrom ? `From ${filters.dateFrom}` : null,
+          filters.dateTo ? `To ${filters.dateTo}` : null,
+        ]
+          .filter(Boolean)
+          .join(" · "),
       });
     }
     if (filters.association !== "All Associations") {
@@ -252,12 +248,21 @@ export function ReportsPage() {
     return chips;
   }, [filters, canFilterByFarmer]);
 
-  const clearChip = (key) => setFilter(key, DEFAULT_FILTERS[key]);
+  const clearChip = (key) => {
+    if (key === "dateRange") {
+      setFilters((f) => ({ ...f, dateFrom: "", dateTo: "" }));
+      return;
+    }
+    setFilter(key, DEFAULT_FILTERS[key]);
+  };
 
   // ---- Filtered datasets ----
   const filteredSalesOrders = useMemo(
-    () => SALES_ORDERS.filter((o) => inDateRange(o.date, filters.dateRange)),
-    [filters.dateRange],
+    () =>
+      SALES_ORDERS.filter((o) =>
+        inDateRange(o.date, filters.dateFrom, filters.dateTo),
+      ),
+    [filters.dateFrom, filters.dateTo],
   );
 
   const filteredProducts = useMemo(
@@ -282,24 +287,29 @@ export function ReportsPage() {
     () =>
       HARVEST_REPORT.filter(
         (h) =>
-          inDateRange(h.harvestedAt, filters.dateRange) &&
+          inDateRange(h.harvestedAt, filters.dateFrom, filters.dateTo) &&
           (filters.category === "All Categories" ||
             h.category === filters.category) &&
           (filters.farmer === "All Farmers" || h.farmer === filters.farmer),
       ),
-    [filters.dateRange, filters.category, filters.farmer],
+    [filters.dateFrom, filters.dateTo, filters.category, filters.farmer],
   );
 
   const filteredFarmers = useMemo(
     () =>
       FARMERS_REPORT.filter(
         (f) =>
-          inDateRange(f.joinedAt, filters.dateRange) &&
+          inDateRange(f.joinedAt, filters.dateFrom, filters.dateTo) &&
           (filters.association === "All Associations" ||
             f.association === filters.association) &&
           (filters.farmer === "All Farmers" || f.fullName === filters.farmer),
       ),
-    [filters.dateRange, filters.association, filters.farmer],
+    [
+      filters.dateFrom,
+      filters.dateTo,
+      filters.association,
+      filters.farmer,
+    ],
   );
 
   return (
@@ -362,15 +372,32 @@ export function ReportsPage() {
         <div
           className={[
             "grid grid-cols-1 gap-3 sm:grid-cols-2",
-            canFilterByFarmer ? "lg:grid-cols-4" : "lg:grid-cols-3",
+            canFilterByFarmer ? "lg:grid-cols-5" : "lg:grid-cols-4",
           ].join(" ")}
         >
-          <SelectFilter
-            label="Date Range"
-            value={filters.dateRange}
-            onChange={(v) => setFilter("dateRange", v)}
-            options={DATE_RANGE_OPTIONS}
-          />
+          <div>
+            <span className="label-mono mb-1.5 block text-muted-foreground">
+              From
+            </span>
+            <input
+              type="date"
+              value={filters.dateFrom}
+              onChange={(e) => setFilter("dateFrom", e.target.value)}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
+            />
+          </div>
+
+          <div>
+            <span className="label-mono mb-1.5 block text-muted-foreground">
+              To
+            </span>
+            <input
+              type="date"
+              value={filters.dateTo}
+              onChange={(e) => setFilter("dateTo", e.target.value)}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
+            />
+          </div>
 
           <div>
             <span className="label-mono mb-1.5 block text-muted-foreground">
@@ -438,31 +465,6 @@ export function ReportsPage() {
       )}
       {tab === "harvest" && <HarvestTab harvests={filteredHarvests} />}
     </div>
-  );
-}
-
-// ============ FILTER SELECT (native, used for Date Range) ============
-function SelectFilter({ label, value, onChange, options }) {
-  return (
-    <label className="block">
-      <span className="label-mono mb-1.5 block text-muted-foreground">
-        {label}
-      </span>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none rounded-lg border border-border bg-background py-2.5 pl-3 pr-9 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
-        >
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      </div>
-    </label>
   );
 }
 
@@ -781,10 +783,7 @@ function SalesLineChart({ data, unit = "₱", hideOrders = false }) {
   const W = 800;
   const H = 240;
   const PAD = 40;
-  const gradientId = useMemo(
-    () => `chart-fill-${Math.random().toString(36).slice(2)}`,
-    [],
-  );
+  const gradientId = useId();
   const max = Math.max(...data.map((d) => d.revenue), 1);
   const stepX = (W - PAD * 2) / Math.max(data.length - 1, 1);
   const pts = data.map((d, i) => ({
@@ -1054,33 +1053,17 @@ function trendPct(series) {
   return Math.round(((curr - prev) / prev) * 100);
 }
 
-function inDateRange(dateStr, range) {
-  if (range === "all") return true;
-  const d = new Date(dateStr);
+function inDateRange(dateStr, from, to) {
+  if (!from && !to) return true;
+  const d = new Date(`${dateStr}T00:00:00`);
   if (Number.isNaN(d.getTime())) return true;
-  const now = new Date();
-
-  if (range === "today") {
-    return (
-      d.getFullYear() === now.getFullYear() &&
-      d.getMonth() === now.getMonth() &&
-      d.getDate() === now.getDate()
-    );
+  if (from) {
+    const f = new Date(`${from}T00:00:00`);
+    if (d < f) return false;
   }
-  if (range === "month") {
-    return (
-      d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
-    );
-  }
-  if (range === "semiannual") {
-    const half = (m) => (m < 6 ? 0 : 1);
-    return (
-      d.getFullYear() === now.getFullYear() &&
-      half(d.getMonth()) === half(now.getMonth())
-    );
-  }
-  if (range === "year") {
-    return d.getFullYear() === now.getFullYear();
+  if (to) {
+    const t = new Date(`${to}T23:59:59.999`);
+    if (d > t) return false;
   }
   return true;
 }

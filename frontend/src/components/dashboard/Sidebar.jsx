@@ -5,6 +5,14 @@ import { getNavSectionsForRole } from "@/constants/navigation";
 import { Button } from "@/components/ui";
 import useAuth from "@/hooks/useAuth";
 
+const ROLE_LABELS = {
+  buyer: "Buyer",
+  farmer: "Farmer",
+  manager: "Manager",
+  dti: "DTI",
+  kaluppa: "Kaluppa",
+};
+
 export function Sidebar({ open, onClose }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -13,6 +21,20 @@ export function Sidebar({ open, onClose }) {
   const [loggingOut, setLoggingOut] = useState(false);
 
   const navSections = getNavSectionsForRole(user?.role);
+
+  const fullName =
+    [user?.firstName, user?.middleName, user?.lastName]
+      .filter(Boolean)
+      .join(" ") || user?.username ||
+    "Guest";
+  const initials =
+    [user?.firstName, user?.lastName]
+      .filter(Boolean)
+      .map((n) => n[0]?.toUpperCase())
+      .join("") || "U";
+  const roleLabel =
+    ROLE_LABELS[user?.role] ??
+    (user?.role ? String(user.role) : "Member");
 
   const isActive = (to, exact) =>
     to
@@ -116,6 +138,29 @@ export function Sidebar({ open, onClose }) {
             </div>
           ))}
         </nav>
+
+        {/* Profile */}
+        {user && (
+          <Link
+            to={`/${user.role}/settings`}
+            onClick={onClose}
+            className="block border-t border-sidebar-border p-4 transition-colors hover:bg-neutral-warm/60"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-semibold text-primary-foreground">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-foreground">
+                  {fullName}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {roleLabel}
+                </p>
+              </div>
+            </div>
+          </Link>
+        )}
       </aside>
 
       {logoutOpen && (
