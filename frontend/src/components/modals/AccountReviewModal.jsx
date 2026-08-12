@@ -65,7 +65,7 @@ export function AccountReviewModal({ row, action, onCancel, onConfirm }) {
             </div>
             <div>
               <p className="label-mono mb-1 text-muted-foreground">Farmer ID</p>
-              <p className="text-sm font-semibold text-foreground">{row.id}</p>
+              <p className="text-sm font-semibold text-foreground">{row._id}</p>
             </div>
             <div>
               <p className="label-mono mb-1 text-muted-foreground">Applied</p>

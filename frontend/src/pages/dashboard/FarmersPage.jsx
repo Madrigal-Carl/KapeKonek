@@ -2,16 +2,22 @@ import { useState } from "react";
 import { Archive, Check, Pencil, Plus, X } from "lucide-react";
 import { Button, IconButton } from "@/components/ui";
 import { fmtDate } from "@/utils/format";
-import { DataTable, PageSection, StatusPill } from "@/components/dashboard";
+import { DataTable, StatusPill } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
-import { DEFAULT_PASSWORD, FARMERS } from "@/constants/data";
+import { DEFAULT_PASSWORD } from "@/constants/data";
 import {
   FarmerModal,
   ArchiveConfirmModal,
   AccountReviewModal,
   AssociationReviewModal,
 } from "@/components/modals";
+import {
+  useDeleteUser,
+  useReviewAccount,
+  useReviewAssociation,
+  useUsers,
+} from "@/hooks/useUsers";
 
 export function FarmersPage() {
   const { role } = useAuth();
@@ -24,56 +30,21 @@ export function FarmersPage() {
   const canReviewAccount = isDti;
   const canReviewAssociation = isManager;
 
-  const [rows, setRows] = useState(FARMERS);
+  const { data: farmers = [], isLoading } = useUsers({
+    role: "farmer",
+    all: true,
+  });
+  const deleteUser = useDeleteUser();
+  const reviewAccount = useReviewAccount();
+  const reviewAssociation = useReviewAssociation();
+
   const [modal, setModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [confirmAccount, setConfirmAccount] = useState(null);
   const [confirmAssociation, setConfirmAssociation] = useState(null);
 
-  const nextId = () => `FR-${String(rows.length + 1).padStart(3, "0")}`;
-
-  const handleSave = (data) => {
-    setRows((r) => {
-      const exists = r.find((x) => x.id === data.id);
-      if (exists)
-        return r.map((x) => (x.id === data.id ? { ...x, ...data } : x));
-      return [
-        ...r,
-        {
-          ...data,
-          farmCount: 0,
-          status: "pending",
-          associationStatus: "pending",
-          joinedAt: new Date().toISOString().slice(0, 10),
-        },
-      ];
-    });
-    setModal(null);
-  };
-
-  const setStatus = (id, status, remarks) =>
-    setRows((r) =>
-      r.map((x) =>
-        x.id === id
-          ? {
-              ...x,
-              status,
-              denyRemarks: status === "denied" ? (remarks ?? "") : undefined,
-            }
-          : x,
-      ),
-    );
-
-  const setAssociationStatus = (id, associationStatus) =>
-    setRows((r) =>
-      r.map((x) => (x.id === id ? { ...x, associationStatus } : x)),
-    );
-
   const onEdit = (r) =>
-    setModal({
-      mode: "edit",
-      data: { ...r, password: DEFAULT_PASSWORD, files: [] },
-    });
+    setModal({ mode: "edit", data: { ...r, password: DEFAULT_PASSWORD } });
   const onDelete = (r) => setConfirmDelete(r);
   const onApproveAccount = (r) =>
     setConfirmAccount({ row: r, action: "approve" });
@@ -91,21 +62,23 @@ export function FarmersPage() {
         <>
           <div className="font-semibold text-foreground">{r.fullName}</div>
           <div className="label-mono text-muted-foreground">
-            {r.id} · {r.email}
+            {r._id} · {r.email}
           </div>
         </>
       ),
     },
     { key: "farmCount", label: "Farms" },
     {
-      key: "status",
+      key: "accountStatus",
       label: "Account",
-      render: (r) => <StatusPill status={r.status} />,
+      render: (r) =>
+        r.accountStatus ? <StatusPill status={r.accountStatus} /> : "—",
     },
     {
       key: "associationStatus",
       label: "Association",
-      render: (r) => <StatusPill status={r.associationStatus} />,
+      render: (r) =>
+        r.associationStatus ? <StatusPill status={r.associationStatus} /> : "—",
     },
     {
       key: "joinedAt",
@@ -117,7 +90,8 @@ export function FarmersPage() {
       label: "",
       align: "right",
       render: (r) => {
-        const showAccountActions = canReviewAccount && r.status === "pending";
+        const showAccountActions =
+          canReviewAccount && r.accountStatus === "pending";
         const showAssociationActions =
           canReviewAssociation && r.associationStatus === "pending";
         const hasAnyAction = showAccountActions || canManage;
@@ -181,15 +155,15 @@ export function FarmersPage() {
 
   const filters = [
     {
-      key: "status",
+      key: "accountStatus",
       initialValue: "all",
       options: [
         { value: "all", label: "All Statuses" },
         { value: "pending", label: "Pending" },
         { value: "approved", label: "Approved" },
-        { value: "denied", label: "Denied" },
+        { value: "rejected", label: "Rejected" },
       ],
-      matcher: (row, value) => row.status === value,
+      matcher: (row, value) => row.accountStatus === value,
     },
   ];
 
@@ -215,11 +189,14 @@ export function FarmersPage() {
               setModal({
                 mode: "add",
                 data: {
-                  id: nextId(),
-                  fullName: "",
+                  lastName: "",
+                  firstName: "",
+                  middleName: "",
+                  username: "",
                   email: "",
+                  contactNumber: "",
+                  address: "",
                   password: DEFAULT_PASSWORD,
-                  files: [],
                 },
               })
             }
@@ -231,14 +208,15 @@ export function FarmersPage() {
       </div>
 
       <DataTable
-        rows={rows}
+        rows={farmers}
         columns={columns}
-        searchKeys={["fullName", "email", "id"]}
+        searchKeys={["fullName", "email", "_id"]}
         searchPlaceholder="Search by name, email, or ID…"
         filters={filters}
         pageSize={5}
-        getRowKey={(r) => r.id}
+        getRowKey={(r) => r._id}
         minWidth="860px"
+        loading={isLoading}
         emptyTitle="No farmers found"
         emptyDescription={
           canManage
@@ -252,7 +230,6 @@ export function FarmersPage() {
           mode={modal.mode}
           initial={modal.data}
           onClose={() => setModal(null)}
-          onSave={handleSave}
         />
       )}
 
@@ -270,8 +247,9 @@ export function FarmersPage() {
           }
           onCancel={() => setConfirmDelete(null)}
           onConfirm={() => {
-            setRows((r) => r.filter((x) => x.id !== confirmDelete.id));
-            setConfirmDelete(null);
+            deleteUser.mutate(confirmDelete._id, {
+              onSuccess: () => setConfirmDelete(null),
+            });
           }}
         />
       )}
@@ -282,12 +260,17 @@ export function FarmersPage() {
           action={confirmAccount.action}
           onCancel={() => setConfirmAccount(null)}
           onConfirm={(remarks) => {
-            setStatus(
-              confirmAccount.row.id,
-              confirmAccount.action === "approve" ? "approved" : "denied",
-              remarks,
+            reviewAccount.mutate(
+              {
+                id: confirmAccount.row._id,
+                data: {
+                  status:
+                    confirmAccount.action === "approve" ? "approved" : "rejected",
+                  ...(remarks ? { remarks } : {}),
+                },
+              },
+              { onSuccess: () => setConfirmAccount(null) },
             );
-            setConfirmAccount(null);
           }}
         />
       )}
@@ -297,12 +280,20 @@ export function FarmersPage() {
           row={confirmAssociation.row}
           action={confirmAssociation.action}
           onCancel={() => setConfirmAssociation(null)}
-          onConfirm={() => {
-            setAssociationStatus(
-              confirmAssociation.row.id,
-              confirmAssociation.action === "approve" ? "approved" : "denied",
+          onConfirm={(remarks) => {
+            reviewAssociation.mutate(
+              {
+                id: confirmAssociation.row._id,
+                data: {
+                  status:
+                    confirmAssociation.action === "approve"
+                      ? "approved"
+                      : "rejected",
+                  ...(remarks ? { remarks } : {}),
+                },
+              },
+              { onSuccess: () => setConfirmAssociation(null) },
             );
-            setConfirmAssociation(null);
           }}
         />
       )}

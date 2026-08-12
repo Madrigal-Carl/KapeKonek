@@ -8,6 +8,7 @@ import { errorHandler } from "./middlewares/error.middleware.js";
 import uploadRoutes from "./routes/upload.routes.js";
 
 import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use(morgan("dev"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/uploads", uploadRoutes);
+app.use("/api/users", userRoutes);
 
 app.use(errorHandler);
 

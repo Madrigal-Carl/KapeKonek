@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RotateCcw, X } from "lucide-react";
 import {
   Button,
@@ -7,11 +7,57 @@ import {
   TextInput,
   MultiSelect,
 } from "@/components/ui";
-import { DEFAULT_PASSWORD, FARMER_OPTIONS } from "@/constants/data";
+import FieldError from "@/components/ui/FieldError";
+import { DEFAULT_PASSWORD } from "@/constants/data";
+import {
+  createManagerSchema,
+  getFieldErrors,
+  updateUserSchema,
+} from "@/schemas/user.schema";
+import {
+  useAvailableFarmers,
+  useCreateUser,
+  useUpdateUser,
+} from "@/hooks/useUsers";
 
-export function ManagerModal({ mode, initial, onClose, onSave }) {
-  const [form, setForm] = useState(initial);
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+export function ManagerModal({ mode, initial, onClose }) {
+  const [form, setForm] = useState(() => ({
+    ...initial,
+    assignedFarmers: (initial.assignedFarmers ?? []).map(
+      (farmer) => farmer._id ?? farmer,
+    ),
+  }));
+  const [resetPassword, setResetPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const createUser = useCreateUser();
+  const updateUser = useUpdateUser();
+  const isPending = createUser.isPending || updateUser.isPending;
+  const set = (k, v) => {
+    setForm((f) => ({ ...f, [k]: v }));
+    setErrors((current) => {
+      if (!current[k]) return current;
+      const next = { ...current };
+      delete next[k];
+      return next;
+    });
+  };
+
+  const { data: availableFarmers = [] } = useAvailableFarmers();
+
+  const farmerOptions = useMemo(() => {
+    const assigned = (initial.assignedFarmers ?? []).map((farmer) => ({
+      value: farmer._id ?? farmer,
+      label: farmer.fullName ?? farmer,
+    }));
+    const seen = new Set(assigned.map((option) => option.value));
+
+    return [
+      ...assigned,
+      ...availableFarmers
+        .filter((farmer) => !seen.has(farmer._id))
+        .map((farmer) => ({ value: farmer._id, label: farmer.fullName })),
+    ];
+  }, [initial.assignedFarmers, availableFarmers]);
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -21,14 +67,10 @@ export function ManagerModal({ mode, initial, onClose, onSave }) {
 
   const submit = (e) => {
     e?.preventDefault();
-    if (
-      !form.lastName?.trim() ||
-      !form.firstName?.trim() ||
-      !form.email?.trim()
-    )
-      return;
-    onSave({
-      ...form,
+
+    const association = form.association?.trim() || "";
+
+    const payload = {
       lastName: form.lastName.trim(),
       firstName: form.firstName.trim(),
       middleName: form.middleName?.trim() || "",
@@ -36,12 +78,30 @@ export function ManagerModal({ mode, initial, onClose, onSave }) {
       email: form.email.trim(),
       contactNumber: form.contactNumber?.trim() || "",
       address: form.address?.trim() || "",
-      association: form.association?.trim() || "",
-      fullName: [form.firstName, form.middleName, form.lastName]
-        .filter(Boolean)
-        .join(" ")
-        .trim(),
-    });
+      ...(association ? { association } : {}),
+      assignedFarmers: form.assignedFarmers || [],
+      ...(mode === "add" || resetPassword
+        ? { password: DEFAULT_PASSWORD }
+        : {}),
+    };
+
+    const schema = mode === "edit" ? updateUserSchema : createManagerSchema;
+    const result = schema.safeParse(payload);
+
+    if (!result.success) {
+      setErrors(getFieldErrors(result.error));
+      return;
+    }
+
+    setErrors({});
+
+    const mutation = mode === "edit" ? updateUser : createUser;
+    const variables =
+      mode === "edit"
+        ? { id: initial._id, data: payload }
+        : { ...payload, role: "manager" };
+
+    mutation.mutate(variables, { onSuccess: onClose });
   };
 
   const modalTitle =
@@ -79,6 +139,7 @@ export function ManagerModal({ mode, initial, onClose, onSave }) {
                     onChange={(e) => set("lastName", e.target.value)}
                     placeholder="Dela Cruz"
                   />
+                  <FieldError message={errors.lastName} />
                 </Field>
                 <Field label="First Name">
                   <TextInput
@@ -86,6 +147,7 @@ export function ManagerModal({ mode, initial, onClose, onSave }) {
                     onChange={(e) => set("firstName", e.target.value)}
                     placeholder="Juan"
                   />
+                  <FieldError message={errors.firstName} />
                 </Field>
                 <Field label="Middle Name (Optional)">
                   <TextInput
@@ -93,6 +155,7 @@ export function ManagerModal({ mode, initial, onClose, onSave }) {
                     onChange={(e) => set("middleName", e.target.value)}
                     placeholder="Santos"
                   />
+                  <FieldError message={errors.middleName} />
                 </Field>
                 <Field label="Contact Number">
                   <TextInput
@@ -101,6 +164,7 @@ export function ManagerModal({ mode, initial, onClose, onSave }) {
                     onChange={(e) => set("contactNumber", e.target.value)}
                     placeholder="09XX XXX XXXX"
                   />
+                  <FieldError message={errors.contactNumber} />
                 </Field>
                 <Field label="Address" full>
                   <TextInput
@@ -108,6 +172,7 @@ export function ManagerModal({ mode, initial, onClose, onSave }) {
                     onChange={(e) => set("address", e.target.value)}
                     placeholder="Street, Barangay, City/Municipality, Province"
                   />
+                  <FieldError message={errors.address} />
                 </Field>
               </div>
             </SectionGroup>
@@ -121,6 +186,7 @@ export function ManagerModal({ mode, initial, onClose, onSave }) {
                     onChange={(e) => set("username", e.target.value)}
                     placeholder="juandelacruz"
                   />
+                  <FieldError message={errors.username} />
                 </Field>
                 <Field label="Email" full>
                   <TextInput
@@ -129,6 +195,7 @@ export function ManagerModal({ mode, initial, onClose, onSave }) {
                     onChange={(e) => set("email", e.target.value)}
                     placeholder="name@kapekonek.ph"
                   />
+                  <FieldError message={errors.email} />
                 </Field>
                 <Field label="Default Password" full>
                   <TextInput
@@ -140,7 +207,10 @@ export function ManagerModal({ mode, initial, onClose, onSave }) {
                   {mode === "edit" && (
                     <button
                       type="button"
-                      onClick={() => set("password", DEFAULT_PASSWORD)}
+                      onClick={() => {
+                        set("password", DEFAULT_PASSWORD);
+                        setResetPassword(true);
+                      }}
                       className="mt-2 inline-flex items-center gap-1.5 self-start text-xs font-semibold text-accent hover:underline"
                     >
                       <RotateCcw className="h-3.5 w-3.5" /> Reset to default
@@ -160,13 +230,14 @@ export function ManagerModal({ mode, initial, onClose, onSave }) {
                     onChange={(e) => set("association", e.target.value)}
                     placeholder="e.g. Boac Farmers Cooperative Association"
                   />
+                  <FieldError message={errors.association} />
                 </Field>
 
                 <Field label="Farmer(s)" full>
                   <MultiSelect
-                    values={form.farmers || []}
-                    onChange={(v) => set("farmers", v)}
-                    options={FARMER_OPTIONS}
+                    values={form.assignedFarmers || []}
+                    onChange={(v) => set("assignedFarmers", v)}
+                    options={farmerOptions}
                     placeholder="Select farmer(s)…"
                   />
                 </Field>
@@ -179,8 +250,12 @@ export function ManagerModal({ mode, initial, onClose, onSave }) {
           <Button variant="outline" type="button" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="button" onClick={submit}>
-            {mode === "add" ? "Add Manager" : "Save Changes"}
+          <Button type="button" onClick={submit} disabled={isPending}>
+            {isPending
+              ? "Saving…"
+              : mode === "add"
+                ? "Add Manager"
+                : "Save Changes"}
           </Button>
         </div>
       </div>

@@ -3,31 +3,19 @@ import { Archive, Pencil, Plus } from "lucide-react";
 import { Button, IconButton } from "@/components/ui";
 import { fmtDate } from "@/utils/format";
 import { DataTable } from "@/components/dashboard";
-import { DEFAULT_PASSWORD, MANAGERS } from "@/constants/data";
+import { DEFAULT_PASSWORD } from "@/constants/data";
 import { ManagerModal, ArchiveConfirmModal } from "@/components/modals";
+import { useDeleteUser, useUsers } from "@/hooks/useUsers";
 
 export function ManagersPage() {
-  const [rows, setRows] = useState(MANAGERS);
   const [modal, setModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  const nextId = () => `MG-${String(rows.length + 1).padStart(3, "0")}`;
-
-  const handleSave = (data) => {
-    setRows((r) => {
-      const exists = r.find((x) => x.id === data.id);
-      if (exists)
-        return r.map((x) => (x.id === data.id ? { ...x, ...data } : x));
-      return [
-        ...r,
-        {
-          ...data,
-          joinedAt: new Date().toISOString().slice(0, 10),
-        },
-      ];
-    });
-    setModal(null);
-  };
+  const { data: managers = [], isLoading } = useUsers({
+    role: "manager",
+    all: true,
+  });
+  const deleteUser = useDeleteUser();
 
   const columns = [
     {
@@ -37,7 +25,7 @@ export function ManagersPage() {
         <div>
           <div className="font-semibold text-foreground">{row.fullName}</div>
           <div className="label-mono text-muted-foreground">
-            {row.id} · {row.email}
+            {row._id} · {row.email}
           </div>
         </div>
       ),
@@ -50,10 +38,10 @@ export function ManagersPage() {
       ),
     },
     {
-      key: "farmers",
+      key: "farmerCount",
       label: "Farmer(s)",
       render: (row) => (
-        <span className="text-foreground">{(row.farmers || []).length}</span>
+        <span className="text-foreground">{row.farmerCount ?? 0}</span>
       ),
     },
     {
@@ -79,7 +67,7 @@ export function ManagersPage() {
                   ...row,
                   password: DEFAULT_PASSWORD,
                   association: row.association || "",
-                  farmers: row.farmers || [],
+                  assignedFarmers: row.assignedFarmers || [],
                 },
               })
             }
@@ -111,12 +99,16 @@ export function ManagersPage() {
             setModal({
               mode: "add",
               data: {
-                id: nextId(),
-                fullName: "",
+                lastName: "",
+                firstName: "",
+                middleName: "",
+                username: "",
                 email: "",
+                contactNumber: "",
+                address: "",
                 password: DEFAULT_PASSWORD,
                 association: "",
-                farmers: [],
+                assignedFarmers: [],
               },
             })
           }
@@ -127,18 +119,19 @@ export function ManagersPage() {
       </div>
 
       <DataTable
-        rows={rows}
+        rows={managers}
         columns={columns}
         searchKeys={[
           (row, query) =>
-            row.fullName.toLowerCase().includes(query) ||
-            row.email.toLowerCase().includes(query) ||
-            row.id.toLowerCase().includes(query),
+            row.fullName?.toLowerCase().includes(query) ||
+            row.email?.toLowerCase().includes(query) ||
+            row._id?.toLowerCase().includes(query),
         ]}
         searchPlaceholder="Search by name, email, or ID…"
         emptyTitle="No managers found"
         emptyDescription="Try adjusting your search or add a new manager."
         minWidth="760px"
+        loading={isLoading}
       />
 
       {modal && (
@@ -146,7 +139,6 @@ export function ManagersPage() {
           mode={modal.mode}
           initial={modal.data}
           onClose={() => setModal(null)}
-          onSave={handleSave}
         />
       )}
 
@@ -164,8 +156,9 @@ export function ManagersPage() {
           }
           onCancel={() => setConfirmDelete(null)}
           onConfirm={() => {
-            setRows((r) => r.filter((x) => x.id !== confirmDelete.id));
-            setConfirmDelete(null);
+            deleteUser.mutate(confirmDelete._id, {
+              onSuccess: () => setConfirmDelete(null),
+            });
           }}
         />
       )}

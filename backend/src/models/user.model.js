@@ -62,6 +62,25 @@ const userSchema = new mongoose.Schema(
             enum: ["buyer", "farmer", "manager", "dti", "kaluppa"],
             required: true,
         },
+        deletedAt: {
+            type: Date,
+            default: null,
+        },
+        files: {
+            type: [
+                {
+                    name: { type: String, required: true },
+                    url: { type: String, required: true },
+                    type: {
+                        type: String,
+                        enum: ["image", "pdf", "document"],
+                        default: "document",
+                    },
+                    size: { type: Number, default: 0 },
+                },
+            ],
+            default: [],
+        },
     },
     {
         timestamps: true,

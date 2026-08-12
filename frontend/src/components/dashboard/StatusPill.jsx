@@ -31,6 +31,10 @@ const STATUS_META = {
     label: "Denied",
     tone: "danger",
   },
+  rejected: {
+    label: "Rejected",
+    tone: "danger",
+  },
   cash: {
     label: "Cash",
     tone: "warning",

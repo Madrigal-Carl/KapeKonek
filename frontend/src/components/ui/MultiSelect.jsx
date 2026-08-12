@@ -20,20 +20,37 @@ export function MultiSelect({
     return () => window.removeEventListener("mousedown", h);
   }, []);
 
+  const normalized = useMemo(
+    () =>
+      options.map((option) =>
+        typeof option === "string"
+          ? { value: option, label: option }
+          : { value: String(option.value), label: option.label },
+      ),
+    [options],
+  );
+
   const filtered = useMemo(
-    () => options.filter((o) => o.toLowerCase().includes(q.toLowerCase())),
-    [q, options],
+    () =>
+      normalized.filter((option) =>
+        option.label.toLowerCase().includes(q.toLowerCase()),
+      ),
+    [q, normalized],
   );
 
   const trimmed = q.trim();
   const canCreate =
     allowCreate &&
     trimmed.length > 0 &&
-    !options.some((o) => o.toLowerCase() === trimmed.toLowerCase());
+    !normalized.some(
+      (option) => option.label.toLowerCase() === trimmed.toLowerCase(),
+    );
 
-  const toggle = (o) =>
+  const toggle = (option) =>
     onChange(
-      values.includes(o) ? values.filter((v) => v !== o) : [...values, o],
+      values.includes(option.value)
+        ? values.filter((v) => v !== option.value)
+        : [...values, option.value],
     );
 
   const handleCreate = () => {
@@ -41,6 +58,9 @@ export function MultiSelect({
     if (!values.includes(trimmed)) onChange([...values, trimmed]);
     setQ("");
   };
+
+  const labelOf = (value) =>
+    normalized.find((option) => option.value === value)?.label ?? value;
 
   return (
     <div ref={ref} className="relative w-full">
@@ -58,7 +78,7 @@ export function MultiSelect({
                 key={v}
                 className="inline-flex items-center gap-1 border border-border bg-accent/10 px-2 py-0.5 text-xs font-semibold text-foreground"
               >
-                {v}
+                {labelOf(v)}
                 <span
                   role="button"
                   tabIndex={0}
@@ -107,13 +127,13 @@ export function MultiSelect({
                 No results.
               </li>
             ) : (
-              filtered.map((o) => {
-                const selected = values.includes(o);
+              filtered.map((option) => {
+                const selected = values.includes(option.value);
                 return (
-                  <li key={o}>
+                  <li key={option.value}>
                     <button
                       type="button"
-                      onClick={() => toggle(o)}
+                      onClick={() => toggle(option)}
                       className={[
                         "flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted",
                         selected && "bg-accent/10 font-semibold",
@@ -121,7 +141,7 @@ export function MultiSelect({
                         .filter(Boolean)
                         .join(" ")}
                     >
-                      {o}
+                      {option.label}
                       {selected && <span className="h-1.5 w-1.5 bg-accent" />}
                     </button>
                   </li>

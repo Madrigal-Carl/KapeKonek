@@ -16,6 +16,12 @@ const associationSchema = new mongoose.Schema(
             minlength: 2,
             maxlength: 100,
         },
+        assignedFarmers: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+            },
+        ],
     },
     {
         timestamps: true,
