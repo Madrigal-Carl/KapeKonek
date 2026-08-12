@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const requiredName = (label) =>
     z
-        .string({ required_error: `${label} is required` })
+        .string({ error: `${label} is required` })
         .trim()
         .min(2, `${label} must be at least 2 characters`)
         .max(100, `${label} must not exceed 100 characters`);
@@ -34,7 +34,7 @@ export const createUserSchema = z
             .max(100, "Middle name must not exceed 100 characters")
             .optional(),
         username: z
-            .string({ required_error: "Username is required" })
+            .string({ error: "Username is required" })
             .trim()
             .min(3, "Username must be at least 3 characters")
             .max(30, "Username must not exceed 30 characters")
@@ -43,10 +43,10 @@ export const createUserSchema = z
                 "Username can only contain letters, numbers, and underscores",
             ),
         email: z
-            .string({ required_error: "Email is required" })
+            .string({ error: "Email is required" })
             .email("Invalid email format"),
         contactNumber: z
-            .string({ required_error: "Contact number is required" })
+            .string({ error: "Contact number is required" })
             .trim()
             .min(10, "Contact number must be at least 10 digits")
             .max(15, "Contact number must not exceed 15 digits")
@@ -55,16 +55,16 @@ export const createUserSchema = z
                 "Contact number can only contain digits, spaces, + and -",
             ),
         address: z
-            .string({ required_error: "Address is required" })
+            .string({ error: "Address is required" })
             .trim()
             .min(5, "Address must be at least 5 characters")
             .max(255, "Address must not exceed 255 characters"),
         password: z
-            .string({ required_error: "Password is required" })
+            .string({ error: "Password is required" })
             .min(6, "Password must be at least 6 characters")
             .max(100, "Password must not exceed 100 characters"),
         role: z.enum(["buyer", "farmer", "manager", "dti", "kaluppa"], {
-            required_error: "Please select an account type",
+            error: "Please select an account type",
         }),
         association: z
             .string()
@@ -81,6 +81,14 @@ export const createUserSchema = z
                 code: "custom",
                 path: ["files"],
                 message: "At least one file is required for a farmer account",
+            });
+        }
+
+        if (data.role === "manager" && !data.association) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["association"],
+                message: "Association Name is required for manager accounts",
             });
         }
     });

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const nameField = (label) =>
     z
-        .string({ required_error: `${label} is required` })
+        .string({ error: `${label} is required` })
         .trim()
         .min(2, `${label} must be at least 2 characters`)
         .max(100, `${label} must not exceed 100 characters`);
@@ -15,7 +15,7 @@ const middleName = z
     .or(z.literal(""));
 
 const username = z
-    .string({ required_error: "Username is required" })
+    .string({ error: "Username is required" })
     .trim()
     .min(3, "Username must be at least 3 characters")
     .max(30, "Username must not exceed 30 characters")
@@ -25,11 +25,11 @@ const username = z
     );
 
 const email = z
-    .string({ required_error: "Email is required" })
+    .string({ error: "Email is required" })
     .email("Invalid email format");
 
 const contactNumber = z
-    .string({ required_error: "Contact number is required" })
+    .string({ error: "Contact number is required" })
     .trim()
     .min(10, "Contact number must be at least 10 digits")
     .max(15, "Contact number must not exceed 15 digits")
@@ -39,13 +39,13 @@ const contactNumber = z
     );
 
 const address = z
-    .string({ required_error: "Address is required" })
+    .string({ error: "Address is required" })
     .trim()
     .min(5, "Address must be at least 5 characters")
     .max(255, "Address must not exceed 255 characters");
 
 const password = z
-    .string({ required_error: "Password is required" })
+    .string({ error: "Password is required" })
     .min(6, "Password must be at least 6 characters")
     .max(100, "Password must not exceed 100 characters");
 
@@ -82,7 +82,11 @@ const personalFields = {
 
 export const createManagerSchema = z.object({
     ...personalFields,
-    association,
+    association: z
+        .string({ error: "Association Name is required" })
+        .trim()
+        .min(2, "Association must be at least 2 characters")
+        .max(100, "Association must not exceed 100 characters"),
     assignedFarmers,
     files,
 });
