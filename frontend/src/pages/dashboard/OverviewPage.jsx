@@ -122,14 +122,9 @@ const CHART_COLORS = [
 ];
 
 // ---------- Reusable chart primitives (no deps) ----------
-function StatCard({ label, value, sub, icon: Icon, to }) {
-  const Wrapper = to ? Link : "div";
-  const props = to ? { to } : {};
+function StatCard({ label, value, sub, icon: Icon }) {
   return (
-    <Wrapper
-      {...props}
-      className="group block border border-border bg-card p-5 transition-colors hover:border-foreground"
-    >
+    <div className="group block border border-border bg-card p-5 transition-colors hover:border-foreground">
       <div className="flex items-center justify-between">
         <p className="label-mono text-muted-foreground">{label}</p>
         <Icon className="h-6 w-6 text-accent" />
@@ -138,7 +133,7 @@ function StatCard({ label, value, sub, icon: Icon, to }) {
         {value}
       </p>
       {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
-    </Wrapper>
+    </div>
   );
 }
 
@@ -432,28 +427,24 @@ export function OverviewPage() {
           value={totalFarms}
           sub={`${totalHectares.toFixed(1)} ha total`}
           icon={Sprout}
-          to="/farm"
         />
         <StatCard
           label="Farm Yield"
           value={`${totalFarmYield.toLocaleString()} kg`}
           sub="Across all plots"
           icon={Bean}
-          to="/farm"
         />
         <StatCard
           label="Out of Stock"
           value={outOfStock}
           sub={`${outOfStock === 1 ? "product needs" : "products need"} restocking`}
           icon={PackageX}
-          to="/inventory"
         />
         <StatCard
           label="Inventory"
           value={totalStock.toLocaleString()}
           sub={`${activeProducts}/${INVENTORY.length} active · ${outOfStock} OOS`}
           icon={Package}
-          to="/inventory"
         />
       </div>
 
