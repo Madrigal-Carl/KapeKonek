@@ -111,37 +111,26 @@ export function HomePage() {
       {/* HERO — image-only carousel */}
       <HeroCarousel />
 
-      {/* HERO CTA — moved below the carousel */}
+      {/* FEATURED PRODUCTS */}
       <section className="border-b border-border bg-[var(--color-surface)]">
-        <div className="kk-container py-16 md:py-20">
-          <div className="max-w-2xl">
-            <span className="label-mono text-[var(--color-accent)]">
-              01 · Coffee Ecosystem
-            </span>
-            <h1 className="mt-6 text-4xl font-extrabold leading-[1.04] tracking-tight sm:text-5xl md:text-[3.5rem]">
-              Connecting Coffee
-              <br />
-              Farmers and Buyers.
-            </h1>
-            <p className="mt-6 max-w-xl text-base text-muted-foreground">
-              A direct-from-farm marketplace, knowledge hub, and harvest tracker
-              — built for growers, cooperatives, and the people who buy from
-              them.
-            </p>
-            <div className="mt-10 flex flex-wrap items-center gap-3">
-              <Link
-                to="/products"
-                className="label-mono inline-flex items-center gap-2 bg-[var(--color-accent)] px-6 py-4 text-[var(--color-accent-foreground)] transition-transform active:scale-[0.98]"
-              >
-                Browse Products <ArrowRight size={14} />
-              </Link>
-              <Link
-                to="/about"
-                className="label-mono inline-flex items-center gap-2 border border-foreground px-6 py-4 text-foreground hover:bg-foreground hover:text-background"
-              >
-                Learn More
-              </Link>
-            </div>
+        <div className="kk-container py-20">
+          <div className="flex items-end justify-between gap-6">
+            <SectionHead
+              index="03"
+              eyebrow="Marketplace"
+              title="Featured products."
+            />
+            <Link
+              to="/products"
+              className="label-mono hidden items-center gap-2 text-foreground hover:text-[var(--color-accent)] sm:inline-flex"
+            >
+              View all <ArrowRight size={14} />
+            </Link>
+          </div>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {featured.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
           </div>
         </div>
       </section>
@@ -192,30 +181,6 @@ export function HomePage() {
                 <h3 className="mt-5 text-lg font-bold">{c.t}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{c.d}</p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURED PRODUCTS */}
-      <section className="border-b border-border bg-[var(--color-surface)]">
-        <div className="kk-container py-20">
-          <div className="flex items-end justify-between gap-6">
-            <SectionHead
-              index="03"
-              eyebrow="Marketplace"
-              title="Featured products."
-            />
-            <Link
-              to="/products"
-              className="label-mono hidden items-center gap-2 text-foreground hover:text-[var(--color-accent)] sm:inline-flex"
-            >
-              View all <ArrowRight size={14} />
-            </Link>
-          </div>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {featured.map((p) => (
-              <ProductCard key={p.id} product={p} />
             ))}
           </div>
         </div>
