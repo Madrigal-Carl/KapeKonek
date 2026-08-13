@@ -34,12 +34,6 @@ const address = z
     .min(2, "Address must be at least 2 characters")
     .max(255, "Address must not exceed 255 characters");
 
-const propertyNumber = z
-    .string({ error: "Property number is required" })
-    .trim()
-    .min(2, "Property number must be at least 2 characters")
-    .max(100, "Property number must not exceed 100 characters");
-
 const association = z
     .string()
     .regex(/^[0-9a-fA-F]{24}$/, "Invalid association id")
@@ -52,7 +46,6 @@ const assignedFarmers = z
 export const createFarmSchema = z.object({
     address,
     size,
-    propertyNumber,
     latitude,
     longitude,
     association,
@@ -63,7 +56,6 @@ export const updateFarmSchema = z
     .object({
         address: address.optional(),
         size: size.optional(),
-        propertyNumber: propertyNumber.optional(),
         latitude: latitude.optional(),
         longitude: longitude.optional(),
         association,

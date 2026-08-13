@@ -1,6 +1,7 @@
 import {
     getFarms,
     getJoinableFarms,
+    getFarmFarmers,
     createFarm,
     updateFarm,
     deleteFarm,
@@ -25,6 +26,15 @@ export const getJoinableFarmsHandler = asyncHandler(async (req, res) => {
     return res.status(200).json({
         message: "Joinable farms fetched successfully",
         farms,
+    });
+});
+
+export const getFarmFarmersHandler = asyncHandler(async (req, res) => {
+    const farmers = await getFarmFarmers(req.params.id);
+
+    return res.status(200).json({
+        message: "Farm farmers fetched successfully",
+        farmers,
     });
 });
 

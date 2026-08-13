@@ -5,63 +5,42 @@ import { fmtDate } from "@/utils/format";
 import { DataTable } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
-import { HARVESTS, HARVEST_CATEGORY_OPTIONS } from "@/constants/data";
+import { useDeleteHarvest, useHarvests } from "@/hooks/useHarvests";
+import { HARVEST_VARIETY_OPTIONS } from "@/schemas/harvest.schema";
 import { HarvestModal, ArchiveConfirmModal } from "@/components/modals";
+
+const capitalize = (s) =>
+  s ? s.charAt(0).toUpperCase() + s.slice(1) : "—";
 
 export function HarvestPage() {
   const { role } = useAuth();
-  const isManager = role === ROLES.MANAGER || role === ROLES.KALUPPA;
   const isViewOnly = role === ROLES.DTI;
 
-  const [rows, setRows] = useState(HARVESTS);
+  const { data: harvests = [], isLoading } = useHarvests({ all: true });
+  const deleteHarvest = useDeleteHarvest();
+
   const [modal, setModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
-
-  const nextId = () => `HV-${String(rows.length + 1).padStart(3, "0")}`;
-
-  const openAdd = () =>
-    setModal({
-      mode: "add",
-      data: {
-        id: nextId(),
-        category: HARVEST_CATEGORY_OPTIONS[0],
-        variety: "Arabica",
-        yieldKg: 0,
-        farm: "",
-        farmer: "",
-        harvestedAt: new Date().toISOString().slice(0, 10),
-      },
-    });
-
-  const handleSave = (data) => {
-    setRows((r) => {
-      const cleaned = { ...data, yieldKg: Number(data.yieldKg) || 0 };
-      const exists = r.find((x) => x.id === data.id);
-      if (exists) return r.map((x) => (x.id === data.id ? cleaned : x));
-      return [...r, cleaned];
-    });
-    setModal(null);
-  };
 
   const columns = [
     {
       key: "farm",
       label: "Farm",
       render: (row) => (
-        <div className="font-semibold text-foreground">{row.farm}</div>
+        <>
+          <div className="font-semibold text-foreground">
+            {row.farm?.propertyNumber ?? "—"}
+          </div>
+          <div className="label-mono text-muted-foreground">
+            {row.farm?.address ?? ""}
+          </div>
+        </>
       ),
-    },
-    {
-      key: "category",
-      label: "Category",
-      render: (row) => <span className="text-foreground">{row.category}</span>,
     },
     {
       key: "variety",
       label: "Variety",
-      render: (row) => (
-        <span className="text-foreground">{row.variety || "—"}</span>
-      ),
+      render: (row) => <span className="text-foreground">{capitalize(row.variety)}</span>,
     },
     {
       key: "yieldKg",
@@ -69,6 +48,15 @@ export function HarvestPage() {
       render: (row) => (
         <span className="text-foreground">
           {row.yieldKg.toLocaleString()} kg
+        </span>
+      ),
+    },
+    {
+      key: "farmer",
+      label: "Farmer",
+      render: (row) => (
+        <span className="text-foreground">
+          {row.farmer?.fullName ?? "—"}
         </span>
       ),
     },
@@ -107,13 +95,16 @@ export function HarvestPage() {
 
   const filters = [
     {
-      key: "category",
+      key: "variety",
       initialValue: "all",
       options: [
-        { value: "all", label: "All Categories" },
-        ...HARVEST_CATEGORY_OPTIONS.map((value) => ({ value, label: value })),
+        { value: "all", label: "All Varieties" },
+        ...HARVEST_VARIETY_OPTIONS.map((v) => ({
+          value: v.value,
+          label: v.label,
+        })),
       ],
-      matcher: (row, value) => row.category === value,
+      matcher: (row, value) => row.variety === value,
     },
   ];
 
@@ -130,20 +121,26 @@ export function HarvestPage() {
           </p>
         </div>
         {!isViewOnly && (
-          <Button onClick={openAdd} className="gap-2">
+          <Button onClick={() => setModal({ mode: "add", data: null })} className="gap-2">
             <Plus className="h-4 w-4" /> Add Harvest
           </Button>
         )}
       </div>
 
       <DataTable
-        rows={rows}
+        rows={harvests}
         columns={columns}
         searchKeys={[
-          (row, query) => (row.farm || "").toLowerCase().includes(query),
+          (row, query) =>
+            (row.farm?.propertyNumber ?? "").toLowerCase().includes(query) ||
+            (row.farm?.address ?? "").toLowerCase().includes(query) ||
+            (row.farmer?.fullName ?? "").toLowerCase().includes(query) ||
+            (row.variety ?? "").toLowerCase().includes(query),
         ]}
-        searchPlaceholder="Search by farm…"
+        searchPlaceholder="Search by farm, farmer, or variety…"
         filters={filters}
+        getRowKey={(row) => row._id}
+        loading={isLoading}
         emptyTitle="No harvests found"
         emptyDescription="Try adjusting your search or add a new harvest."
         minWidth="820px"
@@ -153,9 +150,7 @@ export function HarvestPage() {
         <HarvestModal
           mode={modal.mode}
           initial={modal.data}
-          isManager={isManager}
           onClose={() => setModal(null)}
-          onSave={handleSave}
         />
       )}
 
@@ -164,17 +159,19 @@ export function HarvestPage() {
           title="Archive harvest?"
           description={
             <>
-              This will archive{" "}
-              <span className="font-semibold text-foreground">
-                {confirmDelete.id}
-              </span>
-              . It will no longer appear in active lists.
+              Are you sure you want to archive the{" "}
+              <strong className="text-foreground">
+                {confirmDelete.variety} harvest
+              </strong>{" "}
+              on {confirmDelete.farm?.propertyNumber ?? "this farm"}? It will
+              no longer appear in active lists.
             </>
           }
           onCancel={() => setConfirmDelete(null)}
           onConfirm={() => {
-            setRows((r) => r.filter((x) => x.id !== confirmDelete.id));
-            setConfirmDelete(null);
+            deleteHarvest.mutate(confirmDelete._id, {
+              onSuccess: () => setConfirmDelete(null),
+            });
           }}
         />
       )}

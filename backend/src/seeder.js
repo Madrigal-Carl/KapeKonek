@@ -5,9 +5,9 @@ import { wipeAssociations, seedAssociations } from "./seeders/association.seeder
 import { wipeUsers, seedUsers } from "./seeders/user.seeder.js";
 import { wipeFarmerVerifications, seedFarmerVerifications } from "./seeders/farmerVerification.seeder.js";
 import { wipeFarms, seedFarms } from "./seeders/farm.seeder.js";
+import { wipeHarvests, seedHarvests } from "./seeders/harvest.seeder.js";
 
 // Models with no seed data yet — still wiped so every collection starts clean.
-import Harvest from "./models/harvest.model.js";
 import Product from "./models/product.model.js";
 import Order from "./models/order.model.js";
 import Post from "./models/post.model.js";
@@ -15,7 +15,7 @@ import Comment from "./models/comment.model.js";
 import Like from "./models/like.model.js";
 import Rating from "./models/rating.model.js";
 
-const WIPE_ONLY_MODELS = [Harvest, Product, Order, Post, Comment, Like, Rating];
+const WIPE_ONLY_MODELS = [Product, Order, Post, Comment, Like, Rating];
 
 // Order matters: each entry is listed after every seeder whose output it
 // depends on, so foreign keys always point at documents that already exist
@@ -28,6 +28,9 @@ const WIPE_ONLY_MODELS = [Harvest, Product, Order, Post, Comment, Like, Rating];
 //                          to their association, rosters populated)
 //   Farms               -> needs Users + Associations (owner + association +
 //                          assigned farmer roster resolved from them)
+//   Harvests            -> needs Farms + Users (each harvest points at a
+//                          farm, one of its farmers, and the farm's
+//                          association)
 //
 // To add a new model seeder later: create seeders/xxx.seeder.js exporting
 // wipeXxx()/seedXxx(context), import it above, and add one entry below in
@@ -37,6 +40,7 @@ const SEEDERS = [
     { name: "Associations", wipe: wipeAssociations, seed: seedAssociations },
     { name: "Farmer Verifications", wipe: wipeFarmerVerifications, seed: seedFarmerVerifications },
     { name: "Farms", wipe: wipeFarms, seed: seedFarms },
+    { name: "Harvests", wipe: wipeHarvests, seed: seedHarvests },
 ];
 
 async function runSeeders() {

@@ -3,6 +3,7 @@ import {
     createFarm,
     deleteFarm,
     getFarms,
+    getFarmFarmers,
     getJoinableFarms,
     joinFarm,
     leaveFarm,
@@ -14,6 +15,7 @@ export const farmKeys = {
     all: ["farms"],
     list: (filters) => ["farms", "list", filters],
     joinable: ["farms", "joinable"],
+    farmers: (farmId) => ["farms", "farmers", farmId],
 };
 
 export function useFarms(filters = {}, options = {}) {
@@ -28,6 +30,14 @@ export function useJoinableFarms(options = {}) {
     return useQuery({
         queryKey: farmKeys.joinable,
         queryFn: () => getJoinableFarms().then((response) => response.farms),
+        ...options,
+    });
+}
+
+export function useFarmFarmers(farmId, options = {}) {
+    return useQuery({
+        queryKey: farmKeys.farmers(farmId),
+        queryFn: () => getFarmFarmers(farmId).then((response) => response.farmers),
         ...options,
     });
 }

@@ -27,7 +27,6 @@ export function FarmModal({ mode, initial, onClose }) {
   const isKaluppa = role === ROLES.KALUPPA;
 
   const [form, setForm] = useState(() => ({
-    propertyNumber: initial?.propertyNumber ?? "",
     address: initial?.address ?? "",
     size: initial?.size != null ? String(initial.size) : "",
     assignedFarmers: initial?.assignedFarmers?.length
@@ -75,7 +74,6 @@ export function FarmModal({ mode, initial, onClose }) {
     e?.preventDefault();
 
     const payload = {
-      propertyNumber: form.propertyNumber.trim(),
       address: form.address.trim(),
       size: form.size,
       latitude: form.location?.lat,
@@ -135,14 +133,6 @@ export function FarmModal({ mode, initial, onClose }) {
           <div className="space-y-8">
             <SectionGroup title="Property Information">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Property Number" full>
-                  <TextInput
-                    value={form.propertyNumber}
-                    onChange={(e) => set("propertyNumber", e.target.value)}
-                    placeholder="TCT-2021-00456"
-                  />
-                  <FieldError message={errors.propertyNumber} />
-                </Field>
                 <Field label="Address" full>
                   <TextInput
                     value={form.address}

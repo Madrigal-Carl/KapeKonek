@@ -2,6 +2,7 @@ import express from "express";
 import {
     getFarmsHandler,
     getJoinableFarmsHandler,
+    getFarmFarmersHandler,
     createFarmHandler,
     updateFarmHandler,
     deleteFarmHandler,
@@ -33,6 +34,13 @@ router.get(
     authenticated,
     allowRoles("farmer"),
     getJoinableFarmsHandler,
+);
+router.get(
+    "/:id/farmers",
+    authenticated,
+    allowRoles("kaluppa", "manager"),
+    validateFarmIdParam,
+    getFarmFarmersHandler,
 );
 router.post(
     "/",

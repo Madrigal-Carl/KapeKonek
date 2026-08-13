@@ -56,6 +56,28 @@ const farmSchema = new mongoose.Schema(
     },
 );
 
+// Auto-generates the property number in TCT-<year>-<increment> format when a
+// farm is created without one. Runs before validation so the required field
+// passes, and skips farms that already carry an explicit number (seeders).
+farmSchema.pre("validate", async function () {
+    if (this.propertyNumber) return;
+
+    const year = new Date().getFullYear();
+    const prefix = `TCT-${year}-`;
+
+    const last = await Farm.findOne({
+        propertyNumber: new RegExp(`^${escapeRegex(prefix)}`),
+    })
+        .sort({ propertyNumber: -1 })
+        .select("propertyNumber");
+
+    const lastNumber = last
+        ? Number(last.propertyNumber.slice(prefix.length)) || 0
+        : 0;
+
+    this.propertyNumber = `${prefix}${String(lastNumber + 1).padStart(4, "0")}`;
+});
+
 farmSchema.index(
     { propertyNumber: 1 },
     {
@@ -67,4 +89,10 @@ farmSchema.index(
     },
 );
 
-export default mongoose.model("Farm", farmSchema);
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const Farm = mongoose.model("Farm", farmSchema);
+
+export default Farm;
