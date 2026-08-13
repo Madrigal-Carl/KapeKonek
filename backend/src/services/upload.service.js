@@ -1,9 +1,11 @@
+import crypto from "crypto";
 import cloudinary from "../config/cloudinary.js";
 
 const SUBFOLDER_MAP = {
     farmer: "farmers",
     product: "products",
     receipt: "receipts",
+    chat: "chats",
 };
 
 export const createUploadSignature = ({ type }) => {
@@ -22,11 +24,14 @@ export const createUploadSignature = ({ type }) => {
     const folder = `${rootFolder}/${subfolder}`;
     const timestamp = Math.round(Date.now() / 1000);
 
+    // Store the file under a random name — the original filename is kept
+    // client-side purely for display, never as the asset's public id.
+    const publicId = crypto.randomUUID();
+
     const paramsToSign = {
         timestamp,
         folder,
-        use_filename: true,
-        unique_filename: true,
+        public_id: publicId,
     };
 
     const signature = cloudinary.utils.api_sign_request(
@@ -40,7 +45,6 @@ export const createUploadSignature = ({ type }) => {
         timestamp,
         signature,
         folder,
-        useFilename: true,
-        uniqueFilename: true,
+        publicId,
     };
 };

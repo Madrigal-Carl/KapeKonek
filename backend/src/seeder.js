@@ -14,8 +14,17 @@ import Post from "./models/post.model.js";
 import Comment from "./models/comment.model.js";
 import Like from "./models/like.model.js";
 import Rating from "./models/rating.model.js";
+import ChatMessage from "./models/chatMessage.model.js";
 
-const WIPE_ONLY_MODELS = [Product, Order, Post, Comment, Like, Rating];
+const WIPE_ONLY_MODELS = [
+    Product,
+    Order,
+    Post,
+    Comment,
+    Like,
+    Rating,
+    ChatMessage,
+];
 
 // Order matters: each entry is listed after every seeder whose output it
 // depends on, so foreign keys always point at documents that already exist

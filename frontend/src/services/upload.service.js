@@ -5,10 +5,12 @@ export async function getUploadSignature({ type }) {
     return response.data;
 }
 
-// Uploads to Cloudinary. When an onProgress callback is provided it is
-// invoked with (loadedBytes, totalBytes) as the request uploads.
+// Uploads to Cloudinary. The asset is stored under a random public id
+// signed by the backend — the original filename is kept by the caller for
+// display only. When an onProgress callback is provided it is invoked with
+// (loadedBytes, totalBytes) as the request uploads.
 export async function uploadToCloudinary(file, type, onProgress) {
-    const { url, apiKey, timestamp, signature, folder, useFilename, uniqueFilename } =
+    const { url, apiKey, timestamp, signature, folder, publicId } =
         await getUploadSignature({ type });
 
     const formData = new FormData();
@@ -17,8 +19,7 @@ export async function uploadToCloudinary(file, type, onProgress) {
     formData.append("timestamp", timestamp);
     formData.append("signature", signature);
     formData.append("folder", folder);
-    formData.append("use_filename", useFilename);
-    formData.append("unique_filename", uniqueFilename);
+    formData.append("public_id", publicId);
 
     return await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
