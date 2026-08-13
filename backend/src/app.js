@@ -9,6 +9,8 @@ import uploadRoutes from "./routes/upload.routes.js";
 
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import farmRoutes from "./routes/farm.routes.js";
+import associationRoutes from "./routes/association.routes.js";
 
 const app = express();
 
@@ -42,6 +44,8 @@ app.use(morgan("dev"));
 app.use("/api/auth", authRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/farms", farmRoutes);
+app.use("/api/associations", associationRoutes);
 
 app.use(errorHandler);
 

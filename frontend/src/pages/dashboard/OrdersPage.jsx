@@ -124,7 +124,6 @@ export function OrdersPage() {
         ]}
         searchPlaceholder="Search by reference, customer, or payment…"
         filters={filters}
-        pageSize={5}
         getRowKey={(row) => row.ref}
         emptyTitle="No orders found"
         emptyDescription="Try adjusting your search or filters."

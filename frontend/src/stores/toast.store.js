@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 let counter = 0;
 const TOAST_DURATION = 2800;
@@ -12,6 +13,7 @@ export const useToastStore = create((set, get) => ({
         const toast = {
             id,
             message,
+            type: opts.type ?? "success",
             actionLabel: opts.actionLabel,
             onAction: opts.onAction,
             leaving: false,
@@ -23,6 +25,11 @@ export const useToastStore = create((set, get) => ({
 
         return id;
     },
+
+    // Shows the backend-provided error message (response body), falling back
+    // to a generic message when the server doesn't return one.
+    showError: (error, fallback = "Something went wrong") =>
+        get().show(getErrorMessage(error, fallback), { type: "error" }),
 
     dismiss: (id) => {
         set((state) => ({

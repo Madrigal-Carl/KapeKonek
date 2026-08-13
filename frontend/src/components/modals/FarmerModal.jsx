@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { RotateCcw, Upload, X } from "lucide-react";
+import { Eye, FileText, Image as ImageIcon, RotateCcw, Upload, X } from "lucide-react";
 import { Button, Field, IconButton, TextInput } from "@/components/ui";
 import FieldError from "@/components/ui/FieldError";
 import { DEFAULT_PASSWORD } from "@/constants/data";
@@ -21,7 +21,7 @@ export function FarmerModal({ mode, initial, onClose }) {
     (initial.files ?? []).map((f) => ({ ...f })),
   );
   const [filesChanged, setFilesChanged] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [upload, setUpload] = useState({ active: false, percent: 0 });
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const isPending = createUser.isPending || updateUser.isPending;
@@ -56,11 +56,21 @@ export function FarmerModal({ mode, initial, onClose }) {
     e.target.value = "";
     if (!list.length) return;
 
-    setUploading(true);
+    const totalBytes = list.reduce((sum, file) => sum + file.size, 0);
+    let completedBytes = 0;
+    setUpload({ active: true, percent: 0 });
 
     for (const file of list) {
       try {
-        const result = await uploadToCloudinary(file, "farmer");
+        const result = await uploadToCloudinary(file, "farmer", (loaded) => {
+          const overall = ((completedBytes + loaded) / totalBytes) * 100;
+          setUpload({ active: true, percent: Math.min(Math.round(overall), 99) });
+        });
+        completedBytes += file.size;
+        setUpload({
+          active: true,
+          percent: Math.round((completedBytes / totalBytes) * 100),
+        });
         setFiles((prev) => [
           ...prev,
           {
@@ -77,7 +87,7 @@ export function FarmerModal({ mode, initial, onClose }) {
       }
     }
 
-    setUploading(false);
+    setUpload({ active: false, percent: 100 });
   };
 
   const removeFile = (key) => {
@@ -262,17 +272,17 @@ export function FarmerModal({ mode, initial, onClose }) {
             {/* Attachments section */}
             <SectionGroup title="Attachments">
               <div
-                onClick={() => !uploading && fileInputRef.current?.click()}
+                onClick={() => !upload.active && fileInputRef.current?.click()}
                 className={[
                   "flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed border-border bg-muted/30 px-4 py-6 text-center hover:bg-muted/50",
-                  uploading && "cursor-not-allowed opacity-60",
+                  upload.active && "cursor-not-allowed opacity-60",
                 ]
                   .filter(Boolean)
                   .join(" ")}
               >
                 <Upload className="h-5 w-5 text-muted-foreground" />
                 <div className="text-sm font-medium text-foreground">
-                  {uploading ? "Uploading…" : "Click to upload files"}
+                  {upload.active ? "Uploading…" : "Click to upload files"}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   PDF, images, or documents
@@ -281,36 +291,73 @@ export function FarmerModal({ mode, initial, onClose }) {
                   ref={fileInputRef}
                   type="file"
                   multiple
-                  disabled={uploading}
+                  disabled={upload.active}
                   className="hidden"
                   onChange={onPickFiles}
                 />
               </div>
 
+              {upload.active && (
+                <div className="mt-3 border border-border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="h-1.5 flex-1 overflow-hidden bg-muted">
+                      <div
+                        className="h-full bg-accent transition-[width] duration-150"
+                        style={{ width: `${upload.percent}%` }}
+                      />
+                    </div>
+                    <span className="label-mono shrink-0 text-muted-foreground">
+                      {upload.percent}%
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Uploading files…
+                  </p>
+                </div>
+              )}
+
               {files.length > 0 && (
                 <ul className="mt-3 space-y-2">
-                  {files.map((f) => (
-                    <li
-                      key={`${f.name}-${f.size}`}
-                      className="border border-border bg-background p-3"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-medium text-foreground">
-                            {f.name}
+                  {files.map((f) => {
+                    const Icon = f.type === "image" ? ImageIcon : FileText;
+                    return (
+                      <li
+                        key={`${f.name}-${f.size}`}
+                        className="flex items-center justify-between gap-3 border border-border bg-background p-3"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="grid h-9 w-9 shrink-0 place-items-center border border-border bg-muted">
+                            <Icon className="h-4 w-4 text-muted-foreground" />
                           </div>
-                          <div className="label-mono text-muted-foreground">
-                            {(f.size / 1024).toFixed(1)} KB
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-medium text-foreground">
+                              {f.name}
+                            </div>
+                            <div className="label-mono text-muted-foreground">
+                              {(f.size / 1024).toFixed(1)} KB
+                            </div>
                           </div>
                         </div>
-                        <IconButton
-                          icon={X}
-                          label="Remove"
-                          onClick={() => removeFile(`${f.name}-${f.size}`)}
-                        />
-                      </div>
-                    </li>
-                  ))}
+                        <div className="flex shrink-0 items-center gap-2">
+                          {f.url && (
+                            <a
+                              href={f.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex h-8 items-center gap-1.5 border border-border bg-background px-3 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
+                            >
+                              <Eye className="h-3.5 w-3.5" /> View
+                            </a>
+                          )}
+                          <IconButton
+                            icon={X}
+                            label="Remove"
+                            onClick={() => removeFile(`${f.name}-${f.size}`)}
+                          />
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
 

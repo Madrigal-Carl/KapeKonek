@@ -64,8 +64,12 @@ export function AccountReviewModal({ row, action, onCancel, onConfirm }) {
               </p>
             </div>
             <div>
-              <p className="label-mono mb-1 text-muted-foreground">Farmer ID</p>
-              <p className="text-sm font-semibold text-foreground">{row._id}</p>
+              <p className="label-mono mb-1 text-muted-foreground">
+                Contact Number
+              </p>
+              <p className="text-sm font-semibold text-foreground">
+                {row.contactNumber}
+              </p>
             </div>
             <div>
               <p className="label-mono mb-1 text-muted-foreground">Applied</p>

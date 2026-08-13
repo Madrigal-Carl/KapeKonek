@@ -92,7 +92,6 @@ export const dtiNavSections = [
         label: "Records",
         items: [
             { to: "/dti/farmers", label: "Farmer", icon: UserCog },
-            { to: "/dti/farms", label: "Farm", icon: Sprout },
             { to: "/dti/harvests", label: "Harvest", icon: Bean }
         ]
     },

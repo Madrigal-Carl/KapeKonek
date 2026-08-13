@@ -1,141 +1,56 @@
 import { useState } from "react";
-import { Archive, Pencil, Plus } from "lucide-react";
+import { Archive, DoorOpen, Pencil, Plus } from "lucide-react";
 import { Button, IconButton } from "@/components/ui";
 import { DataTable } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
-import { ROLES } from "@/constants/roles";
-import { EXISTING_FARM_REGISTRY, FARMS } from "@/constants/data";
-import { fmtCoord, fmtDate } from "@/utils/format";
 import {
-  FarmModal,
+  useDeleteFarm,
+  useFarms,
+  useJoinableFarms,
+  useJoinFarm,
+  useLeaveFarm,
+} from "@/hooks/useFarms";
+import { ROLES } from "@/constants/roles";
+import { fmtDate } from "@/utils/format";
+import {
   AddChooserModal,
-  ExistingFarmModal,
   ArchiveConfirmModal,
+  ExistingFarmModal,
+  FarmModal,
 } from "@/components/modals";
 
 export function FarmsPage() {
-  const { role } = useAuth();
-  const isManager = role === ROLES.MANAGER || role === ROLES.KALUPPA;
-  const isViewOnly = role === ROLES.DTI;
+  const { role, user } = useAuth();
+  const isFarmer = role === ROLES.FARMER;
+  const isManager = role === ROLES.MANAGER;
+  const isKaluppa = role === ROLES.KALUPPA;
+  const canManageAll = isManager || isKaluppa;
 
-  const [rows, setRows] = useState(FARMS);
+  const { data: farms = [], isLoading } = useFarms({ all: true });
+  const { data: joinableFarms = [] } = useJoinableFarms({ enabled: isFarmer });
+  const deleteFarm = useDeleteFarm();
+  const joinFarm = useJoinFarm();
+  const leaveFarm = useLeaveFarm();
+
   const [modal, setModal] = useState(null);
   const [addChooserOpen, setAddChooserOpen] = useState(false);
   const [existingOpen, setExistingOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [confirmLeave, setConfirmLeave] = useState(null);
 
-  const nextId = () => `FM-${String(rows.length + 1).padStart(3, "0")}`;
+  const canEdit = (r) =>
+    canManageAll || (isFarmer && r.owner?._id === user?._id);
 
-  const openAddNew = () =>
-    setModal({
-      mode: "add",
-      data: {
-        id: nextId(),
-        address: "",
-        size: 0,
-        farmers: [],
-        associations: [],
-        crops: [],
-        yieldKg: 0,
-        location: null,
-        joinedAt: new Date().toISOString().slice(0, 10),
-      },
-    });
-
-  const attachExisting = (registryId) => {
-    const reg = EXISTING_FARM_REGISTRY.find((r) => r.id === registryId);
-    if (!reg) return;
-    const today = new Date().toISOString().slice(0, 10);
-    setRows((r) => [
-      ...r,
-      {
-        id: nextId(),
-        address: reg.address,
-        size: reg.size,
-        farmers: [],
-        associations: [],
-        crops: [],
-        yieldKg: 0,
-        location: reg.location,
-        joinedAt: today,
-        history: [
-          { action: "Linked", item: `Existing farm ${reg.id}`, date: today },
-        ],
-        isExisting: true,
-      },
-    ]);
-    setExistingOpen(false);
-  };
-
-  const handleSave = (data) => {
-    setRows((r) => {
-      const today = new Date().toISOString().slice(0, 10);
-      const cleaned = {
-        ...data,
-        size: Number(data.size) || 0,
-        yieldKg: Number(data.yieldKg) || 0,
-        crops: (data.crops || []).filter((c) => c.crop),
-      };
-      const exists = r.find((x) => x.id === data.id);
-      if (exists) {
-        const prevCrops = exists.crops.map((c) => c.crop);
-        const nextCrops = cleaned.crops.map((c) => c.crop);
-        const added = nextCrops.filter((x) => !prevCrops.includes(x));
-        const harvestedNew = cleaned.crops.filter((c) => {
-          const before = exists.crops.find((p) => p.crop === c.crop);
-          return (
-            c.status === "harvested" &&
-            (!before || before.status !== "harvested")
-          );
-        });
-        const newEvents = [
-          ...added.map((c) => ({
-            action: "Received",
-            item: `${c} seeds`,
-            date: today,
-          })),
-          ...harvestedNew.map((c) => ({
-            action: "Harvested",
-            item: c.crop,
-            date: today,
-          })),
-        ];
-        return r.map((x) =>
-          x.id === data.id
-            ? {
-                ...x,
-                ...cleaned,
-                history: [...(x.history || []), ...newEvents],
-              }
-            : x,
-        );
-      }
-      return [
-        ...r,
-        {
-          ...cleaned,
-          history: cleaned.crops.map((c) => ({
-            action: c.status === "harvested" ? "Harvested" : "Received",
-            item: c.status === "harvested" ? c.crop : `${c.crop} seeds`,
-            date: today,
-          })),
-        },
-      ];
-    });
-    setModal(null);
-  };
-
-  const onEdit = (r) => setModal({ mode: "edit", data: { ...r } });
-  const onDelete = (r) => setConfirmDelete(r);
+  const openAddNew = () => setModal({ mode: "add", data: null });
 
   const columns = [
     {
-      key: "address",
-      label: "Address",
+      key: "propertyNumber",
+      label: "Property Number",
       render: (r) => (
         <>
-          <div className="font-semibold text-foreground">{r.address}</div>
-          <div className="label-mono text-muted-foreground">{r.id}</div>
+          <div className="font-semibold text-foreground">{r.propertyNumber}</div>
+          <div className="label-mono text-muted-foreground">{r.address}</div>
         </>
       ),
     },
@@ -145,38 +60,53 @@ export function FarmsPage() {
       render: (r) => `${r.size} ha`,
     },
     {
-      key: "yieldKg",
-      label: "Yielded Coffee (kg)",
-      render: (r) => `${r.yieldKg.toLocaleString()} kg`,
+      key: "assignedFarmers",
+      label: "Farmers",
+      render: (r) => r.assignedFarmers?.length ?? 0,
     },
     {
-      key: "joinedAt",
+      key: "createdAt",
       label: "Joined At",
-      render: (r) => fmtDate(r.joinedAt),
+      render: (r) => fmtDate(r.createdAt),
     },
     {
       key: "actions",
       label: "",
       align: "right",
-      render: (r) =>
-        isViewOnly ? (
-          <span className="text-muted-foreground">—</span>
-        ) : (
-          <div className="flex items-center justify-end gap-1">
-            {!r.isExisting && (
+      render: (r) => {
+        const owned = isFarmer && r.owner?._id === user?._id;
+
+        if (canManageAll || owned) {
+          return (
+            <div className="flex items-center justify-end gap-1">
               <IconButton
                 icon={Pencil}
                 label="Edit"
-                onClick={() => onEdit(r)}
+                onClick={() => setModal({ mode: "edit", data: r })}
               />
-            )}
-            <IconButton
-              icon={Archive}
-              label="Archive"
-              onClick={() => onDelete(r)}
-            />
-          </div>
-        ),
+              <IconButton
+                icon={Archive}
+                label="Archive"
+                onClick={() => setConfirmDelete(r)}
+              />
+            </div>
+          );
+        }
+
+        if (isFarmer) {
+          return (
+            <div className="flex items-center justify-end gap-1">
+              <IconButton
+                icon={DoorOpen}
+                label="Leave farm"
+                onClick={() => setConfirmLeave(r)}
+              />
+            </div>
+          );
+        }
+
+        return <span className="text-muted-foreground">—</span>;
+      },
     },
   ];
 
@@ -213,42 +143,38 @@ export function FarmsPage() {
             Land assets, sizes, geotagged plots, and crop allocations.
           </p>
         </div>
-        {!isViewOnly && (
-          <Button
-            onClick={() =>
-              !isManager ? setAddChooserOpen(true) : openAddNew()
-            }
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" /> Add Farm
-          </Button>
-        )}
+        <Button
+          onClick={() =>
+            isFarmer ? setAddChooserOpen(true) : openAddNew()
+          }
+          className="gap-2"
+        >
+          <Plus className="h-4 w-4" /> Add Farm
+        </Button>
       </div>
 
       <DataTable
-        rows={rows}
+        rows={farms}
         columns={columns}
-        searchKeys={["address", "id"]}
-        searchPlaceholder="Search by address or ID…"
+        searchKeys={["propertyNumber", "address", ["owner", "fullName"]]}
+        searchPlaceholder="Search by property number, address, or owner…"
         filters={filters}
-        pageSize={5}
-        getRowKey={(r) => r.id}
+        getRowKey={(r) => r._id}
         minWidth="720px"
+        loading={isLoading}
         emptyTitle="No farms found"
         emptyDescription="Try adjusting your search or add a new farm."
       />
 
-      {modal && !isViewOnly && (
+      {modal && (
         <FarmModal
           mode={modal.mode}
           initial={modal.data}
-          isManager={isManager}
           onClose={() => setModal(null)}
-          onSave={handleSave}
         />
       )}
 
-      {addChooserOpen && !isViewOnly && (
+      {addChooserOpen && (
         <AddChooserModal
           onClose={() => setAddChooserOpen(false)}
           onNew={() => {
@@ -262,32 +188,55 @@ export function FarmsPage() {
         />
       )}
 
-      {existingOpen && !isViewOnly && (
+      {existingOpen && (
         <ExistingFarmModal
-          options={EXISTING_FARM_REGISTRY.filter(
-            (reg) => !rows.some((r) => r.address === reg.address),
-          )}
+          options={joinableFarms}
           onClose={() => setExistingOpen(false)}
-          onSelect={attachExisting}
+          onSelect={(farmId) =>
+            joinFarm.mutate(farmId, { onSuccess: () => setExistingOpen(false) })
+          }
         />
       )}
 
-      {confirmDelete && !isViewOnly && (
+      {confirmDelete && (
         <ArchiveConfirmModal
           title="Archive farm?"
           description={
             <>
               Are you sure you want to archive{" "}
               <strong className="text-foreground">
-                {confirmDelete.id} ({confirmDelete.address})
+                {confirmDelete.propertyNumber} ({confirmDelete.address})
               </strong>
               ? It will no longer appear in active lists.
             </>
           }
           onCancel={() => setConfirmDelete(null)}
           onConfirm={() => {
-            setRows((r) => r.filter((x) => x.id !== confirmDelete.id));
-            setConfirmDelete(null);
+            deleteFarm.mutate(confirmDelete._id, {
+              onSuccess: () => setConfirmDelete(null),
+            });
+          }}
+        />
+      )}
+
+      {confirmLeave && (
+        <ArchiveConfirmModal
+          title="Leave farm?"
+          confirmLabel="Leave"
+          description={
+            <>
+              Are you sure you want to leave{" "}
+              <strong className="text-foreground">
+                {confirmLeave.propertyNumber} ({confirmLeave.address})
+              </strong>
+              ? You will be removed from this farm&apos;s assigned farmers.
+            </>
+          }
+          onCancel={() => setConfirmLeave(null)}
+          onConfirm={() => {
+            leaveFarm.mutate(confirmLeave._id, {
+              onSuccess: () => setConfirmLeave(null),
+            });
           }}
         />
       )}

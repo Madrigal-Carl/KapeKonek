@@ -6,6 +6,7 @@ import {
   logoutUser,
   getMe,
 } from "@/services/auth.service";
+import { queryClient } from "@/api/queryClient";
 
 const useAuthStore = create((set) => ({
   user: null,
@@ -35,6 +36,9 @@ const useAuthStore = create((set) => ({
 
   logout: async () => {
     await logoutUser();
+    // Wipe all cached server data — queries are user-scoped, so nothing
+    // should leak across sessions.
+    queryClient.clear();
     set({ user: null });
   },
 }));

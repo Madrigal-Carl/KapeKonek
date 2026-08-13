@@ -130,7 +130,6 @@ export default function AppRouter() {
           <Route path="/dti" element={<DashboardLayout />}>
             <Route path="overview" element={<OverviewPage />} />
             <Route path="farmers" element={<FarmersPage />} />
-            <Route path="farms" element={<FarmerFarmsPage />} />
             <Route path="harvests" element={<HarvestPage />} />
             <Route path="knowledge-hub" element={<HubPage />} />
             <Route path="inventory" element={<InventoryPage />} />

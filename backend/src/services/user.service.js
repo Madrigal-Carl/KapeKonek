@@ -335,9 +335,26 @@ const checkUserFieldConflicts = async (data, excludeId) => {
     });
 
     if (existing) {
-        const conflictError = new Error(
-            "Email, username, or contact number already exists",
-        );
+        const conflictingFields = [];
+
+        if (data.email && existing.email === data.email.toLowerCase()) {
+            conflictingFields.push("Email");
+        }
+        if (data.username && existing.username === data.username) {
+            conflictingFields.push("Username");
+        }
+        if (
+            data.contactNumber &&
+            existing.contactNumber === data.contactNumber
+        ) {
+            conflictingFields.push("Contact number");
+        }
+
+        const label = conflictingFields.length
+            ? conflictingFields.join(", ")
+            : "Email, username, or contact number";
+
+        const conflictError = new Error(`${label} already exists`);
         conflictError.statusCode = 409;
         throw conflictError;
     }

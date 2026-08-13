@@ -191,7 +191,6 @@ export function InventoryPage() {
         ]}
         searchPlaceholder="Search by name, ID, category, or variety…"
         filters={filters}
-        pageSize={5}
         emptyTitle="No products found"
         emptyDescription="Try adjusting your search or add a new product."
         minWidth="920px"

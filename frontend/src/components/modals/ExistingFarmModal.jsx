@@ -27,12 +27,12 @@ export function ExistingFarmModal({ options, onClose, onSelect }) {
       options.filter(
         (o) =>
           o.address.toLowerCase().includes(q.toLowerCase()) ||
-          o.id.toLowerCase().includes(q.toLowerCase()),
+          o.propertyNumber.toLowerCase().includes(q.toLowerCase()),
       ),
     [q, options],
   );
 
-  const selectedRow = options.find((o) => o.id === selected);
+  const selectedRow = options.find((o) => o._id === selected);
 
   return (
     <div
@@ -69,7 +69,7 @@ export function ExistingFarmModal({ options, onClose, onSelect }) {
                   .join(" ")}
               >
                 {selectedRow
-                  ? `${selectedRow.id} · ${selectedRow.address}`
+                  ? `${selectedRow.propertyNumber} · ${selectedRow.address}`
                   : "Select a farm…"}
               </span>
               <ChevronDown
@@ -96,30 +96,30 @@ export function ExistingFarmModal({ options, onClose, onSelect }) {
                 <ul className="max-h-64 overflow-auto">
                   {filtered.length === 0 ? (
                     <li className="px-3 py-3 text-sm text-muted-foreground">
-                      No farms available.
+                      No farms available in your association.
                     </li>
                   ) : (
                     filtered.map((o) => (
-                      <li key={o.id}>
+                      <li key={o._id}>
                         <button
                           type="button"
                           onClick={() => {
-                            setSelected(o.id);
+                            setSelected(o._id);
                             setOpen(false);
                             setQ("");
                           }}
                           className={[
                             "flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm hover:bg-muted",
-                            selected === o.id && "bg-accent/10",
+                            selected === o._id && "bg-accent/10",
                           ]
                             .filter(Boolean)
                             .join(" ")}
                         >
                           <span className="font-semibold text-foreground">
-                            {o.address}
+                            {o.propertyNumber}
                           </span>
                           <span className="label-mono text-muted-foreground">
-                            {o.id} · {o.size} ha
+                            {o.address} · {o.size} ha
                           </span>
                         </button>
                       </li>

@@ -40,7 +40,7 @@ export function AddChooserModal({ onClose, onNew, onExisting }) {
               Add Existing Farm
             </span>
             <span className="text-xs text-muted-foreground">
-              Pick from the registry of pre-mapped farms in your area.
+              Pick from farms within your association.
             </span>
           </button>
           <button

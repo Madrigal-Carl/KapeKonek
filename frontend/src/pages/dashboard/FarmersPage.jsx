@@ -213,7 +213,6 @@ export function FarmersPage() {
         searchKeys={["fullName", "email", "_id"]}
         searchPlaceholder="Search by name, email, or ID…"
         filters={filters}
-        pageSize={5}
         getRowKey={(r) => r._id}
         minWidth="860px"
         loading={isLoading}
