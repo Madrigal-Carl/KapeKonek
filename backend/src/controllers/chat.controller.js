@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import {
     getChats,
+    markChatRead,
     getChatMessages,
     sendMessage,
     updateMessage,
@@ -31,6 +32,15 @@ export const getChatsHandler = asyncHandler(async (req, res) => {
     return res.status(200).json({
         message: "Chats fetched successfully",
         chats,
+    });
+});
+
+export const markChatReadHandler = asyncHandler(async (req, res) => {
+    const { lastReadAt } = await markChatRead(req.params.id, req.user);
+
+    return res.status(200).json({
+        message: "Chat marked as read",
+        lastReadAt,
     });
 });
 

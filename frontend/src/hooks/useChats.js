@@ -3,6 +3,7 @@ import {
     deleteMessage,
     getChatMessages,
     getChats,
+    markChatRead,
     sendMessage,
     updateMessage,
 } from "@/services/chat.service";
@@ -19,6 +20,22 @@ export function useChats(options = {}) {
         queryKey: chatKeys.list,
         queryFn: () => getChats().then((response) => response.chats),
         ...options,
+    });
+}
+
+export function useMarkChatRead() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (chatId) => markChatRead(chatId),
+        onSuccess: (_result, chatId) => {
+            queryClient.setQueryData(chatKeys.list, (old = []) =>
+                old.map((chat) =>
+                    chat._id === chatId ? { ...chat, unreadCount: 0 } : chat,
+                ),
+            );
+        },
+        onError: (error) => notifyError(error, "Failed to mark chat as read"),
     });
 }
 

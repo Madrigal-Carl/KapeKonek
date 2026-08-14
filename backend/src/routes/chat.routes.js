@@ -2,6 +2,7 @@ import express from "express";
 import {
     getSocketTokenHandler,
     getChatsHandler,
+    markChatReadHandler,
     getChatMessagesHandler,
     sendMessageHandler,
     updateMessageHandler,
@@ -32,6 +33,13 @@ router.get(
     authenticated,
     allowRoles("manager", "farmer"),
     getChatsHandler,
+);
+router.post(
+    "/:id/read",
+    authenticated,
+    allowRoles("manager", "farmer"),
+    validateChatIdParam,
+    markChatReadHandler,
 );
 router.get(
     "/:id/messages",

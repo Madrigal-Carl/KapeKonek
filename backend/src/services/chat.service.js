@@ -1,4 +1,5 @@
 import ChatMessage from "../models/chatMessage.model.js";
+import ChatRead from "../models/chatRead.model.js";
 import Association from "../models/association.model.js";
 import User from "../models/user.model.js";
 import FarmerVerification from "../models/farmerVerification.model.js";
@@ -67,8 +68,44 @@ export const getChats = async (authenticatedUser) => {
     }
 
     return {
-        chats: await attachChatData(associations),
+        chats: await attachChatData(associations, authenticatedUser),
     };
+};
+
+export const markChatRead = async (id, authenticatedUser) => {
+    const association = await Association.findById(id);
+
+    if (!association) {
+        const notFoundError = new Error("Chat not found");
+        notFoundError.statusCode = 404;
+        throw notFoundError;
+    }
+
+    await assertCanAccessChat(association, authenticatedUser);
+
+    let readState;
+
+    try {
+        readState = await ChatRead.findOneAndUpdate(
+            { user: authenticatedUser._id, association: association._id },
+            { $set: { lastReadAt: new Date() } },
+            { upsert: true, returnDocument: "after" },
+        );
+    } catch (error) {
+        // Concurrent upserts race on the unique {user, association} index —
+        // retry as a plain update now that the document exists.
+        if (error.code === 11000) {
+            readState = await ChatRead.findOneAndUpdate(
+                { user: authenticatedUser._id, association: association._id },
+                { $set: { lastReadAt: new Date() } },
+                { returnDocument: "after" },
+            );
+        } else {
+            throw error;
+        }
+    }
+
+    return { lastReadAt: readState.lastReadAt };
 };
 
 export const getChatMessages = async (
@@ -216,7 +253,7 @@ export const deleteMessage = async (id, messageId, authenticatedUser) => {
     return { _id: deleted._id, deletedAt: deleted.deletedAt };
 };
 
-const attachChatData = async (associations) => {
+const attachChatData = async (associations, authenticatedUser) => {
     if (!associations.length) return [];
 
     const userIds = [
@@ -232,7 +269,7 @@ const attachChatData = async (associations) => {
         ),
     ];
 
-    const [users, messages] = await Promise.all([
+    const [users, messages, readStates] = await Promise.all([
         userIds.length
             ? User.find({ _id: { $in: userIds } }).select(
                   "firstName middleName lastName",
@@ -242,6 +279,10 @@ const attachChatData = async (associations) => {
             association: { $in: associations.map((a) => a._id) },
             deletedAt: null,
         }).sort({ createdAt: 1 }),
+        ChatRead.find({
+            user: authenticatedUser._id,
+            association: { $in: associations.map((a) => a._id) },
+        }),
     ]);
 
     const nameByUser = new Map(
@@ -254,40 +295,59 @@ const attachChatData = async (associations) => {
         lastMessageByAssociation.set(message.association.toString(), message);
     }
 
-    return associations.map((association) => {
-        const obj = association.toObject();
-        const lastMessage = lastMessageByAssociation.get(obj._id.toString());
+    const lastReadByAssociation = new Map(
+        readStates.map((state) => [
+            state.association.toString(),
+            state.lastReadAt,
+        ]),
+    );
 
-        return {
-            _id: obj._id,
-            name: obj.name,
-            members: [
-                ...(obj.assignedFarmers ?? []),
-                ...(obj.user ? [obj.user] : []),
-            ].map((memberId) => {
-                const id = memberId.toString();
-                return { _id: id, fullName: nameByUser.get(id) ?? id };
-            }),
-            lastMessage: lastMessage
-                ? {
-                      _id: lastMessage._id,
-                      text: lastMessage.text,
-                      hasAttachments:
-                          (lastMessage.attachments ?? []).length > 0,
-                      sender: lastMessage.sender
-                          ? {
-                                _id: lastMessage.sender.toString(),
-                                fullName:
-                                    nameByUser.get(
-                                        lastMessage.sender.toString(),
-                                    ) ?? lastMessage.sender.toString(),
-                            }
-                          : null,
-                      createdAt: lastMessage.createdAt,
-                  }
-                : null,
-        };
-    });
+    return Promise.all(
+        associations.map(async (association) => {
+            const obj = association.toObject();
+            const associationId = obj._id.toString();
+            const lastMessage = lastMessageByAssociation.get(associationId);
+            const lastReadAt = lastReadByAssociation.get(associationId);
+
+            const unreadCount = await ChatMessage.countDocuments({
+                association: association._id,
+                deletedAt: null,
+                sender: { $ne: authenticatedUser._id },
+                ...(lastReadAt ? { createdAt: { $gt: lastReadAt } } : {}),
+            });
+
+            return {
+                _id: obj._id,
+                name: obj.name,
+                members: [
+                    ...(obj.assignedFarmers ?? []),
+                    ...(obj.user ? [obj.user] : []),
+                ].map((memberId) => {
+                    const id = memberId.toString();
+                    return { _id: id, fullName: nameByUser.get(id) ?? id };
+                }),
+                lastMessage: lastMessage
+                    ? {
+                          _id: lastMessage._id,
+                          text: lastMessage.text,
+                          hasAttachments:
+                              (lastMessage.attachments ?? []).length > 0,
+                          sender: lastMessage.sender
+                              ? {
+                                    _id: lastMessage.sender.toString(),
+                                    fullName:
+                                        nameByUser.get(
+                                            lastMessage.sender.toString(),
+                                        ) ?? lastMessage.sender.toString(),
+                                }
+                              : null,
+                          createdAt: lastMessage.createdAt,
+                      }
+                    : null,
+                unreadCount,
+            };
+        }),
+    );
 };
 
 const attachMessageData = async (messages) => {

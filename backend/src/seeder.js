@@ -15,6 +15,7 @@ import Comment from "./models/comment.model.js";
 import Like from "./models/like.model.js";
 import Rating from "./models/rating.model.js";
 import ChatMessage from "./models/chatMessage.model.js";
+import ChatRead from "./models/chatRead.model.js";
 
 const WIPE_ONLY_MODELS = [
     Product,
@@ -24,6 +25,7 @@ const WIPE_ONLY_MODELS = [
     Like,
     Rating,
     ChatMessage,
+    ChatRead,
 ];
 
 // Order matters: each entry is listed after every seeder whose output it

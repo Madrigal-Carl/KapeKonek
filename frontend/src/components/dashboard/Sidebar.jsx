@@ -4,6 +4,8 @@ import { useState } from "react";
 import { getNavSectionsForRole } from "@/constants/navigation";
 import { Button } from "@/components/ui";
 import useAuth from "@/hooks/useAuth";
+import { useChats } from "@/hooks/useChats";
+import { ROLES } from "@/constants/roles";
 
 const ROLE_LABELS = {
   buyer: "Buyer",
@@ -20,7 +22,22 @@ export function Sidebar({ open, onClose }) {
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  const navSections = getNavSectionsForRole(user?.role);
+  const isChatRole =
+    user?.role === ROLES.MANAGER || user?.role === ROLES.FARMER;
+  const { data: chats = [] } = useChats({ enabled: isChatRole });
+  const unreadCount = chats.reduce(
+    (sum, chat) => sum + (chat.unreadCount ?? 0),
+    0,
+  );
+
+  const navSections = getNavSectionsForRole(user?.role).map((section) => ({
+    ...section,
+    items: section.items.map((item) =>
+      item.to?.endsWith("/chat") && unreadCount > 0
+        ? { ...item, badge: unreadCount > 9 ? "9+" : unreadCount }
+        : item,
+    ),
+  }));
 
   const fullName =
     [user?.firstName, user?.middleName, user?.lastName]

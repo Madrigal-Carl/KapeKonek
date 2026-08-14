@@ -2,7 +2,16 @@ import { io } from "socket.io-client";
 import api from "@/api/axios";
 
 let socket = null;
+let activeChatId = null;
 const listeners = new Map(); // event -> Set<callback>
+
+// Tracks which chat is currently open in the UI, so unread badges aren't
+// incremented for the conversation being viewed.
+export const setActiveChatId = (chatId) => {
+    activeChatId = chatId;
+};
+
+export const getActiveChatId = () => activeChatId;
 
 const getSocketUrl = () => {
     const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:5000/api";

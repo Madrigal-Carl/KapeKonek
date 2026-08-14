@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { Coffee, Menu } from "lucide-react";
 import { Sidebar } from "@/components/dashboard";
+import { useChatUnreadWatcher } from "@/hooks/useChatUnread";
 
 export default function DashboardLayout() {
   const [open, setOpen] = useState(false);
+  useChatUnreadWatcher();
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">

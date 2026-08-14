@@ -18,11 +18,12 @@ import {
   chatKeys,
   useChats,
   useDeleteMessage,
+  useMarkChatRead,
   useSendMessage,
   useUpdateMessage,
 } from "@/hooks/useChats";
 import { useChatSocket } from "@/hooks/useChatSocket";
-import { onChatEvent } from "@/services/chatSocket";
+import { onChatEvent, setActiveChatId } from "@/services/chatSocket";
 import { getChatMessages } from "@/services/chat.service";
 import { uploadToCloudinary } from "@/services/upload.service";
 import { notify, notifyError } from "@/utils/notify";
@@ -120,6 +121,25 @@ export function ChatPage() {
   const sendMutation = useSendMessage();
   const updateMutation = useUpdateMessage();
   const deleteMutation = useDeleteMessage();
+  const markChatRead = useMarkChatRead();
+
+  // Mark the chat as read when opened and flag it as the active chat so the
+  // unread badge isn't incremented while it's being viewed. Fires once per
+  // chat — the mutation object identity changes every render, so it goes
+  // through a ref to avoid re-firing.
+  const markChatReadRef = useRef(markChatRead);
+  markChatReadRef.current = markChatRead;
+  const markedReadRef = useRef(null);
+
+  useEffect(() => {
+    if (!chatId) return;
+    setActiveChatId(chatId);
+    if (markedReadRef.current !== chatId) {
+      markedReadRef.current = chatId;
+      markChatReadRef.current.mutate(chatId);
+    }
+    return () => setActiveChatId(null);
+  }, [chatId]);
 
   // Initial load — start from the LAST page so the most recent messages
   // (up to 30) appear first; older pages are prepended on scroll-up.

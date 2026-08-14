@@ -6,6 +6,12 @@ export async function getChats() {
     return response.data;
 }
 
+export async function markChatRead(chatId) {
+    const response = await api.post(`/chats/${chatId}/read`);
+
+    return response.data;
+}
+
 export async function getChatMessages(chatId, params = {}) {
     const response = await api.get(`/chats/${chatId}/messages`, { params });
 

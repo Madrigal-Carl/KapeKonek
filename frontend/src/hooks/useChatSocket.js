@@ -9,7 +9,9 @@ import {
 } from "@/services/chatSocket";
 
 // Transport-level hook for the realtime chat socket. When enabled, keeps
-// the shared socket connected and joins/leaves the given chat room.
+// the shared socket connected and joins/leaves the given chat room. The
+// socket's connection lifecycle is owned by the app-level watcher, so this
+// hook only joins/leaves rooms and subscribes to status.
 export function useChatSocket({ chatId, enabled = true } = {}) {
     const [status, setStatus] = useState("disconnected");
 
@@ -21,7 +23,6 @@ export function useChatSocket({ chatId, enabled = true } = {}) {
 
         return () => {
             offStatus();
-            disconnectChatSocket();
         };
     }, [enabled]);
 
