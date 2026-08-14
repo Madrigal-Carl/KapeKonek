@@ -3,7 +3,7 @@ import { z } from "zod";
 const attachmentItem = z.object({
     name: z.string().trim().min(1, "File name is required"),
     url: z.string().url("Invalid file URL"),
-    type: z.enum(["image", "pdf", "document"]).optional(),
+    type: z.enum(["image", "pdf", "document", "video"]).optional(),
     size: z.number().nonnegative().optional(),
 });
 

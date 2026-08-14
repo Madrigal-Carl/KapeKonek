@@ -13,7 +13,7 @@ const attachmentSchema = new mongoose.Schema(
         },
         type: {
             type: String,
-            enum: ["image", "pdf", "document"],
+            enum: ["image", "pdf", "document", "video"],
             default: "document",
         },
         size: {

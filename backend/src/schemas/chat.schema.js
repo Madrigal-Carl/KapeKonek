@@ -3,12 +3,28 @@ import { z } from "zod";
 const objectId = (label) =>
     z.string().regex(/^[0-9a-fA-F]{24}$/, `Invalid ${label}`);
 
-const attachmentItem = z.object({
-    name: z.string().trim().min(1, "File name is required"),
-    url: z.string().url("Invalid file URL"),
-    type: z.enum(["image", "pdf", "document"]).optional(),
-    size: z.number().nonnegative().optional(),
-});
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // images
+const MAX_FILE_BYTES = 20 * 1024 * 1024; // pdfs, documents, videos
+
+const attachmentItem = z
+    .object({
+        name: z.string().trim().min(1, "File name is required"),
+        url: z.string().url("Invalid file URL"),
+        type: z.enum(["image", "pdf", "document", "video"]).optional(),
+        size: z.number().nonnegative().optional(),
+    })
+    .refine(
+        (attachment) =>
+            attachment.size == null ||
+            (attachment.type === "image"
+                ? attachment.size <= MAX_IMAGE_BYTES
+                : attachment.size <= MAX_FILE_BYTES),
+        (attachment) => ({
+            message: `"${attachment.name}" exceeds the ${
+                attachment.type === "image" ? "5 MB" : "20 MB"
+            } size limit`,
+        }),
+    );
 
 export const chatIdParamSchema = z.object({
     id: objectId("association id"),

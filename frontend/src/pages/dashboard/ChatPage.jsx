@@ -8,6 +8,7 @@ import {
   Send,
   Trash2,
   Users,
+  Video,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui";
@@ -24,7 +25,7 @@ import {
 import { useChatSocket } from "@/hooks/useChatSocket";
 import { onChatEvent } from "@/services/chatSocket";
 import { uploadToCloudinary } from "@/services/upload.service";
-import { notifyError } from "@/utils/notify";
+import { notify, notifyError } from "@/utils/notify";
 import { sendMessageSchema, updateMessageSchema } from "@/schemas/chat.schema";
 
 const fmtTime = (s) => {
@@ -47,6 +48,7 @@ const canModifyMessage = (m) =>
 
 const toAttachmentType = (mime) => {
   if (mime?.startsWith("image/")) return "image";
+  if (mime?.startsWith("video/")) return "video";
   if (mime === "application/pdf") return "pdf";
   return "document";
 };
@@ -90,6 +92,7 @@ export function ChatPage() {
 
   const scrollRef = useRef(null);
   const imageRef = useRef(null);
+  const videoRef = useRef(null);
   const fileRef = useRef(null);
   const typingTimersRef = useRef({});
   const lastTypingAtRef = useRef(0);
@@ -203,11 +206,27 @@ export function ChatPage() {
     e.target.value = "";
     if (!list.length) return;
 
-    const totalBytes = list.reduce((sum, file) => sum + file.size, 0);
+    // Images max 5 MB; files and videos max 20 MB.
+    const allowed = list.filter((file) => {
+      const isImage = file.type?.startsWith("image/");
+      const limit = isImage ? 5 * 1024 * 1024 : 20 * 1024 * 1024;
+      if (file.size > limit) {
+        notify(
+          `"${file.name}" exceeds the ${limit / 1024 / 1024} MB size limit`,
+          { type: "error" },
+        );
+        return false;
+      }
+      return true;
+    });
+
+    if (!allowed.length) return;
+
+    const totalBytes = allowed.reduce((sum, file) => sum + file.size, 0);
     let completedBytes = 0;
     setUpload({ active: true, percent: 0 });
 
-    for (const file of list) {
+    for (const file of allowed) {
       try {
         const result = await uploadToCloudinary(file, "chat", (loaded) => {
           const overall = ((completedBytes + loaded) / totalBytes) * 100;
@@ -299,6 +318,13 @@ export function ChatPage() {
                 className="max-h-40 border border-border object-cover"
               />
             </a>
+          ) : a.type === "video" ? (
+            <video
+              key={idx}
+              src={a.url}
+              controls
+              className="max-h-56 w-full border border-border bg-background"
+            />
           ) : (
             <a
               key={idx}
@@ -626,6 +652,14 @@ export function ChatPage() {
                     alt={a.name}
                     className="h-24 w-24 border border-border object-cover"
                   />
+                ) : a.type === "video" ? (
+                  <video
+                    src={a.url}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    className="h-24 w-24 border border-border object-cover"
+                  />
                 ) : (
                   <div className="flex h-24 w-24 flex-col items-center justify-center gap-1.5 border border-border bg-background px-2 text-center">
                     <FileText className="h-6 w-6 text-muted-foreground" />
@@ -674,6 +708,15 @@ export function ChatPage() {
             onChange={onPickFiles}
           />
           <input
+            ref={videoRef}
+            type="file"
+            accept="video/*"
+            multiple
+            hidden
+            disabled={upload.active}
+            onChange={onPickFiles}
+          />
+          <input
             ref={fileRef}
             type="file"
             multiple
@@ -689,6 +732,15 @@ export function ChatPage() {
             aria-label="Attach image"
           >
             <ImageIcon className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => videoRef.current?.click()}
+            disabled={upload.active}
+            className="grid h-10 w-10 shrink-0 place-items-center border border-border text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+            aria-label="Attach video"
+          >
+            <Video className="h-5 w-5" />
           </button>
           <button
             type="button"
