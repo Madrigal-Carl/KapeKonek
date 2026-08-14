@@ -16,7 +16,6 @@ import { ArchiveConfirmModal } from "@/components/modals";
 import useAuth from "@/hooks/useAuth";
 import {
   chatKeys,
-  useChatMessages,
   useChats,
   useDeleteMessage,
   useSendMessage,
@@ -24,9 +23,12 @@ import {
 } from "@/hooks/useChats";
 import { useChatSocket } from "@/hooks/useChatSocket";
 import { onChatEvent } from "@/services/chatSocket";
+import { getChatMessages } from "@/services/chat.service";
 import { uploadToCloudinary } from "@/services/upload.service";
 import { notify, notifyError } from "@/utils/notify";
 import { sendMessageSchema, updateMessageSchema } from "@/schemas/chat.schema";
+
+const MESSAGES_PER_PAGE = 30;
 
 const fmtTime = (s) => {
   if (!s) return "";
@@ -102,22 +104,99 @@ export function ChatPage() {
   const chat = chats[0];
   const chatId = chat?._id;
 
-  const { data: messages = [], isLoading: messagesLoading } =
-    useChatMessages(chatId);
+  const [messages, setMessages] = useState([]);
+  const [loadingInitial, setLoadingInitial] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextPage, setNextPage] = useState(null);
+  const messagesRef = useRef([]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
   const { status: socketStatus, sendTyping } = useChatSocket({ chatId });
 
   const sendMutation = useSendMessage();
   const updateMutation = useUpdateMessage();
   const deleteMutation = useDeleteMessage();
 
-  // Realtime event handling — merge socket events into the query cache so
-  // the message thread AND the chat list (last-message preview) update for
-  // every member, not just the sender.
+  // Initial load — start from the LAST page so the most recent messages
+  // (up to 30) appear first; older pages are prepended on scroll-up.
   useEffect(() => {
     if (!chatId) return;
 
-    const setMessages = (updater) =>
-      queryClient.setQueryData(chatKeys.messages(chatId), updater);
+    let cancelled = false;
+    setMessages([]);
+    setHasMore(false);
+    setNextPage(null);
+    setLoadingInitial(true);
+
+    (async () => {
+      try {
+        const first = await getChatMessages(chatId, {
+          page: 1,
+          limit: MESSAGES_PER_PAGE,
+        });
+        const totalPages = first.pagination?.totalPages ?? 1;
+        const last = await getChatMessages(chatId, {
+          page: totalPages,
+          limit: MESSAGES_PER_PAGE,
+        });
+
+        if (cancelled) return;
+        setMessages(last.messages);
+        setHasMore(totalPages > 1);
+        setNextPage(totalPages > 1 ? totalPages - 1 : null);
+      } catch (err) {
+        if (!cancelled) notifyError(err, "Failed to load messages");
+      } finally {
+        if (!cancelled) setLoadingInitial(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [chatId]);
+
+  const loadOlder = async () => {
+    if (!chatId || loadingOlder || !hasMore || nextPage == null) return;
+
+    setLoadingOlder(true);
+    const scrollEl = scrollRef.current;
+    const prevHeight = scrollEl?.scrollHeight ?? 0;
+
+    try {
+      const res = await getChatMessages(chatId, {
+        page: nextPage,
+        limit: MESSAGES_PER_PAGE,
+      });
+      setMessages((prev) => [...res.messages, ...prev]);
+      setHasMore(res.pagination.page > 1);
+      setNextPage(res.pagination.page > 1 ? res.pagination.page - 1 : null);
+
+      // Keep the viewport anchored after prepending older messages.
+      requestAnimationFrame(() => {
+        const el = scrollRef.current;
+        if (el) el.scrollTop = el.scrollHeight - prevHeight;
+      });
+    } catch (err) {
+      notifyError(err, "Failed to load older messages");
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
+
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (el && el.scrollTop < 60) loadOlder();
+  };
+
+  // Realtime event handling — merge socket events into the local message
+  // list AND the chat list (last-message preview) so every member updates.
+  useEffect(() => {
+    if (!chatId) return;
 
     const patchChatList = (updater) =>
       queryClient.setQueryData(chatKeys.list, (old = []) =>
@@ -138,8 +217,8 @@ export function ChatPage() {
     const unsubscribes = [
       onChatEvent("chat:new-message", (d) => {
         if (d.chatId !== chatId) return;
-        setMessages((old = []) =>
-          old.some((m) => m._id === d.message._id) ? old : [...old, d.message],
+        setMessages((prev) =>
+          prev.some((m) => m._id === d.message._id) ? prev : [...prev, d.message],
         );
         patchChatList((chat) => ({
           ...chat,
@@ -148,8 +227,8 @@ export function ChatPage() {
       }),
       onChatEvent("chat:message-updated", (d) => {
         if (d.chatId !== chatId) return;
-        setMessages((old = []) =>
-          old.map((m) => (m._id === d.message._id ? d.message : m)),
+        setMessages((prev) =>
+          prev.map((m) => (m._id === d.message._id ? d.message : m)),
         );
         patchChatList((chat) =>
           chat.lastMessage?._id === d.message._id
@@ -159,16 +238,13 @@ export function ChatPage() {
       }),
       onChatEvent("chat:message-deleted", (d) => {
         if (d.chatId !== chatId) return;
-        setMessages((old = []) => old.filter((m) => m._id !== d.messageId));
-        const remaining =
-          queryClient.getQueryData(chatKeys.messages(chatId)) ?? [];
+        const next = messagesRef.current.filter((m) => m._id !== d.messageId);
+        setMessages(next);
         patchChatList((chat) =>
           chat.lastMessage?._id === d.messageId
             ? {
                 ...chat,
-                lastMessage: toLastMessage(
-                  remaining[remaining.length - 1] ?? null,
-                ),
+                lastMessage: toLastMessage(next[next.length - 1] ?? null),
               }
             : chat,
         );
@@ -405,10 +481,11 @@ export function ChatPage() {
         {/* Messages */}
         <div
           ref={scrollRef}
+          onScroll={handleScroll}
           className="flex-1 overflow-y-auto bg-background px-4 py-4 sm:px-6"
         >
           <div className="mx-auto flex max-w-5xl flex-col gap-3">
-            {messagesLoading ? (
+            {loadingInitial ? (
               [0, 1, 2].map((i) => (
                 <div key={i} className="h-10 w-2/3 animate-pulse bg-muted" />
               ))
@@ -419,18 +496,36 @@ export function ChatPage() {
                 </p>
               </div>
             ) : (
-              messages.map((m, i) => {
-                const isOwn = m.sender?._id === currentUserId;
-                const prev = messages[i - 1];
-                const showAuthor =
-                  !isOwn && prev?.sender?._id !== m.sender?._id;
+              <>
+                {hasMore && (
+                  <div className="py-2 text-center">
+                    {loadingOlder ? (
+                      <span className="label-mono text-xs text-muted-foreground">
+                        Loading older messages…
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={loadOlder}
+                        className="label-mono text-accent hover:underline"
+                      >
+                        Load older messages
+                      </button>
+                    )}
+                  </div>
+                )}
+                {messages.map((m, i) => {
+                  const isOwn = m.sender?._id === currentUserId;
+                  const prev = messages[i - 1];
+                  const showAuthor =
+                    !isOwn && prev?.sender?._id !== m.sender?._id;
 
-                return (
-                  <div
-                    key={m._id}
-                    className={`group flex items-start gap-2 ${isOwn ? "justify-end" : "justify-start"}`}
-                  >
-                    {!isOwn && (
+                  return (
+                    <div
+                      key={m._id}
+                      className={`group flex items-start gap-2 ${isOwn ? "justify-end" : "justify-start"}`}
+                    >
+                      {!isOwn && (
                       <Avatar
                         name={m.sender?.fullName}
                         className={`h-9 w-9 text-xs ${showAuthor ? "" : "invisible"}`}
@@ -519,7 +614,8 @@ export function ChatPage() {
                     )}
                   </div>
                 );
-              })
+                })}
+              </>
             )}
 
             {/* Typing indicator — inside the thread, at the bottom */}
