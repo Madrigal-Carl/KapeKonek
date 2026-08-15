@@ -6,6 +6,7 @@ const SUBFOLDER_MAP = {
     product: "products",
     receipt: "receipts",
     chat: "chats",
+    post: "posts",
 };
 
 export const createUploadSignature = ({ type }) => {

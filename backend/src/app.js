@@ -12,6 +12,7 @@ import userRoutes from "./routes/user.routes.js";
 import farmRoutes from "./routes/farm.routes.js";
 import harvestRoutes from "./routes/harvest.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
+import postRoutes from "./routes/post.routes.js";
 import associationRoutes from "./routes/association.routes.js";
 
 const app = express();
@@ -49,6 +50,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/farms", farmRoutes);
 app.use("/api/harvests", harvestRoutes);
 app.use("/api/chats", chatRoutes);
+app.use("/api/posts", postRoutes);
 app.use("/api/associations", associationRoutes);
 
 app.use(errorHandler);

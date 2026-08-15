@@ -16,7 +16,7 @@ export const farmerNavSections = [
         label: "Community",
         items: [
             { to: "/farmer/chat", label: "Chat", icon: MessageCircle },
-            { to: "/farmer/knowledge-hub", label: "Hub", icon: Users, badge: 3 }
+            { to: "/farmer/knowledge-hub", label: "Hub", icon: Users }
         ]
     },
     {
@@ -53,7 +53,7 @@ export const managerNavSections = [
         label: "Community",
         items: [
             { to: "/manager/chat", label: "Chat", icon: MessageCircle },
-            { to: "/manager/knowledge-hub", label: "Hub", icon: Users, badge: 3 }
+            { to: "/manager/knowledge-hub", label: "Hub", icon: Users }
         ]
     },
     {
@@ -98,7 +98,7 @@ export const dtiNavSections = [
     {
         label: "Community",
         items: [
-            { to: "/dti/knowledge-hub", label: "Hub", icon: Users, badge: 3 }
+            { to: "/dti/knowledge-hub", label: "Hub", icon: Users }
         ]
     },
     {
@@ -144,7 +144,7 @@ export const kaluppaNavSections = [
     {
         label: "Community",
         items: [
-            { to: "/kaluppa/knowledge-hub", label: "Hub", icon: Users, badge: 3 }
+            { to: "/kaluppa/knowledge-hub", label: "Hub", icon: Users }
         ]
     },
     {
