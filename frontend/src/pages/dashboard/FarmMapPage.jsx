@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2, Search } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useFarms } from "@/hooks/useFarms";
 
 const BOAC_CENTER = { lat: 13.4477, lng: 121.8407 };
-
 const MARKER_ICON_URL =
   "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png";
 const MARKER_ICON_2X_URL =
@@ -12,32 +12,13 @@ const MARKER_ICON_2X_URL =
 const MARKER_SHADOW_URL =
   "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png";
 
-const FARMS = [
-  {
-    id: "FM-001",
-    name: "Sitio Malusak Farm",
-    address: "Sitio Malusak, Boac, Marinduque",
-    size: 4.2,
-    yieldKg: 1820,
-    location: { lat: 13.4521, lng: 121.8389 },
-  },
-  {
-    id: "FM-002",
-    name: "Barangay Tugos Farm",
-    address: "Barangay Tugos, Mogpog, Marinduque",
-    size: 2.6,
-    yieldKg: 940,
-    location: { lat: 13.4731, lng: 121.8612 },
-  },
-  {
-    id: "FM-003",
-    name: "Sitio Hinapulan Farm",
-    address: "Sitio Hinapulan, Gasan, Marinduque",
-    size: 6.8,
-    yieldKg: 3120,
-    location: { lat: 13.3221, lng: 121.8693 },
-  },
-];
+const escapeHtml = (value) =>
+  String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 
 export function FarmMapPage() {
   const [query, setQuery] = useState("");
@@ -46,10 +27,18 @@ export function FarmMapPage() {
   const mapRef = useRef(null);
   const markersLayerRef = useRef(null);
 
-  const filteredFarms = FARMS.filter((farm) => {
-    const text = `${farm.name} ${farm.address}`.toLowerCase();
-    return text.includes(query.trim().toLowerCase());
-  });
+  const { data: farms = [], isLoading, isError } = useFarms({ all: true });
+
+  const filteredFarms = useMemo(() => {
+    const search = query.trim().toLowerCase();
+    if (!search) return farms;
+
+    return farms.filter((farm) =>
+      `${farm.propertyNumber ?? ""} ${farm.address ?? ""}`
+        .toLowerCase()
+        .includes(search),
+    );
+  }, [farms, query]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -79,13 +68,13 @@ export function FarmMapPage() {
     markersLayer.icon = icon;
     markersLayerRef.current = markersLayer;
 
-    const ro = new ResizeObserver(() => map.invalidateSize());
-    ro.observe(containerRef.current);
+    const resizeObserver = new ResizeObserver(() => map.invalidateSize());
+    resizeObserver.observe(containerRef.current);
     setTimeout(() => map.invalidateSize(), 50);
     setMapReady(true);
 
     return () => {
-      ro.disconnect();
+      resizeObserver.disconnect();
       setMapReady(false);
       map.remove();
       mapRef.current = null;
@@ -95,36 +84,47 @@ export function FarmMapPage() {
 
   useEffect(() => {
     if (!mapReady || !mapRef.current || !markersLayerRef.current) return;
+
     const map = mapRef.current;
     const layer = markersLayerRef.current;
     const icon = layer.icon;
-    layer.clearLayers();
     const bounds = [];
+
+    layer.clearLayers();
+
     filteredFarms.forEach((farm) => {
-      const marker = L.marker([farm.location.lat, farm.location.lng], {
-        icon,
-      }).addTo(layer);
-      const tooltipHtml = `
-        <div style="min-width:180px">
-          <div style="font-weight:600;margin-bottom:4px">${farm.name}</div>
-          <div style="font-size:12px;color:#555">${farm.address}</div>
-          <div style="margin-top:6px;font-size:12px"><strong>Hectares:</strong> ${farm.size} ha</div>
-          <div style="font-size:12px"><strong>Total yield:</strong> ${farm.yieldKg.toLocaleString()} kg</div>
+      const latitude = Number(farm.latitude);
+      const longitude = Number(farm.longitude);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+
+      const marker = L.marker([latitude, longitude], { icon }).addTo(layer);
+      const owner = farm.owner?.fullName ?? "—";
+      const farmerCount = farm.assignedFarmers?.length ?? 0;
+
+      const popupHtml = `
+        <div style="min-width:190px">
+          <div style="font-weight:600;margin-bottom:4px">${escapeHtml(farm.propertyNumber)}</div>
+          <div style="font-size:12px;color:#555">${escapeHtml(farm.address)}</div>
+          <div style="margin-top:6px;font-size:12px"><strong>Hectares:</strong> ${escapeHtml(farm.size)} ha</div>
+          <div style="font-size:12px"><strong>Owner:</strong> ${escapeHtml(owner)}</div>
+          <div style="font-size:12px"><strong>Farmers:</strong> ${farmerCount}</div>
         </div>
       `;
-      marker.bindTooltip(tooltipHtml, {
+
+      marker.bindTooltip(popupHtml, {
         direction: "top",
         offset: [0, -30],
         opacity: 1,
       });
-      bounds.push([farm.location.lat, farm.location.lng]);
+      bounds.push([latitude, longitude]);
     });
+
     if (bounds.length) {
       map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
     } else {
       map.setView([BOAC_CENTER.lat, BOAC_CENTER.lng], 11);
     }
-  }, [mapReady, filteredFarms]);
+  }, [filteredFarms, mapReady]);
 
   return (
     <div className="py-8">
@@ -134,8 +134,8 @@ export function FarmMapPage() {
           Farm Map
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Geotagged farms across Marinduque. Hover a pin to see the farm name,
-          hectares, and total yield.
+          Geotagged farms available to your role. Search by property number or
+          address.
         </p>
       </div>
 
@@ -144,23 +144,36 @@ export function FarmMapPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search farm..."
+            placeholder="Search property number or address…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full rounded-md border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground outline-none ring-offset-background placeholder:text-muted-foreground focus:ring-2 focus:ring-accent"
+            onChange={(event) => setQuery(event.target.value)}
+            className="w-full border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-accent"
           />
         </div>
         <p className="text-sm text-muted-foreground">
-          {filteredFarms.length} farm{filteredFarms.length === 1 ? "" : "s"}{" "}
-          total
+          {filteredFarms.length} farm{filteredFarms.length === 1 ? "" : "s"} total
         </p>
       </div>
+
+      {isError && (
+        <div className="mb-4 border border-destructive bg-card px-4 py-3 text-sm text-destructive">
+          Failed to load farms for the map.
+        </div>
+      )}
 
       <div className="border border-border bg-card p-2">
         <div
           ref={containerRef}
           className="relative z-0 h-[600px] w-full border border-border bg-muted"
-        />
+        >
+          {isLoading && (
+            <div className="absolute inset-0 z-10 grid place-items-center bg-background/70">
+              <div className="inline-flex items-center gap-2 border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading farms…
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

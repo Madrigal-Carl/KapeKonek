@@ -25,7 +25,7 @@ const router = express.Router();
 router.get(
     "/",
     authenticated,
-    allowRoles("kaluppa", "manager", "farmer"),
+    allowRoles("kaluppa", "manager", "farmer", "dti"),
     validateGetFarmsQuery,
     getFarmsHandler,
 );
