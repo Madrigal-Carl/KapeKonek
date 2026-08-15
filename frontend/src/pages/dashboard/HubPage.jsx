@@ -25,7 +25,7 @@ import {
   useDeleteComment,
   useDeletePost,
   usePostComments,
-  usePosts,
+  useInfinitePosts,
   useDebouncedPostLike,
   useUpdateComment,
   useUpdatePost,
@@ -462,7 +462,15 @@ function PostCard({ post, currentUserId, onEdit, onDelete, onMediaOpen, onTagCli
 export function HubPage() {
   const { user } = useAuth();
   const currentUserId = user?._id;
-  const { data: posts = [], isLoading, isError } = usePosts({ all: true });
+  const {
+    data,
+    isLoading,
+    isError,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfinitePosts({ limit: 10 });
+  const posts = data?.pages.flatMap((page) => page.posts ?? []) ?? [];
   const createPost = useCreatePost();
   const updatePost = useUpdatePost();
   const deletePost = useDeletePost();
@@ -476,6 +484,24 @@ export function HubPage() {
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState("All");
   const [lightbox, setLightbox] = useState(null);
+  const loadMoreRef = useRef(null);
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !hasNextPage) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "320px" },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const resetEditor = () => {
     setDraft("");
@@ -630,6 +656,13 @@ export function HubPage() {
               ))}
             </div>
           )}
+          <div ref={loadMoreRef} className="min-h-8 py-2 text-center">
+            {isFetchingNextPage && (
+              <span className="label-mono text-xs text-muted-foreground">
+                Loading more posts…
+              </span>
+            )}
+          </div>
         </div>
       </main>
 

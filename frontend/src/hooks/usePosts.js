@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   createComment,
   createPost,
@@ -17,12 +22,34 @@ export const postKeys = {
   all: ["posts"],
   list: (filters) => ["posts", "list", filters],
   comments: (postId) => ["posts", "comments", postId],
+  infinite: (filters) => ["posts", "infinite", filters],
 };
 
 export function usePosts(filters = {}, options = {}) {
   return useQuery({
     queryKey: postKeys.list(filters),
     queryFn: () => getPosts(filters).then((response) => response.posts),
+    ...options,
+  });
+}
+
+export function useInfinitePosts(filters = {}, options = {}) {
+  const limit = filters.limit ?? 10;
+  const queryFilters = { ...filters };
+  delete queryFilters.limit;
+
+  return useInfiniteQuery({
+    queryKey: postKeys.infinite(filters),
+    queryFn: ({ pageParam }) =>
+      getPosts({ ...queryFilters, page: pageParam, limit }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const pagination = lastPage.pagination;
+      if (!pagination || pagination.page >= pagination.totalPages) {
+        return undefined;
+      }
+      return pagination.page + 1;
+    },
     ...options,
   });
 }
