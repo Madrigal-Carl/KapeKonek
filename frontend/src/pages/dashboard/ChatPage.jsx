@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  Check,
   FileText,
   Image as ImageIcon,
   Paperclip,
   Pencil,
   Send,
+  ShieldCheck,
   Trash2,
   Users,
   Video,
@@ -64,18 +66,38 @@ const initialsOf = (name) =>
     .join("")
     .toUpperCase();
 
-function Avatar({ name, className }) {
+function Avatar({ name, className, verified, isAdmin }) {
   return (
-    <div
-      className={[
-        "grid shrink-0 place-items-center border border-border bg-muted font-semibold text-foreground",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      style={{ borderRadius: "50%" }}
-    >
-      {initialsOf(name)}
+    <div className="relative shrink-0">
+      <div
+        className={[
+          "grid place-items-center border border-border bg-muted font-semibold text-foreground",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        style={{ borderRadius: "50%" }}
+      >
+        {initialsOf(name)}
+      </div>
+      {verified && (
+        <span
+          className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center border border-background bg-emerald-500 text-white"
+          style={{ borderRadius: "50%" }}
+          title="Verified"
+        >
+          <Check className="h-2.5 w-2.5" strokeWidth={3} />
+        </span>
+      )}
+      {isAdmin && (
+        <span
+          className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center border border-background bg-accent text-accent-foreground"
+          style={{ borderRadius: "50%" }}
+          title="Admin"
+        >
+          <ShieldCheck className="h-2.5 w-2.5" />
+        </span>
+      )}
     </div>
   );
 }
@@ -127,16 +149,19 @@ export function ChatPage() {
   // unread badge isn't incremented while it's being viewed. Fires once per
   // chat — the mutation object identity changes every render, so it goes
   // through a ref to avoid re-firing.
-  const markChatReadRef = useRef(markChatRead);
-  markChatReadRef.current = markChatRead;
+  const markChatReadRef = useRef(null);
   const markedReadRef = useRef(null);
+
+  useEffect(() => {
+    markChatReadRef.current = markChatRead;
+  }, [markChatRead]);
 
   useEffect(() => {
     if (!chatId) return;
     setActiveChatId(chatId);
     if (markedReadRef.current !== chatId) {
       markedReadRef.current = chatId;
-      markChatReadRef.current.mutate(chatId);
+      markChatReadRef.current?.mutate(chatId);
     }
     return () => setActiveChatId(null);
   }, [chatId]);
@@ -548,6 +573,8 @@ export function ChatPage() {
                       {!isOwn && (
                       <Avatar
                         name={m.sender?.fullName}
+                        verified={m.sender?.verified}
+                        isAdmin={m.sender?.isAdmin}
                         className={`h-9 w-9 text-xs ${showAuthor ? "" : "invisible"}`}
                       />
                     )}
@@ -695,7 +722,7 @@ export function ChatPage() {
             <ul className="space-y-2">
               {chat.members.map((member) => (
                 <li key={member._id} className="flex items-center gap-3">
-                  <Avatar name={member.fullName} className="h-9 w-9 text-xs" />
+                  <Avatar name={member.fullName} verified={member.verified} isAdmin={member.isAdmin} className="h-9 w-9 text-xs" />
                   <div className="min-w-0">
                     <div className="truncate text-sm text-foreground">
                       {member.fullName}
@@ -737,7 +764,7 @@ export function ChatPage() {
             <ul className="space-y-2">
               {chat.members.map((member) => (
                 <li key={member._id} className="flex items-center gap-3">
-                  <Avatar name={member.fullName} className="h-9 w-9 text-xs" />
+                  <Avatar name={member.fullName} verified={member.verified} isAdmin={member.isAdmin} className="h-9 w-9 text-xs" />
                   <div className="min-w-0">
                     <div className="truncate text-sm text-foreground">
                       {member.fullName}

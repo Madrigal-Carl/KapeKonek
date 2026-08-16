@@ -268,25 +268,42 @@ const attachChatData = async (associations, authenticatedUser) => {
                 .filter(Boolean),
         ),
     ];
+    const associationIds = associations.map((association) => association._id);
 
-    const [users, messages, readStates] = await Promise.all([
+    const [users, messages, readStates, verifications] = await Promise.all([
         userIds.length
             ? User.find({ _id: { $in: userIds } }).select(
-                  "firstName middleName lastName",
+                  "firstName middleName lastName role",
               )
             : [],
         ChatMessage.find({
-            association: { $in: associations.map((a) => a._id) },
+            association: { $in: associationIds },
             deletedAt: null,
         }).sort({ createdAt: 1 }),
         ChatRead.find({
             user: authenticatedUser._id,
-            association: { $in: associations.map((a) => a._id) },
+            association: { $in: associationIds },
+        }),
+        FarmerVerification.find({
+            user: { $in: userIds },
+            association: { $in: associationIds },
+            associationStatus: "approved",
         }),
     ]);
 
     const nameByUser = new Map(
         users.map((user) => [user._id.toString(), getFullName(user)]),
+    );
+    const roleByUser = new Map(
+        users.map((user) => [user._id.toString(), user.role]),
+    );
+
+    // `${associationId}:${userId}` -> verified on that association.
+    const verifiedByAssociationUser = new Set(
+        verifications.map(
+            (verification) =>
+                `${verification.association.toString()}:${verification.user.toString()}`,
+        ),
     );
 
     // Sorted ascending, so the last message per chat wins the map.
@@ -316,16 +333,27 @@ const attachChatData = async (associations, authenticatedUser) => {
                 ...(lastReadAt ? { createdAt: { $gt: lastReadAt } } : {}),
             });
 
+            const memberMeta = (memberId) => {
+                const id = memberId.toString();
+                const role = roleByUser.get(id);
+
+                return {
+                    _id: id,
+                    fullName: nameByUser.get(id) ?? id,
+                    verified:
+                        role === "farmer" &&
+                        verifiedByAssociationUser.has(`${associationId}:${id}`),
+                    isAdmin: role === "manager",
+                };
+            };
+
             return {
                 _id: obj._id,
                 name: obj.name,
                 members: [
                     ...(obj.assignedFarmers ?? []),
                     ...(obj.user ? [obj.user] : []),
-                ].map((memberId) => {
-                    const id = memberId.toString();
-                    return { _id: id, fullName: nameByUser.get(id) ?? id };
-                }),
+                ].map(memberMeta),
                 lastMessage: lastMessage
                     ? {
                           _id: lastMessage._id,
@@ -333,13 +361,7 @@ const attachChatData = async (associations, authenticatedUser) => {
                           hasAttachments:
                               (lastMessage.attachments ?? []).length > 0,
                           sender: lastMessage.sender
-                              ? {
-                                    _id: lastMessage.sender.toString(),
-                                    fullName:
-                                        nameByUser.get(
-                                            lastMessage.sender.toString(),
-                                        ) ?? lastMessage.sender.toString(),
-                                }
+                              ? memberMeta(lastMessage.sender)
                               : null,
                           createdAt: lastMessage.createdAt,
                       }
@@ -359,24 +381,58 @@ const attachMessageData = async (messages) => {
         ),
     ];
 
-    const senders = senderIds.length
-        ? await User.find({ _id: { $in: senderIds } }).select(
-              "firstName middleName lastName",
-          )
-        : [];
+    const [senders, verifications] = await Promise.all([
+        senderIds.length
+            ? User.find({ _id: { $in: senderIds } }).select(
+                  "firstName middleName lastName role",
+              )
+            : [],
+        senderIds.length
+            ? FarmerVerification.find({
+                  user: { $in: senderIds },
+                  associationStatus: "approved",
+              })
+            : [],
+    ]);
 
     const nameByUser = new Map(
         senders.map((user) => [user._id.toString(), getFullName(user)]),
     );
+    const roleByUser = new Map(
+        senders.map((user) => [user._id.toString(), user.role]),
+    );
+
+    // associationId -> Set(verified user ids)
+    const verifiedByAssociation = new Map();
+    for (const verification of verifications) {
+        const associationId = verification.association.toString();
+        const userId = verification.user.toString();
+        if (!verifiedByAssociation.has(associationId)) {
+            verifiedByAssociation.set(associationId, new Set());
+        }
+        verifiedByAssociation.get(associationId).add(userId);
+    }
 
     return messages.map((message) => {
         const obj = message.toObject();
         const senderId = obj.sender?.toString();
+        const role = roleByUser.get(senderId);
 
         return {
             ...obj,
             sender: senderId
-                ? { _id: senderId, fullName: nameByUser.get(senderId) ?? senderId }
+                ? {
+                      _id: senderId,
+                      fullName: nameByUser.get(senderId) ?? senderId,
+                      verified:
+                          role === "farmer" &&
+                          Boolean(
+                              verifiedByAssociation
+                                  .get(obj.association?.toString())
+                                  ?.has(senderId),
+                          ),
+                      isAdmin: role === "manager",
+                  }
                 : null,
         };
     });
