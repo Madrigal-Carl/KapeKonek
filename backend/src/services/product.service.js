@@ -11,6 +11,31 @@ const getFullName = (user) =>
         .join(" ")
         .trim();
 
+// Kaluppa can sell everything except coffee cherries; farmers and managers
+// always register coffee cherries.
+const KALUPPA_CATEGORIES = [
+    "fertilizer",
+    "coffee_beans",
+    "coffee_seedlings",
+];
+
+const resolveCategory = (category, authenticatedUser) => {
+    if (authenticatedUser.role === "kaluppa") {
+        if (!KALUPPA_CATEGORIES.includes(category)) {
+            const badRequestError = new Error(
+                "Kaluppa can only register fertilizer, coffee beans, or coffee seedlings",
+            );
+            badRequestError.statusCode = 400;
+            throw badRequestError;
+        }
+
+        return category;
+    }
+
+    // Farmers and managers always register coffee cherries.
+    return "coffee_cherries";
+};
+
 const escapeRegex = (str) =>
     str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -136,6 +161,7 @@ export const createProduct = async (data, authenticatedUser) => {
 
     const product = await Product.create({
         ...rest,
+        category: resolveCategory(rest.category, authenticatedUser),
         // Farmers and managers manage by weight, kaluppa by stock — stock
         // stays null when the creator doesn't track it.
         stock: rest.stock ?? null,

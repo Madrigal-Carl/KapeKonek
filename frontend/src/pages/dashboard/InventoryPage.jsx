@@ -23,6 +23,7 @@ const capitalize = (value) =>
 export function InventoryPage() {
   const { role } = useAuth();
   const isDTI = role === ROLES.DTI;
+  const isKaluppa = role === ROLES.KALUPPA;
 
   const { data: products = [], isLoading } = useProducts({ all: true });
   const deleteProduct = useDeleteProduct();
@@ -62,16 +63,35 @@ export function InventoryPage() {
         </span>
       ),
     },
-    {
-      key: "stock",
-      label: "Stock",
-      render: (row) =>
-        row.stock != null ? (
-          <span className="text-foreground">{row.stock.toLocaleString()}</span>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        ),
-    },
+    ...(isKaluppa
+      ? [
+          {
+            key: "stock",
+            label: "Stock",
+            render: (row) =>
+              row.stock != null ? (
+                <span className="text-foreground">
+                  {row.stock.toLocaleString()}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">—</span>
+              ),
+          },
+        ]
+      : [
+          {
+            key: "weight",
+            label: "Weight (kg)",
+            render: (row) =>
+              row.weight != null ? (
+                <span className="text-foreground">
+                  {row.weight.toLocaleString()}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">—</span>
+              ),
+          },
+        ]),
     {
       key: "rating",
       label: "Rating",

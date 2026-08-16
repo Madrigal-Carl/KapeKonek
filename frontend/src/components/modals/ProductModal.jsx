@@ -32,7 +32,10 @@ export function ProductModal({ mode, initial, onClose }) {
   const [form, setForm] = useState(() => ({
     name: initial?.name ?? "",
     farm: initial?.farm?._id ?? initial?.farm ?? "",
-    category: initial?.category ?? "",
+    category:
+      role === ROLES.KALUPPA
+        ? (initial?.category ?? "")
+        : (initial?.category ?? "coffee_cherries"),
     variety: initial?.variety ?? "",
     stock: initial?.stock != null ? String(initial.stock) : "",
     status: initial?.status ?? "active",
@@ -222,23 +225,31 @@ export function ProductModal({ mode, initial, onClose }) {
             </Field>
 
             <Field label="Category">
-              <div className="relative">
-                <select
-                  value={form.category}
-                  onChange={(e) => set("category", e.target.value)}
-                  className="w-full appearance-none border border-border bg-background px-3 py-2.5 pr-9 text-sm text-foreground outline-none focus:border-foreground"
-                >
-                  <option value="" disabled>
-                    Select category…
-                  </option>
-                  {PRODUCT_CATEGORY_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+              {isKaluppa ? (
+                <div className="relative">
+                  <select
+                    value={form.category}
+                    onChange={(e) => set("category", e.target.value)}
+                    className="w-full appearance-none border border-border bg-background px-3 py-2.5 pr-9 text-sm text-foreground outline-none focus:border-foreground"
+                  >
+                    <option value="" disabled>
+                      Select category…
                     </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
+                    {PRODUCT_CATEGORY_OPTIONS.filter(
+                      (option) => option.value !== "coffee_cherries",
+                    ).map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="flex w-full items-center border border-border bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground">
+                  Coffee Cherries
+                </div>
+              )}
               <FieldError message={errors.category} />
             </Field>
 
