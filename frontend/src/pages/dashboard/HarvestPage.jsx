@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Archive, Pencil, Plus } from "lucide-react";
-import { IconButton, Button } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { fmtDate } from "@/utils/format";
-import { DataTable } from "@/components/dashboard";
+import { DataTable, RowActions } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
 import { useDeleteHarvest, useHarvests } from "@/hooks/useHarvests";
@@ -73,22 +73,25 @@ export function HarvestPage() {
       align: "right",
       render: (row) =>
         isViewOnly ? (
-          <div className="flex items-center justify-end text-muted-foreground">
-            —
-          </div>
+          <span className="text-muted-foreground">—</span>
         ) : (
-          <div className="flex items-center justify-end gap-1">
-            <IconButton
-              icon={Pencil}
-              label="Edit"
-              onClick={() => setModal({ mode: "edit", data: { ...row } })}
-            />
-            <IconButton
-              icon={Archive}
-              label="Archive"
-              onClick={() => setConfirmDelete(row)}
-            />
-          </div>
+          <RowActions
+            actions={[
+              {
+                key: "edit",
+                label: "Edit",
+                icon: Pencil,
+                onClick: () => setModal({ mode: "edit", data: { ...row } }),
+              },
+              {
+                key: "archive",
+                label: "Archive",
+                icon: Archive,
+                danger: true,
+                onClick: () => setConfirmDelete(row),
+              },
+            ]}
+          />
         ),
     },
   ];

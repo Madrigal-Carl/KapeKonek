@@ -4,3 +4,4 @@ export { DataTable } from "./DataTable";
 export { PageSection } from "./PageSection";
 export { StatusPill } from "./StatusPill";
 export { MethodBadge } from "./MethodBadge";
+export { RowActions } from "./RowActions";

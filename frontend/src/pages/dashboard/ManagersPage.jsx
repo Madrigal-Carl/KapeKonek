@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Archive, Pencil, Plus } from "lucide-react";
-import { Button, IconButton } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { fmtDate } from "@/utils/format";
-import { DataTable } from "@/components/dashboard";
+import { DataTable, RowActions } from "@/components/dashboard";
 import { DEFAULT_PASSWORD } from "@/constants/data";
 import { ManagerModal, ArchiveConfirmModal } from "@/components/modals";
 import { useDeleteUser, useUsers } from "@/hooks/useUsers";
@@ -56,28 +56,32 @@ export function ManagersPage() {
       label: "",
       align: "right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-1">
-          <IconButton
-            icon={Pencil}
-            label="Edit"
-            onClick={() =>
-              setModal({
-                mode: "edit",
-                data: {
-                  ...row,
-                  password: DEFAULT_PASSWORD,
-                  association: row.association || "",
-                  assignedFarmers: row.assignedFarmers || [],
-                },
-              })
-            }
-          />
-          <IconButton
-            icon={Archive}
-            label="Archive"
-            onClick={() => setConfirmDelete(row)}
-          />
-        </div>
+        <RowActions
+          actions={[
+            {
+              key: "edit",
+              label: "Edit",
+              icon: Pencil,
+              onClick: () =>
+                setModal({
+                  mode: "edit",
+                  data: {
+                    ...row,
+                    password: DEFAULT_PASSWORD,
+                    association: row.association || "",
+                    assignedFarmers: row.assignedFarmers || [],
+                  },
+                }),
+            },
+            {
+              key: "archive",
+              label: "Archive",
+              icon: Archive,
+              danger: true,
+              onClick: () => setConfirmDelete(row),
+            },
+          ]}
+        />
       ),
     },
   ];

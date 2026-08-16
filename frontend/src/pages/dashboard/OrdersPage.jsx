@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Check, Eye, X } from "lucide-react";
-import { IconButton } from "@/components/ui";
-import { DataTable, PageSection, StatusPill } from "@/components/dashboard";
+import { DataTable, PageSection, RowActions, StatusPill } from "@/components/dashboard";
 import { fmtPrice } from "@/utils/format";
 import { ORDERS } from "@/constants/data";
 import {
@@ -63,28 +62,34 @@ export function OrdersPage() {
         const isFinal =
           row.status === "completed" || row.status === "cancelled";
         return (
-          <div className="flex items-center justify-end gap-1">
-            <IconButton icon={Eye} label="View" onClick={() => setView(row)} />
-            <IconButton
-              icon={Check}
-              label={
-                row.status === "reserved"
-                  ? "Mark as completed"
-                  : "Mark as completed or reserved"
-              }
-              onClick={() => setCompleteDialog({ order: row })}
-              disabled={isFinal}
-              className={isFinal ? "opacity-40 cursor-not-allowed" : ""}
-            />
-            <IconButton
-              icon={X}
-              label="Cancel order"
-              tone="danger"
-              onClick={() => setCancelDialog({ order: row })}
-              disabled={isFinal}
-              className={isFinal ? "opacity-40 cursor-not-allowed" : ""}
-            />
-          </div>
+          <RowActions
+            actions={[
+              {
+                key: "view",
+                label: "View",
+                icon: Eye,
+                onClick: () => setView(row),
+              },
+              {
+                key: "complete",
+                label:
+                  row.status === "reserved"
+                    ? "Mark as completed"
+                    : "Mark as completed or reserved",
+                icon: Check,
+                disabled: isFinal,
+                onClick: () => setCompleteDialog({ order: row }),
+              },
+              {
+                key: "cancel",
+                label: "Cancel order",
+                icon: X,
+                danger: true,
+                disabled: isFinal,
+                onClick: () => setCancelDialog({ order: row }),
+              },
+            ]}
+          />
         );
       },
     },

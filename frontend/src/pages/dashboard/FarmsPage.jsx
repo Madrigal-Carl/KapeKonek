@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Archive, DoorOpen, Pencil, Plus } from "lucide-react";
-import { Button, IconButton } from "@/components/ui";
-import { DataTable } from "@/components/dashboard";
+import { Button } from "@/components/ui";
+import { DataTable, RowActions } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
 import {
   useDeleteFarm,
@@ -74,34 +74,41 @@ export function FarmsPage() {
       label: "",
       align: "right",
       render: (r) => {
-        const owned = isFarmer && r.owner?._id === user?._id;
-
-        if (canManageAll || owned) {
+        if (canEdit(r)) {
           return (
-            <div className="flex items-center justify-end gap-1">
-              <IconButton
-                icon={Pencil}
-                label="Edit"
-                onClick={() => setModal({ mode: "edit", data: r })}
-              />
-              <IconButton
-                icon={Archive}
-                label="Archive"
-                onClick={() => setConfirmDelete(r)}
-              />
-            </div>
+            <RowActions
+              actions={[
+                {
+                  key: "edit",
+                  label: "Edit",
+                  icon: Pencil,
+                  onClick: () => setModal({ mode: "edit", data: r }),
+                },
+                {
+                  key: "archive",
+                  label: "Archive",
+                  icon: Archive,
+                  danger: true,
+                  onClick: () => setConfirmDelete(r),
+                },
+              ]}
+            />
           );
         }
 
         if (isFarmer) {
           return (
-            <div className="flex items-center justify-end gap-1">
-              <IconButton
-                icon={DoorOpen}
-                label="Leave farm"
-                onClick={() => setConfirmLeave(r)}
-              />
-            </div>
+            <RowActions
+              actions={[
+                {
+                  key: "leave",
+                  label: "Leave Farm",
+                  icon: DoorOpen,
+                  danger: true,
+                  onClick: () => setConfirmLeave(r),
+                },
+              ]}
+            />
           );
         }
 

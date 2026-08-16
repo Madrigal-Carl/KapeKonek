@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Archive, Pencil, Plus, Star, Tag } from "lucide-react";
-import { IconButton, Button } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { fmtPrice } from "@/utils/format";
-import { DataTable, PageSection, StatusPill } from "@/components/dashboard";
+import { DataTable, PageSection, RowActions, StatusPill } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
 import { PRODUCTS, PRODUCT_CATEGORY_OPTIONS } from "@/constants/data";
@@ -116,28 +116,34 @@ export function InventoryPage() {
       label: "",
       align: "right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-1">
-          {isDTI ? (
-            <IconButton
-              icon={Tag}
-              label="Edit Price"
-              onClick={() => setPriceModal(row)}
-            />
-          ) : (
-            <>
-              <IconButton
-                icon={Pencil}
-                label="Edit"
-                onClick={() => setModal({ mode: "edit", data: { ...row } })}
-              />
-              <IconButton
-                icon={Archive}
-                label="Archive"
-                onClick={() => setConfirmDelete(row)}
-              />
-            </>
-          )}
-        </div>
+        <RowActions
+          actions={
+            isDTI
+              ? [
+                  {
+                    key: "price",
+                    label: "Edit Price",
+                    icon: Tag,
+                    onClick: () => setPriceModal(row),
+                  },
+                ]
+              : [
+                  {
+                    key: "edit",
+                    label: "Edit",
+                    icon: Pencil,
+                    onClick: () => setModal({ mode: "edit", data: { ...row } }),
+                  },
+                  {
+                    key: "archive",
+                    label: "Archive",
+                    icon: Archive,
+                    danger: true,
+                    onClick: () => setConfirmDelete(row),
+                  },
+                ]
+          }
+        />
       ),
     },
   ];

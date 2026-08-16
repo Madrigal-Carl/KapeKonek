@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Archive, Check, Pencil, Plus, X } from "lucide-react";
-import { Button, IconButton } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { fmtDate } from "@/utils/format";
-import { DataTable, StatusPill } from "@/components/dashboard";
+import { DataTable, RowActions, StatusPill } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
 import { DEFAULT_PASSWORD } from "@/constants/data";
@@ -94,61 +94,57 @@ export function FarmersPage() {
           canReviewAccount && r.accountStatus === "pending";
         const showAssociationActions =
           canReviewAssociation && r.associationStatus === "pending";
-        const hasAnyAction = showAccountActions || canManage;
 
-        return (
-          <div className="flex items-center justify-end gap-1">
-            {showAccountActions && (
-              <>
-                <IconButton
-                  icon={Check}
-                  label="Approve account"
-                  onClick={() => onApproveAccount(r)}
-                />
-                <IconButton
-                  icon={X}
-                  label="Deny account"
-                  tone="danger"
-                  onClick={() => onDenyAccount(r)}
-                />
-              </>
-            )}
+        const actions = [];
 
-            {canManage && (
-              <>
-                {showAssociationActions && (
-                  <>
-                    <IconButton
-                      icon={Check}
-                      label="Approve association"
-                      onClick={() => onApproveAssociation(r)}
-                    />
-                    <IconButton
-                      icon={X}
-                      label="Deny association"
-                      tone="danger"
-                      onClick={() => onDenyAssociation(r)}
-                    />
-                  </>
-                )}
-                <IconButton
-                  icon={Pencil}
-                  label="Edit"
-                  onClick={() => onEdit(r)}
-                />
-                <IconButton
-                  icon={Archive}
-                  label="Archive"
-                  onClick={() => onDelete(r)}
-                />
-              </>
-            )}
+        if (showAccountActions) {
+          actions.push({
+            key: "approve-account",
+            label: "Approve account",
+            icon: Check,
+            onClick: () => onApproveAccount(r),
+          });
+          actions.push({
+            key: "deny-account",
+            label: "Deny account",
+            icon: X,
+            danger: true,
+            onClick: () => onDenyAccount(r),
+          });
+        }
 
-            {!hasAnyAction && (
-              <span className="text-xs text-muted-foreground">—</span>
-            )}
-          </div>
-        );
+        if (canManage) {
+          if (showAssociationActions) {
+            actions.push({
+              key: "approve-association",
+              label: "Approve association",
+              icon: Check,
+              onClick: () => onApproveAssociation(r),
+            });
+            actions.push({
+              key: "deny-association",
+              label: "Deny association",
+              icon: X,
+              danger: true,
+              onClick: () => onDenyAssociation(r),
+            });
+          }
+          actions.push({
+            key: "edit",
+            label: "Edit",
+            icon: Pencil,
+            onClick: () => onEdit(r),
+          });
+          actions.push({
+            key: "archive",
+            label: "Archive",
+            icon: Archive,
+            danger: true,
+            onClick: () => onDelete(r),
+          });
+        }
+
+        return <RowActions actions={actions} />;
       },
     },
   ];
