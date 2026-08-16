@@ -3,6 +3,37 @@ import User from "../models/user.model.js";
 import Association from "../models/association.model.js";
 import FarmerVerification from "../models/farmerVerification.model.js";
 import Farm from "../models/farm.model.js";
+import emailQueue from "../queues/email.queue.js";
+import { EMAIL_JOBS } from "../queues/email.jobs.js";
+
+const enqueueAccountApprovedEmail = async (userId) => {
+    const user = await User.findById(userId).select("email firstName");
+
+    if (!user?.email) return;
+
+    await emailQueue.add(EMAIL_JOBS.ACCOUNT_APPROVED, {
+        type: EMAIL_JOBS.ACCOUNT_APPROVED,
+        data: {
+            to: user.email,
+            name: user.firstName || "there",
+        },
+    });
+};
+
+const enqueueAssociationApprovedEmail = async (userId, associationName) => {
+    const user = await User.findById(userId).select("email firstName");
+
+    if (!user?.email) return;
+
+    await emailQueue.add(EMAIL_JOBS.ASSOCIATION_APPROVED, {
+        type: EMAIL_JOBS.ASSOCIATION_APPROVED,
+        data: {
+            to: user.email,
+            name: user.firstName || "there",
+            association: associationName,
+        },
+    });
+};
 
 export const getUsers = async ({ role, all, page, limit }, authenticatedUser) => {
     const filter = { deletedAt: null };
@@ -265,6 +296,11 @@ export const reviewAccount = async (id, { status, remarks }, authenticatedUser) 
         throw notFoundError;
     }
 
+    // Notify the farmer once DTI has approved their account registration.
+    if (status === "approved") {
+        await enqueueAccountApprovedEmail(id);
+    }
+
     return verification;
 };
 
@@ -316,6 +352,12 @@ export const reviewAssociation = async (id, { status, remarks }, authenticatedUs
         },
         { returnDocument: "after" },
     );
+
+    // Notify the farmer once the manager has approved their application
+    // for the manager's association.
+    if (status === "approved") {
+        await enqueueAssociationApprovedEmail(id, association.name);
+    }
 
     return updatedVerification;
 };

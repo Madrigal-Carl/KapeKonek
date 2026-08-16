@@ -3,6 +3,7 @@ import { valkeyConnection } from "../../config/valkey.js";
 import { sendEmail } from "../../services/email.service.js";
 import { EMAIL_JOBS } from "../email.jobs.js";
 import { accountApprovedTemplate } from "../../templates/email/account-approved.template.js";
+import { associationApprovedTemplate } from "../../templates/email/association-approved.template.js";
 import { verifyEmailTemplate } from "../../templates/email/verify-email.template.js";
 
 const emailWorker = new Worker(
@@ -21,8 +22,18 @@ const emailWorker = new Worker(
       [EMAIL_JOBS.ACCOUNT_APPROVED]: async () => {
         return sendEmail({
           to: data.to,
-          subject: "Your Account Has Been Approved",
+          subject: "Your KapeKonek Registration Has Been Verified",
           html: accountApprovedTemplate({ name: data.name }),
+        });
+      },
+      [EMAIL_JOBS.ASSOCIATION_APPROVED]: async () => {
+        return sendEmail({
+          to: data.to,
+          subject: "Your Association Application Has Been Approved",
+          html: associationApprovedTemplate({
+            name: data.name,
+            association: data.association,
+          }),
         });
       },
     };
