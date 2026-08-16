@@ -1,23 +1,75 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ImagePlus, Star, X } from "lucide-react";
 import {
   Button,
   Field,
   IconButton,
+  MultiSelect,
   TextInput,
-  SingleSelect,
 } from "@/components/ui";
+import FieldError from "@/components/ui/FieldError";
+import useAuth from "@/hooks/useAuth";
+import { ROLES } from "@/constants/roles";
+import { useFarms } from "@/hooks/useFarms";
+import { useAssociationFarmers } from "@/hooks/useAssociations";
+import { useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
 import {
   PRODUCT_CATEGORY_OPTIONS,
+  PRODUCT_STATUS_OPTIONS,
   PRODUCT_VARIETY_OPTIONS,
-  FARMER_OPTIONS,
-  HARVEST_FARM_OPTIONS,
-} from "@/constants/data";
+  createProductSchema,
+  getFieldErrors,
+  updateProductSchema,
+} from "@/schemas/product.schema";
+import { uploadToCloudinary } from "@/services/upload.service";
+import { notifyError } from "@/utils/notify";
 
-export function ProductModal({ mode, initial, isManager, onClose, onSave }) {
-  const [form, setForm] = useState(initial);
-  const [uploads, setUploads] = useState([]);
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+export function ProductModal({ mode, initial, onClose }) {
+  const { role } = useAuth();
+  const isManager = role === ROLES.MANAGER;
+  const isKaluppa = role === ROLES.KALUPPA;
+
+  const [form, setForm] = useState(() => ({
+    name: initial?.name ?? "",
+    farm: initial?.farm?._id ?? initial?.farm ?? "",
+    category: initial?.category ?? "",
+    variety: initial?.variety ?? "",
+    stock: initial?.stock != null ? String(initial.stock) : "",
+    status: initial?.status ?? "active",
+    weight: initial?.weight != null ? String(initial.weight) : "",
+    description: initial?.description ?? "",
+    imageUrls: (initial?.imageUrls ?? []).map((image) => ({
+      url: image.url,
+      isPrimary: Boolean(image.isPrimary),
+    })),
+    owner: initial?.owner?._id ?? initial?.owner ?? "",
+  }));
+  const [errors, setErrors] = useState({});
+  const [uploading, setUploading] = useState({ active: false, percent: 0 });
+  const fileInputRef = useRef(null);
+
+  const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
+  const isPending = (mode === "add" ? createProduct : updateProduct).isPending;
+
+  const { data: farms = [] } = useFarms({ all: true });
+  const associationId = farms[0]?.association?._id;
+  const { data: associationFarmers = [] } = useAssociationFarmers(
+    associationId,
+    { enabled: isManager && Boolean(associationId) },
+  );
+
+  const farmOptions = farms.map((farm) => ({
+    value: farm._id,
+    label: `${farm.propertyNumber} · ${farm.address}`,
+  }));
+  const farmerOptions = associationFarmers.map((farmer) => ({
+    value: farmer._id,
+    label: farmer.fullName,
+  }));
+
+  const set = (key, value) =>
+    setForm((current) => ({ ...current, [key]: value }));
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -25,55 +77,107 @@ export function ProductModal({ mode, initial, isManager, onClose, onSave }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const addImages = (files) => {
-    if (!files) return;
-    Array.from(files).forEach((file) => {
-      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      const url = URL.createObjectURL(file);
-      setUploads((u) => [...u, { id, name: file.name, progress: 0 }]);
-      let progress = 0;
-      const tick = () => {
-        progress += Math.random() * 18 + 8;
-        if (progress >= 100) {
-          progress = 100;
-          setUploads((u) =>
-            u.map((x) => (x.id === id ? { ...x, progress: 100, url } : x)),
-          );
-          setForm((f) => ({
-            ...f,
-            images: [...f.images, url],
-            primaryImage:
-              f.primaryImage ?? (f.images.length === 0 ? url : f.primaryImage),
-          }));
-          setTimeout(
-            () => setUploads((u) => u.filter((x) => x.id !== id)),
-            600,
-          );
-          return;
-        }
-        setUploads((u) => u.map((x) => (x.id === id ? { ...x, progress } : x)));
-        setTimeout(tick, 180 + Math.random() * 160);
-      };
-      setTimeout(tick, 200);
-    });
+  const onPickImages = async (e) => {
+    const list = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (!list.length) return;
+
+    const totalBytes = list.reduce((sum, file) => sum + file.size, 0);
+    let completedBytes = 0;
+    setUploading({ active: true, percent: 0 });
+
+    for (const file of list) {
+      try {
+        const result = await uploadToCloudinary(file, "product", (loaded) => {
+          const overall = ((completedBytes + loaded) / totalBytes) * 100;
+          setUploading({
+            active: true,
+            percent: Math.min(Math.round(overall), 99),
+          });
+        });
+        completedBytes += file.size;
+        setUploading({
+          active: true,
+          percent: Math.round((completedBytes / totalBytes) * 100),
+        });
+        setForm((current) => ({
+          ...current,
+          imageUrls: [
+            ...current.imageUrls,
+            {
+              url: result.secure_url,
+              isPrimary: current.imageUrls.length === 0,
+            },
+          ],
+        }));
+      } catch (err) {
+        notifyError(err, "Failed to upload image");
+      }
+    }
+
+    setUploading({ active: false, percent: 100 });
   };
 
   const removeImage = (url) =>
-    setForm((f) => ({
-      ...f,
-      images: f.images.filter((u) => u !== url),
-      primaryImage:
-        f.primaryImage === url
-          ? f.images.filter((u) => u !== url)[0]
-          : f.primaryImage,
-    }));
+    setForm((current) => {
+      const remaining = current.imageUrls.filter(
+        (image) => image.url !== url,
+      );
+      const hasPrimary = remaining.some((image) => image.isPrimary);
+      return {
+        ...current,
+        imageUrls: remaining.map((image, index) => ({
+          ...image,
+          isPrimary: hasPrimary ? image.isPrimary : index === 0,
+        })),
+      };
+    });
 
-  const setPrimary = (url) => set("primaryImage", url);
+  const setPrimary = (url) =>
+    setForm((current) => ({
+      ...current,
+      imageUrls: current.imageUrls.map((image) => ({
+        ...image,
+        isPrimary: image.url === url,
+      })),
+    }));
 
   const submit = (e) => {
     e?.preventDefault();
-    if (!form.name.trim()) return;
-    onSave(form);
+
+    const payload = {
+      name: form.name,
+      farm: form.farm,
+      category: form.category,
+      variety: form.variety,
+      status: form.status,
+      description: form.description.trim() || undefined,
+      imageUrls: form.imageUrls.length ? form.imageUrls : undefined,
+      // Kaluppa tracks by stock; farmers and managers by weight.
+      ...(isKaluppa ? { stock: form.stock } : {}),
+      ...(isKaluppa
+        ? {}
+        : { weight: form.weight === "" ? undefined : form.weight }),
+      ...(isManager ? { owner: form.owner || undefined } : {}),
+    };
+
+    const schema = mode === "add" ? createProductSchema : updateProductSchema;
+    const result = schema.safeParse(payload);
+
+    if (!result.success) {
+      setErrors(getFieldErrors(result.error));
+      return;
+    }
+
+    setErrors({});
+
+    const mutation = mode === "add" ? createProduct : updateProduct;
+    const variables =
+      mode === "add"
+        ? result.data
+        : { id: initial._id, data: result.data };
+
+    mutation.mutate(variables, { onSuccess: onClose });
   };
 
   return (
@@ -100,19 +204,21 @@ export function ProductModal({ mode, initial, isManager, onClose, onSave }) {
             <Field label="Product Name" full>
               <TextInput
                 value={form.name}
-                onChange={(v) => set("name", v)}
+                onChange={(e) => set("name", e.target.value)}
                 placeholder="e.g. Arabica Green Beans"
               />
+              <FieldError message={errors.name} />
             </Field>
 
             <Field label="Farm" full>
-              <SingleSelect
-                value={form.farm}
-                onChange={(v) => set("farm", v)}
-                options={HARVEST_FARM_OPTIONS}
+              <MultiSelect
+                values={form.farm ? [form.farm] : []}
+                onChange={(v) => set("farm", v[0] ?? "")}
+                options={farmOptions}
                 placeholder="Select a farm…"
                 searchPlaceholder="Search farms…"
               />
+              <FieldError message={errors.farm} />
             </Field>
 
             <Field label="Category">
@@ -122,14 +228,18 @@ export function ProductModal({ mode, initial, isManager, onClose, onSave }) {
                   onChange={(e) => set("category", e.target.value)}
                   className="w-full appearance-none border border-border bg-background px-3 py-2.5 pr-9 text-sm text-foreground outline-none focus:border-foreground"
                 >
-                  {PRODUCT_CATEGORY_OPTIONS.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
+                  <option value="" disabled>
+                    Select category…
+                  </option>
+                  {PRODUCT_CATEGORY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
                   ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               </div>
+              <FieldError message={errors.category} />
             </Field>
 
             <Field label="Variety">
@@ -139,24 +249,46 @@ export function ProductModal({ mode, initial, isManager, onClose, onSave }) {
                   onChange={(e) => set("variety", e.target.value)}
                   className="w-full appearance-none border border-border bg-background px-3 py-2.5 pr-9 text-sm text-foreground outline-none focus:border-foreground"
                 >
-                  {PRODUCT_VARIETY_OPTIONS.map((v) => (
-                    <option key={v} value={v}>
-                      {v}
+                  <option value="" disabled>
+                    Select variety…
+                  </option>
+                  {PRODUCT_VARIETY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
                   ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               </div>
+              <FieldError message={errors.variety} />
             </Field>
 
-            <Field label="Stock">
-              <TextInput
-                type="number"
-                value={String(form.stock)}
-                onChange={(v) => set("stock", Number(v))}
-                placeholder="0"
-              />
-            </Field>
+            {isKaluppa && (
+              <Field label="Stock">
+                <TextInput
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.stock}
+                  onChange={(e) => set("stock", e.target.value)}
+                  placeholder="0"
+                />
+                <FieldError message={errors.stock} />
+              </Field>
+            )}
+
+            {!isKaluppa && (
+              <Field label="Weight (kg)">
+                <TextInput
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={form.weight}
+                  onChange={(e) => set("weight", e.target.value)}
+                  placeholder="0"
+                />
+              </Field>
+            )}
 
             <Field label="Status">
               <div className="relative">
@@ -165,31 +297,30 @@ export function ProductModal({ mode, initial, isManager, onClose, onSave }) {
                   onChange={(e) => set("status", e.target.value)}
                   className="w-full appearance-none border border-border bg-background px-3 py-2.5 pr-9 text-sm text-foreground outline-none focus:border-foreground"
                 >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  {PRODUCT_STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               </div>
             </Field>
 
-            <Field label="Weight (kg) (Optional)" full>
-              <TextInput
-                type="number"
-                value={String(form.weightKg)}
-                onChange={(v) => set("weightKg", Number(v))}
-                placeholder="0"
-              />
-            </Field>
-
             {isManager && (
               <Field label="Farmer" full>
-                <SingleSelect
-                  value={form.farmer}
-                  onChange={(v) => set("farmer", v)}
-                  options={FARMER_OPTIONS}
-                  placeholder="Select a farmer…"
+                <MultiSelect
+                  values={form.owner ? [form.owner] : []}
+                  onChange={(v) => set("owner", v[0] ?? "")}
+                  options={farmerOptions}
+                  placeholder={
+                    associationId
+                      ? "Select a farmer…"
+                      : "No association found…"
+                  }
                   searchPlaceholder="Search farmers…"
                 />
+                <FieldError message={errors.owner} />
               </Field>
             )}
 
@@ -218,95 +349,76 @@ export function ProductModal({ mode, initial, isManager, onClose, onSave }) {
               </label>
               <input
                 id="product-images-upload"
+                ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 multiple
+                disabled={uploading.active}
                 className="hidden"
-                onChange={(e) => {
-                  addImages(e.target.files);
-                  e.currentTarget.value = "";
-                }}
+                onChange={onPickImages}
               />
-              {uploads.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  {uploads.map((u) => (
+
+              {uploading.active && (
+                <div className="mt-3 flex items-center gap-3 border border-border bg-muted/30 p-3">
+                  <div className="h-1.5 flex-1 overflow-hidden bg-muted">
                     <div
-                      key={u.id}
-                      className="border border-border bg-muted/30 px-3 py-2"
+                      className="h-full bg-accent transition-[width] duration-150"
+                      style={{ width: `${uploading.percent}%` }}
+                    />
+                  </div>
+                  <span className="label-mono shrink-0 text-muted-foreground">
+                    {uploading.percent}%
+                  </span>
+                </div>
+              )}
+
+              {form.imageUrls.length > 0 && (
+                <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                  {form.imageUrls.map((image) => (
+                    <div
+                      key={image.url}
+                      className={[
+                        "group relative aspect-square overflow-hidden border",
+                        image.isPrimary
+                          ? "border-accent ring-2 ring-accent/40"
+                          : "border-border",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                     >
-                      <div className="mb-1.5 flex items-center justify-between gap-3 text-xs">
-                        <span className="truncate font-medium text-foreground">
-                          {u.name}
+                      <img
+                        src={image.url}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                      {image.isPrimary && (
+                        <span className="absolute left-1 top-1 inline-flex items-center gap-1 bg-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-foreground">
+                          <Star className="h-3 w-3 fill-current" /> Primary
                         </span>
-                        <span className="label-mono text-muted-foreground">
-                          {Math.round(u.progress)}%
-                        </span>
-                      </div>
-                      <div className="h-1.5 w-full overflow-hidden bg-border">
-                        <div
-                          className={[
-                            "h-full transition-all",
-                            u.progress >= 100 ? "bg-accent" : "bg-accent/60",
-                          ]
-                            .filter(Boolean)
-                            .join(" ")}
-                          style={{ width: `${u.progress}%` }}
-                        />
+                      )}
+                      <div className="absolute right-1 top-1 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                        {!image.isPrimary && (
+                          <button
+                            type="button"
+                            onClick={() => setPrimary(image.url)}
+                            className="grid h-6 w-6 place-items-center bg-background/90 text-foreground hover:bg-accent hover:text-accent-foreground"
+                            aria-label="Set as primary"
+                            title="Set as primary"
+                          >
+                            <Star className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeImage(image.url)}
+                          className="grid h-6 w-6 place-items-center bg-background/90 text-foreground hover:bg-destructive hover:text-destructive-foreground"
+                          aria-label="Remove image"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
                   ))}
-                </div>
-              )}
-              {form.images.length > 0 && (
-                <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
-                  {form.images.map((src) => {
-                    const isPrimary = form.primaryImage === src;
-                    return (
-                      <div
-                        key={src}
-                        className={[
-                          "group relative aspect-square overflow-hidden border",
-                          isPrimary
-                            ? "border-accent ring-2 ring-accent/40"
-                            : "border-border",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                      >
-                        <img
-                          src={src}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
-                        {isPrimary && (
-                          <span className="absolute left-1 top-1 inline-flex items-center gap-1 bg-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-foreground">
-                            <Star className="h-3 w-3 fill-current" /> Primary
-                          </span>
-                        )}
-                        <div className="absolute right-1 top-1 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                          {!isPrimary && (
-                            <button
-                              type="button"
-                              onClick={() => setPrimary(src)}
-                              className="grid h-6 w-6 place-items-center bg-background/90 text-foreground hover:bg-accent hover:text-accent-foreground"
-                              aria-label="Set as primary"
-                              title="Set as primary"
-                            >
-                              <Star className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => removeImage(src)}
-                            className="grid h-6 w-6 place-items-center bg-background/90 text-foreground hover:bg-destructive hover:text-destructive-foreground"
-                            aria-label="Remove image"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
                 </div>
               )}
             </Field>
@@ -317,8 +429,16 @@ export function ProductModal({ mode, initial, isManager, onClose, onSave }) {
           <Button variant="outline" type="button" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="button" onClick={() => submit()}>
-            {mode === "add" ? "Add Product" : "Save Changes"}
+          <Button
+            type="button"
+            onClick={submit}
+            disabled={isPending || uploading.active}
+          >
+            {isPending
+              ? "Saving…"
+              : mode === "add"
+                ? "Add Product"
+                : "Save Changes"}
           </Button>
         </div>
       </div>

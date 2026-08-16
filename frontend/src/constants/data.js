@@ -339,7 +339,7 @@ export const PRODUCTS = [
         description: "Washed Arabica green beans from Marinduque highlands.",
         images: [],
         status: "active",
-        farmer: "FR-001 \xB7 Lina Okoro",
+        owner: "FR-001 \xB7 Lina Okoro",
     },
     {
         id: "PD-002",
@@ -353,7 +353,7 @@ export const PRODUCTS = [
         description: "Medium roast Robusta with chocolatey notes.",
         images: [],
         status: "active",
-        farmer: "FR-002 \xB7 Samuel Mwangi",
+        owner: "FR-002 \xB7 Samuel Mwangi",
     },
     {
         id: "PD-003",
@@ -367,7 +367,7 @@ export const PRODUCTS = [
         description: "Bold ground Liberica, woody and smoky.",
         images: [],
         status: "inactive",
-        farmer: "FR-004 \xB7 Chidi Okafor",
+        owner: "FR-004 \xB7 Chidi Okafor",
     },
     {
         id: "PD-004",
@@ -381,7 +381,7 @@ export const PRODUCTS = [
         description: "Healthy Excelsa seedlings, 6 months old.",
         images: [],
         status: "active",
-        farmer: "FR-005 \xB7 Joseph Kamau",
+        owner: "FR-005 \xB7 Joseph Kamau",
     },
 ];
 

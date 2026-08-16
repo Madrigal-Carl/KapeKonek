@@ -1,5 +1,9 @@
 import express from "express";
-import { getAssociationsHandler } from "../controllers/association.controller.js";
+import {
+    getAssociationsHandler,
+    getAssociationFarmersHandler,
+} from "../controllers/association.controller.js";
+import { validateAssociationIdParam } from "../validators/association.validator.js";
 import {
     authenticated,
     allowRoles,
@@ -12,6 +16,13 @@ router.get(
     authenticated,
     allowRoles("kaluppa"),
     getAssociationsHandler,
+);
+router.get(
+    "/:id/farmers",
+    authenticated,
+    allowRoles("kaluppa", "manager"),
+    validateAssociationIdParam,
+    getAssociationFarmersHandler,
 );
 
 export default router;

@@ -19,7 +19,7 @@ const ratingSchema = new mongoose.Schema(
         },
         variety: {
             type: String,
-            enum: ["arabica", "robusta", "liberica", "exceisa"],
+            enum: ["arabica", "robusta", "liberica", "excelsa"],
             required: true,
         },
         rating: {

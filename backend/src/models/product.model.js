@@ -12,7 +12,7 @@ const productSchema = new mongoose.Schema(
             ref: "Farm",
             required: true,
         },
-        farmer: {
+        owner: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
@@ -24,12 +24,12 @@ const productSchema = new mongoose.Schema(
         },
         variety: {
             type: String,
-            enum: ["arabica", "robusta", "liberica", "exceisa"],
+            enum: ["arabica", "robusta", "liberica", "excelsa"],
             required: true,
         },
         stock: {
             type: Number,
-            required: true,
+            default: null,
         },
         status: {
             type: String,
@@ -56,6 +56,10 @@ const productSchema = new mongoose.Schema(
                 },
             },
         ],
+        deletedAt: {
+            type: Date,
+            default: null,
+        },
     },
     {
         timestamps: true,
