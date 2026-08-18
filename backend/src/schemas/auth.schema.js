@@ -46,8 +46,7 @@ export const registerSchema = z
     contactNumber: z
       .string({ error: "Contact number is required" })
       .trim()
-      .min(10, "Contact number must be at least 10 digits")
-      .max(15, "Contact number must not exceed 15 digits")
+      .length(11, "Contact number must be exactly 11 characters")
       .regex(
         /^[0-9+\-\s]+$/,
         "Contact number can only contain digits, spaces, + and -",
