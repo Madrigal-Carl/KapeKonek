@@ -3,12 +3,6 @@ import { z } from "zod";
 const objectId = (label) =>
     z.string().regex(/^[0-9a-fA-F]{24}$/, `Invalid ${label}`);
 
-const name = z
-    .string({ error: "Product name is required" })
-    .trim()
-    .min(2, "Product name must be at least 2 characters")
-    .max(200, "Product name must not exceed 200 characters");
-
 const category = z.enum(
     ["coffee_seedlings", "coffee_cherries", "fertilizer", "coffee_beans"],
     { error: "Category is required" },
@@ -49,7 +43,6 @@ const imageItem = z.object({
 const imageUrls = z.array(imageItem).max(10, "A product can have at most 10 images").optional();
 
 export const createProductSchema = z.object({
-    name,
     farm: objectId("farm id"),
     category,
     variety,
@@ -65,7 +58,6 @@ export const createProductSchema = z.object({
 
 export const updateProductSchema = z
     .object({
-        name: name.optional(),
         farm: objectId("farm id").optional(),
         category: category.optional(),
         variety: variety.optional(),

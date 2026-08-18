@@ -54,7 +54,12 @@ export const getProducts = async (
     }
 
     if (search) {
-        filter.name = new RegExp(escapeRegex(search), "i");
+        // Products are identified by category/variety (no product name).
+        filter.$or = [
+            { category: new RegExp(escapeRegex(search), "i") },
+            { variety: new RegExp(escapeRegex(search), "i") },
+            { description: new RegExp(escapeRegex(search), "i") },
+        ];
     }
 
     if (authenticatedUser.role === "farmer") {

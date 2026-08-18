@@ -30,12 +30,6 @@ export const PRODUCT_STATUS_OPTIONS = [
 const objectId = (label) =>
     z.string().regex(/^[0-9a-fA-F]{24}$/, `Invalid ${label}`);
 
-const name = z
-    .string({ error: "Product name is required" })
-    .trim()
-    .min(2, "Product name must be at least 2 characters")
-    .max(200, "Product name must not exceed 200 characters");
-
 const category = z.enum(PRODUCT_CATEGORIES, { error: "Category is required" });
 
 const variety = z.enum(PRODUCT_VARIETIES, { error: "Variety is required" });
@@ -73,7 +67,6 @@ const imageUrls = z
     .optional();
 
 export const createProductSchema = z.object({
-    name,
     farm: objectId("farm id"),
     category,
     variety,
@@ -88,7 +81,6 @@ export const createProductSchema = z.object({
 
 export const updateProductSchema = z
     .object({
-        name: name.optional(),
         farm: objectId("farm id").optional(),
         category: category.optional(),
         variety: variety.optional(),

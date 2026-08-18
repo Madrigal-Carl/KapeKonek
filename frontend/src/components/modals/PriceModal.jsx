@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Button, Field, IconButton, TextInput } from "@/components/ui";
 
+const capitalize = (value) =>
+  value
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
 export function PriceModal({ product, onClose, onSave }) {
   const [price, setPrice] = useState(product.price ?? 0);
 
@@ -32,7 +38,11 @@ export function PriceModal({ product, onClose, onSave }) {
               Set Price
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {product.name} <span className="label-mono">({product.id})</span>
+              {[product.category, product.variety]
+                .filter(Boolean)
+                .map((value) => capitalize(value))
+                .join(" · ") || "Product"}{" "}
+              <span className="label-mono">({product.id})</span>
             </p>
           </div>
           <IconButton icon={X} label="Close" onClick={onClose} />

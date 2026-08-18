@@ -34,11 +34,13 @@ export function InventoryPage() {
 
   const columns = [
     {
-      key: "name",
-      label: "Product Name",
+      key: "farm",
+      label: "Farm",
       render: (row) => (
         <div>
-          <div className="font-semibold text-foreground">{row.name}</div>
+          <div className="font-semibold text-foreground">
+            {row.farm?.propertyNumber ?? "—"}
+          </div>
           <div className="label-mono text-muted-foreground">
             {row.owner?.fullName ?? "—"}
           </div>
@@ -177,12 +179,13 @@ export function InventoryPage() {
         columns={columns}
         searchKeys={[
           (row, query) =>
-            (row.name ?? "").toLowerCase().includes(query) ||
+            (row.farm?.propertyNumber ?? "").toLowerCase().includes(query) ||
+            (row.farm?.address ?? "").toLowerCase().includes(query) ||
             (row.owner?.fullName ?? "").toLowerCase().includes(query) ||
             (row.category ?? "").toLowerCase().includes(query) ||
             (row.variety ?? "").toLowerCase().includes(query),
         ]}
-        searchPlaceholder="Search by name, owner, category, or variety…"
+        searchPlaceholder="Search by farm, owner, category, or variety…"
         filters={filters}
         getRowKey={(row) => row._id}
         loading={isLoading}
@@ -214,7 +217,7 @@ export function InventoryPage() {
             <>
               You're about to archive{" "}
               <strong className="text-foreground">
-                {confirmDelete.name}
+                {confirmDelete.farm?.propertyNumber ?? "this product"}
               </strong>
               . It will no longer appear in active lists.
             </>

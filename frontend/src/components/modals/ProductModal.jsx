@@ -24,13 +24,24 @@ import {
 import { uploadToCloudinary } from "@/services/upload.service";
 import { notifyError } from "@/utils/notify";
 
+const capitalize = (value) =>
+  value
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
 export function ProductModal({ mode, initial, onClose }) {
   const { role } = useAuth();
   const isManager = role === ROLES.MANAGER;
   const isKaluppa = role === ROLES.KALUPPA;
 
+  const productLabel = (item) =>
+    [item?.category, item?.variety]
+      .filter(Boolean)
+      .map((value) => capitalize(value))
+      .join(" · ") || "Product";
+
   const [form, setForm] = useState(() => ({
-    name: initial?.name ?? "",
     farm: initial?.farm?._id ?? initial?.farm ?? "",
     category:
       role === ROLES.KALUPPA
@@ -150,7 +161,6 @@ export function ProductModal({ mode, initial, onClose }) {
     e?.preventDefault();
 
     const payload = {
-      name: form.name,
       farm: form.farm,
       category: form.category,
       variety: form.variety,
@@ -198,10 +208,10 @@ export function ProductModal({ mode, initial, onClose }) {
             <p className="label-mono mb-1 text-accent">Product</p>
             <h2 className="text-xl font-semibold tracking-tight text-foreground">
               {mode === "view"
-                ? `View ${initial.name}`
+                ? `View ${productLabel(initial)}`
                 : mode === "add"
                   ? "Add New Product"
-                  : `Edit ${initial.name}`}
+                  : `Edit ${productLabel(initial)}`}
             </h2>
           </div>
           <IconButton icon={X} label="Close" onClick={onClose} />
@@ -209,15 +219,6 @@ export function ProductModal({ mode, initial, onClose }) {
 
         <form onSubmit={submit} className="flex-1 overflow-y-auto px-6 py-5">
           <fieldset disabled={readOnly} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Product Name" full>
-              <TextInput
-                value={form.name}
-                onChange={(e) => set("name", e.target.value)}
-                placeholder="e.g. Arabica Green Beans"
-              />
-              <FieldError message={errors.name} />
-            </Field>
-
             <Field label="Farm" full>
               <MultiSelect
                 values={form.farm ? [form.farm] : []}
