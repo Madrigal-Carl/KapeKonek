@@ -29,6 +29,11 @@ const weight = z.coerce
     .nonnegative("Weight must not be negative")
     .optional();
 
+const price = z.coerce
+    .number("Price must be a number")
+    .nonnegative("Price must not be negative")
+    .optional();
+
 const description = z
     .string()
     .trim()
@@ -73,6 +78,12 @@ export const updateProductSchema = z
 
 export const productIdParamSchema = z.object({
     id: objectId("product id"),
+});
+
+export const updateProductPriceSchema = z.object({
+    price: price.refine((value) => value !== undefined, {
+        message: "Price is required",
+    }),
 });
 
 export const getProductsQuerySchema = z.object({

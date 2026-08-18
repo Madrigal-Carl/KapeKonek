@@ -118,6 +118,66 @@ export const getProducts = async (
     };
 };
 
+export const getCatalogProducts = async (
+    { all, page, limit, category, search },
+    viewer,
+) => {
+    // The public catalog bucket depends on who's browsing:
+    //   guest / buyer / farmer / manager / dti -> kaluppa-owned listings
+    //   kaluppa                                    -> farmer-owned listings
+    const role = viewer?.role ?? "guest";
+    const ownerRole = role === "kaluppa" ? "farmer" : "kaluppa";
+
+    const ownerIds = await User.find({
+        role: ownerRole,
+        deletedAt: null,
+    }).distinct("_id");
+
+    const filter = {
+        deletedAt: null,
+        status: "active",
+        owner: { $in: ownerIds },
+    };
+
+    if (category) {
+        filter.category = category;
+    }
+
+    if (search) {
+        filter.$or = [
+            { category: new RegExp(escapeRegex(search), "i") },
+            { variety: new RegExp(escapeRegex(search), "i") },
+            { description: new RegExp(escapeRegex(search), "i") },
+        ];
+    }
+
+    if (all) {
+        const products = await Product.find(filter).sort({ createdAt: -1 });
+
+        return {
+            products: await attachProductData(products),
+            pagination: null,
+        };
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [products, total] = await Promise.all([
+        Product.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+        Product.countDocuments(filter),
+    ]);
+
+    return {
+        products: await attachProductData(products),
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit) || 1,
+        },
+    };
+};
+
 export const createProduct = async (data, authenticatedUser) => {
     let owner;
 
@@ -190,6 +250,33 @@ export const updateProduct = async (id, data, authenticatedUser) => {
     const updated = await Product.findOneAndUpdate(
         { _id: product._id, deletedAt: null },
         { $set: data },
+        { returnDocument: "after", runValidators: true },
+    );
+
+    return attachProductData([updated]).then(([attached]) => attached);
+};
+
+// DTI is the only role that sets product pricing.
+export const updateProductPrice = async (id, price, authenticatedUser) => {
+    if (authenticatedUser.role !== "dti") {
+        const forbiddenError = new Error(
+            "Forbidden: insufficient permissions",
+        );
+        forbiddenError.statusCode = 403;
+        throw forbiddenError;
+    }
+
+    const product = await Product.findOne({ _id: id, deletedAt: null });
+
+    if (!product) {
+        const notFoundError = new Error("Product not found");
+        notFoundError.statusCode = 404;
+        throw notFoundError;
+    }
+
+    const updated = await Product.findOneAndUpdate(
+        { _id: product._id, deletedAt: null },
+        { $set: { price } },
         { returnDocument: "after", runValidators: true },
     );
 

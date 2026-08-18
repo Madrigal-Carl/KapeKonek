@@ -6,6 +6,19 @@ export async function getProducts(params = {}) {
     return response.data;
 }
 
+// Public marketplace catalog — works for guests and any logged-in role.
+export async function getCatalogProducts(params = {}) {
+    const response = await api.get("/products/catalog", { params });
+
+    return response.data;
+}
+
+export async function updateProductPrice(id, price) {
+    const response = await api.patch(`/products/${id}/price`, { price });
+
+    return response.data;
+}
+
 export async function createProduct(data) {
     const response = await api.post("/products", data);
 

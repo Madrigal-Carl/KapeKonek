@@ -70,6 +70,33 @@ export const authenticated = async (req, res, next) => {
   }
 };
 
+export const optionalAuth = async (req, res, next) => {
+  // Public endpoints with optional identification: attaches req.user when a
+  // valid session exists, otherwise continues as a guest.
+  try {
+    const accessToken = req.cookies.accessToken;
+
+    if (accessToken) {
+      try {
+        const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
+
+        const user = await User.findById(decoded.userId);
+
+        if (user) {
+          req.user = user;
+          return next();
+        }
+      } catch (err) {
+        // ignore expired/invalid access token
+      }
+    }
+
+    next();
+  } catch (err) {
+    next();
+  }
+};
+
 export const guestOnly = async (req, res, next) => {
   try {
     const accessToken = req.cookies.accessToken;

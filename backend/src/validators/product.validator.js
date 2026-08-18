@@ -3,6 +3,7 @@ import {
     updateProductSchema,
     productIdParamSchema,
     getProductsQuerySchema,
+    updateProductPriceSchema,
 } from "../schemas/product.schema.js";
 
 const validate = (schema) => (req, res, next) => {
@@ -57,5 +58,6 @@ const validateQuery = (schema) => (req, res, next) => {
 
 export const validateCreateProduct = validate(createProductSchema);
 export const validateUpdateProduct = validate(updateProductSchema);
+export const validateUpdateProductPrice = validate(updateProductPriceSchema);
 export const validateProductIdParam = validateParams(productIdParamSchema);
 export const validateGetProductsQuery = validateQuery(getProductsQuerySchema);

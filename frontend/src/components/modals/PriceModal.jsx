@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Button, Field, IconButton, TextInput } from "@/components/ui";
+import { useUpdateProductPrice } from "@/hooks/useProducts";
 
 const capitalize = (value) =>
   value
@@ -8,8 +9,12 @@ const capitalize = (value) =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 
-export function PriceModal({ product, onClose, onSave }) {
-  const [price, setPrice] = useState(product.price ?? 0);
+export function PriceModal({ product, onClose }) {
+  const [price, setPrice] = useState(product.price ?? "");
+  const updatePrice = useUpdateProductPrice();
+  const isPending = updatePrice.isPending;
+
+  const invalid = price !== "" && (Number(price) < 0 || Number.isNaN(Number(price)));
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -19,7 +24,11 @@ export function PriceModal({ product, onClose, onSave }) {
 
   const submit = (e) => {
     e?.preventDefault();
-    onSave(Number(price) || 0);
+    if (invalid) return;
+    updatePrice.mutate(
+      { id: product._id, price: Number(price) || 0 },
+      { onSuccess: onClose },
+    );
   };
 
   return (
@@ -42,20 +51,30 @@ export function PriceModal({ product, onClose, onSave }) {
                 .filter(Boolean)
                 .map((value) => capitalize(value))
                 .join(" · ") || "Product"}{" "}
-              <span className="label-mono">({product.id})</span>
+              <span className="label-mono">
+                ({product.farm?.propertyNumber ?? product._id})
+              </span>
             </p>
           </div>
           <IconButton icon={X} label="Close" onClick={onClose} />
         </div>
 
         <form onSubmit={submit} className="px-6 py-5">
-          <Field label="Price" full>
+          <Field label="Price (PHP)" full>
             <TextInput
               type="number"
+              min="0"
+              step="any"
               value={String(price)}
-              onChange={(v) => setPrice(v)}
+              onChange={(e) => setPrice(e.target.value)}
               placeholder="0"
+              aria-invalid={invalid}
             />
+            {invalid && (
+              <p className="mt-1.5 text-xs text-destructive">
+                Price must be 0 or more.
+              </p>
+            )}
           </Field>
         </form>
 
@@ -63,8 +82,12 @@ export function PriceModal({ product, onClose, onSave }) {
           <Button variant="outline" type="button" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="button" onClick={() => submit()}>
-            Save Price
+          <Button
+            type="button"
+            onClick={submit}
+            disabled={isPending || invalid}
+          >
+            {isPending ? "Saving…" : "Save Price"}
           </Button>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Archive, Eye, Pencil, Plus, Star, Tag } from "lucide-react";
 import { Button } from "@/components/ui";
+import { fmtPrice } from "@/utils/format";
 import { DataTable, PageSection, RowActions, StatusPill } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
@@ -73,27 +74,58 @@ export function InventoryPage() {
             render: (row) =>
               row.stock != null ? (
                 <span className="text-foreground">
-                  {row.stock.toLocaleString()}
+                  {row.stock.toLocaleString()} left
                 </span>
               ) : (
                 <span className="text-muted-foreground">—</span>
               ),
           },
         ]
-      : [
-          {
-            key: "weight",
-            label: "Weight (kg)",
-            render: (row) =>
-              row.weight != null ? (
-                <span className="text-foreground">
-                  {row.weight.toLocaleString()}
-                </span>
-              ) : (
-                <span className="text-muted-foreground">—</span>
-              ),
-          },
-        ]),
+      : isDTI
+        ? [
+            {
+              key: "quantity",
+              label: "Weight/Stock",
+              render: (row) =>
+                row.weight != null ? (
+                  <span className="text-foreground">
+                    {row.weight.toLocaleString()} kg
+                  </span>
+                ) : row.stock != null ? (
+                  <span className="text-foreground">
+                    {row.stock.toLocaleString()} left
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                ),
+            },
+          ]
+        : [
+            {
+              key: "weight",
+              label: "Weight",
+              render: (row) =>
+                row.weight != null ? (
+                  <span className="text-foreground">
+                    {row.weight.toLocaleString()} kg
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                ),
+            },
+          ]),
+    {
+      key: "price",
+      label: "Price",
+      render: (row) =>
+        row.price != null ? (
+          <span className="font-semibold text-foreground">
+            {fmtPrice(row.price)}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">Not set</span>
+        ),
+    },
     {
       key: "rating",
       label: "Rating",
@@ -206,7 +238,6 @@ export function InventoryPage() {
         <PriceModal
           product={priceModal}
           onClose={() => setPriceModal(null)}
-          onSave={() => setPriceModal(null)}
         />
       )}
 

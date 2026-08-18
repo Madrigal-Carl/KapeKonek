@@ -1,27 +1,64 @@
 import { useMemo, useState } from "react";
 import { Search, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { PRODUCTS, CATEGORIES } from "@/constants/products";
 import { ProductCard } from "@/components/public";
+import { useCatalogProducts } from "@/hooks/useProducts";
 
 const PAGE_SIZE = 8;
+
+const CATEGORY_OPTIONS = [
+  { label: "Coffee Seedlings", value: "coffee_seedlings" },
+  { label: "Coffee Cherries", value: "coffee_cherries" },
+  { label: "Fertilizer", value: "fertilizer" },
+  { label: "Coffee Beans", value: "coffee_beans" },
+];
+
+const capitalize = (value) =>
+  value
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 
 export function ProductsPage() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
   const [page, setPage] = useState(1);
 
+  const { data: products = [], isLoading, isError } = useCatalogProducts();
+
+  const cards = useMemo(
+    () =>
+      products.map((p) => ({
+        id: p._id,
+        image: p.imageUrls?.[0]?.url,
+        category: capitalize(p.category),
+        variety: capitalize(p.variety),
+        price: typeof p.price === "number" ? p.price : undefined,
+        description: p.description ?? "",
+        seller: p.owner?.fullName ?? "KapeKonek",
+        sellerRating: typeof p.rating === "number" ? p.rating : undefined,
+      })),
+    [products],
+  );
+
   const filtered = useMemo(() => {
-    let list = [...PRODUCTS];
+    let list = [...cards];
     const ql = q.trim().toLowerCase();
     if (ql)
       list = list.filter(
         (p) =>
-          p.name.toLowerCase().includes(ql) ||
-          p.description.toLowerCase().includes(ql),
+          p.variety.toLowerCase().includes(ql) ||
+          p.category.toLowerCase().includes(ql) ||
+          p.description.toLowerCase().includes(ql) ||
+          p.seller.toLowerCase().includes(ql),
       );
-    if (cat !== "All") list = list.filter((p) => p.category === cat);
+    if (cat !== "All")
+      list = list.filter(
+        (p) =>
+          p.category ===
+          CATEGORY_OPTIONS.find((c) => c.label === cat)?.value,
+      );
     return list;
-  }, [q, cat]);
+  }, [q, cat, cards]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -41,7 +78,7 @@ export function ProductsPage() {
             Coffee, direct from farm.
           </h1>
           <p className="mt-4 max-w-xl text-muted-foreground">
-            Browse {PRODUCTS.length} products from verified farmers and
+            Browse {products.length} products from verified farmers and
             cooperatives.
           </p>
         </div>
@@ -77,8 +114,8 @@ export function ProductsPage() {
                 className="h-11 w-full appearance-none border border-border bg-background pl-3 pr-9 text-sm outline-none focus:border-foreground"
               >
                 <option>All</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c}>{c}</option>
+                {CATEGORY_OPTIONS.map((c) => (
+                  <option key={c.value}>{c.label}</option>
                 ))}
               </select>
             </SelectWrap>
@@ -93,7 +130,17 @@ export function ProductsPage() {
               {filtered.length} results
             </p>
           </div>
-          {pageItems.length === 0 ? (
+          {isLoading ? (
+            <div className="border border-border bg-background p-16 text-center">
+              <p className="text-muted-foreground">Loading products…</p>
+            </div>
+          ) : isError ? (
+            <div className="border border-border bg-background p-16 text-center">
+              <p className="text-destructive">
+                Failed to load products. Please try again later.
+              </p>
+            </div>
+          ) : pageItems.length === 0 ? (
             <div className="border border-border bg-background p-16 text-center">
               <p className="text-muted-foreground">
                 No products match your filters.
@@ -107,7 +154,7 @@ export function ProductsPage() {
             </div>
           )}
 
-          {totalPages > 1 && (
+          {!isLoading && totalPages > 1 && (
             <nav
               className="mt-12 flex items-center justify-center gap-2"
               aria-label="Pagination"

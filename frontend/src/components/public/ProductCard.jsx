@@ -48,7 +48,7 @@ export function ProductCard({ product, variant = "grid" }) {
       role: ["buyer", "farmer", "kaluppa"],
       onSuccess: () => {
         add(product);
-        showToast(`${product.name} added to cart`, {
+        showToast(`${product.variety} added to cart`, {
           actionLabel: "View Cart",
           onAction: () => setOpen(true),
         });
@@ -62,7 +62,7 @@ export function ProductCard({ product, variant = "grid" }) {
         <Link to={`/products/${product.id}`} className="block overflow-hidden">
           <img
             src={product.image}
-            alt={product.name}
+            alt={product.variety}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
@@ -73,7 +73,7 @@ export function ProductCard({ product, variant = "grid" }) {
           </span>
           <Link to={`/products/${product.id}`} className="mt-1">
             <h3 className="truncate text-lg font-bold hover:text-[var(--color-accent)]">
-              {product.name}
+              {product.variety}
             </h3>
           </Link>
           <p className="mt-2 line-clamp-2 text-sm text-[var(--color-muted-foreground)]">
@@ -89,9 +89,11 @@ export function ProductCard({ product, variant = "grid" }) {
           </p>
         </div>
         <div className="flex flex-col items-end justify-between">
-          <span className="text-lg font-bold">
-            {formatPrice(product.price)}
-          </span>
+          {typeof product.price === "number" && (
+            <span className="text-lg font-bold">
+              {formatPrice(product.price)}
+            </span>
+          )}
           <button
             onClick={handleAdd}
             className="label-mono mt-3 inline-flex items-center gap-2 bg-[var(--color-accent)] px-4 py-2.5 text-[var(--color-accent-foreground)] transition-colors hover:bg-[var(--color-foreground)] hover:text-[var(--color-background)]"
@@ -111,7 +113,7 @@ export function ProductCard({ product, variant = "grid" }) {
       >
         <img
           src={product.image}
-          alt={product.name}
+          alt={product.variety}
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
@@ -123,7 +125,7 @@ export function ProductCard({ product, variant = "grid" }) {
       <div className="flex flex-1 flex-col p-5">
         <Link to={`/products/${product.id}`}>
           <h3 className="text-base font-bold leading-snug hover:text-[var(--color-accent)]">
-            {product.name}
+            {product.variety}
           </h3>
         </Link>
         <p className="mt-2 line-clamp-2 text-sm text-[var(--color-muted-foreground)]">
@@ -138,9 +140,11 @@ export function ProductCard({ product, variant = "grid" }) {
           {product.seller}
         </p>
         <div className="mt-5 flex items-center justify-between border-t border-[var(--color-border)] pt-4">
-          <span className="text-lg font-bold">
-            {formatPrice(product.price)}
-          </span>
+          {typeof product.price === "number" && (
+            <span className="text-lg font-bold">
+              {formatPrice(product.price)}
+            </span>
+          )}
           <button
             onClick={handleAdd}
             className="label-mono inline-flex items-center gap-2 bg-[var(--color-accent)] px-6 py-2.5 text-sm text-[var(--color-accent-foreground)] transition-colors hover:bg-[var(--color-foreground)] hover:text-[var(--color-background)]"
