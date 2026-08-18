@@ -1,9 +1,14 @@
 import { useState } from "react";
-import { AlertTriangle, Crosshair, MapPin, X } from "lucide-react";
+import { AlertTriangle, Crosshair, Loader2, MapPin, X } from "lucide-react";
 import { fmtCoord } from "@/utils/format";
 import { LeafletMap } from "./LeafletMap";
 
-export function LocationPicker({ value, onChange }) {
+export function LocationPicker({
+  value,
+  onChange,
+  highlight = null,
+  status = { kind: "idle", message: "" },
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -39,7 +44,30 @@ export function LocationPicker({ value, onChange }) {
           farm&apos;s exact location.
         </span>
       </div>
-      <LeafletMap location={value} onPick={onChange} className="h-64" />
+      <LeafletMap
+        location={value}
+        onPick={onChange}
+        area={highlight}
+        className="h-64"
+      />
+      {(status.kind === "searching" ||
+        status.kind === "found" ||
+        status.kind === "not-found") && (
+        <div
+          className={`flex items-start gap-1.5 text-xs ${
+            status.kind === "not-found"
+              ? "text-destructive"
+              : "text-muted-foreground"
+          }`}
+        >
+          {status.kind === "searching" ? (
+            <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin" />
+          ) : (
+            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+          )}
+          <span>{status.message}</span>
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm">
           {value ? (

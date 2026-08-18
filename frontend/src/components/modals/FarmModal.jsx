@@ -14,6 +14,7 @@ import { ROLES } from "@/constants/roles";
 import { useCreateFarm, useUpdateFarm } from "@/hooks/useFarms";
 import { useAssociations } from "@/hooks/useAssociations";
 import { useUsers } from "@/hooks/useUsers";
+import { geocodeAddress } from "@/utils/geocode";
 import {
   createFarmSchema,
   createKaluppaFarmSchema,
@@ -45,6 +46,7 @@ export function FarmModal({ mode, initial, onClose }) {
         : null,
   }));
   const [errors, setErrors] = useState({});
+  const [geocode, setGeocode] = useState({ kind: "idle", message: "", area: null });
 
   const createFarm = useCreateFarm();
   const updateFarm = useUpdateFarm();
@@ -63,6 +65,43 @@ export function FarmModal({ mode, initial, onClose }) {
   }));
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  // After the user types the address and leaves the field, locate it on the
+  // map: drop the pin at the found coordinates and show a border around the
+  // matched area so they can see where the address is.
+  const locateAddress = async (event) => {
+    const address = String(event?.target?.value ?? "").trim();
+    if (!address) {
+      setGeocode({ kind: "idle", message: "", area: null });
+      return;
+    }
+
+    setGeocode({ kind: "searching", message: "Locating address…", area: null });
+    try {
+      const result = await geocodeAddress(address);
+      if (!result) {
+        setGeocode({
+          kind: "not-found",
+          message: `Could not find “${address}” — click the map to set the pin manually.`,
+          area: null,
+        });
+        return;
+      }
+      set("location", { lat: result.lat, lng: result.lng });
+      setGeocode({
+        kind: "found",
+        message: `Found: ${result.displayName}`,
+        area: result.area,
+      });
+    } catch {
+      setGeocode({
+        kind: "not-found",
+        message:
+          "Address search is unavailable right now — click the map to set the pin manually.",
+        area: null,
+      });
+    }
+  };
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -137,6 +176,7 @@ export function FarmModal({ mode, initial, onClose }) {
                   <TextInput
                     value={form.address}
                     onChange={(e) => set("address", e.target.value)}
+                    onBlur={locateAddress}
                     placeholder="Sitio, Barangay, Municipality"
                   />
                   <FieldError message={errors.address} />
@@ -190,6 +230,8 @@ export function FarmModal({ mode, initial, onClose }) {
               <LocationPicker
                 value={form.location}
                 onChange={(v) => set("location", v)}
+                highlight={geocode.area}
+                status={geocode}
               />
               <FieldError message={locationError} />
             </SectionGroup>

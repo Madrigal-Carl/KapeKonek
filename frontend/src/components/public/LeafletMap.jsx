@@ -14,10 +14,12 @@ export function LeafletMap({
   onPick,
   interactive = true,
   className = "h-56",
+  area = null,
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
+  const areaLayerRef = useRef(null);
   const onPickRef = useRef(onPick);
   const [ready, setReady] = useState(false);
 
@@ -106,6 +108,7 @@ export function LeafletMap({
         mapRef.current = null;
       }
       markerRef.current = null;
+      areaLayerRef.current = null;
     };
   }, []);
 
@@ -151,6 +154,33 @@ export function LeafletMap({
       map.setView(latlng, Math.max(map.getZoom(), 13));
     })();
   }, [location?.lat, location?.lng, ready, interactive]);
+
+  // Area highlight — a bordered rectangle around the geocoded address.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    (async () => {
+      const L = (await import("leaflet")).default;
+      if (areaLayerRef.current) {
+        areaLayerRef.current.remove();
+        areaLayerRef.current = null;
+      }
+      if (!area) return;
+
+      const bounds = L.latLngBounds([
+        [area.south, area.west],
+        [area.north, area.east],
+      ]);
+      areaLayerRef.current = L.rectangle(bounds, {
+        color: "#9a6a1f",
+        weight: 2,
+        fillColor: "#dcb368",
+        fillOpacity: 0.18,
+        interactive: false,
+      }).addTo(map);
+      map.fitBounds(bounds, { padding: [24, 24], maxZoom: 16 });
+    })();
+  }, [area?.south, area?.west, area?.north, area?.east, ready]);
 
   return (
     <div
