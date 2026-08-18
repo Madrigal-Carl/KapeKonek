@@ -43,6 +43,21 @@ const chatMessageSchema = new mongoose.Schema(
             default: "",
         },
         attachments: [attachmentSchema],
+        reactions: [
+            {
+                user: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "User",
+                    required: true,
+                },
+                emoji: {
+                    type: String,
+                    required: true,
+                    trim: true,
+                    maxlength: 32,
+                },
+            },
+        ],
         deletedAt: {
             type: Date,
             default: null,

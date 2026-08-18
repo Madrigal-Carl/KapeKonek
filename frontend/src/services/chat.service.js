@@ -38,3 +38,12 @@ export async function deleteMessage(chatId, messageId) {
 
     return response.data;
 }
+
+export async function toggleReaction(chatId, messageId, emoji) {
+    const response = await api.post(
+        `/chats/${chatId}/messages/${messageId}/reactions`,
+        { emoji },
+    );
+
+    return response.data;
+}

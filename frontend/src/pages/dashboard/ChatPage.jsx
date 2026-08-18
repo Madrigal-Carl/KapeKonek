@@ -8,6 +8,7 @@ import {
   Pencil,
   Send,
   ShieldCheck,
+  Smile,
   Trash2,
   Users,
   Video,
@@ -22,6 +23,7 @@ import {
   useDeleteMessage,
   useMarkChatRead,
   useSendMessage,
+  useToggleReaction,
   useUpdateMessage,
 } from "@/hooks/useChats";
 import { useChatSocket } from "@/hooks/useChatSocket";
@@ -32,6 +34,7 @@ import { notify, notifyError } from "@/utils/notify";
 import { sendMessageSchema, updateMessageSchema } from "@/schemas/chat.schema";
 
 const MESSAGES_PER_PAGE = 30;
+const EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
 const fmtTime = (s) => {
   if (!s) return "";
@@ -68,10 +71,10 @@ const initialsOf = (name) =>
 
 function Avatar({ name, className, verified, isAdmin }) {
   return (
-    <div className="relative shrink-0">
+    <div className="shrink-0">
       <div
         className={[
-          "grid place-items-center border border-border bg-muted font-semibold text-foreground",
+          "relative grid place-items-center border border-border bg-muted font-semibold text-foreground",
           className,
         ]
           .filter(Boolean)
@@ -79,24 +82,71 @@ function Avatar({ name, className, verified, isAdmin }) {
         style={{ borderRadius: "50%" }}
       >
         {initialsOf(name)}
+        {verified && (
+          <span
+            className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center border border-background bg-emerald-500 text-white"
+            style={{ borderRadius: "50%" }}
+            title="Verified"
+          >
+            <Check className="h-2.5 w-2.5" strokeWidth={3} />
+          </span>
+        )}
+        {isAdmin && (
+          <span
+            className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center border border-background bg-accent text-accent-foreground"
+            style={{ borderRadius: "50%" }}
+            title="Admin"
+          >
+            <ShieldCheck className="h-2.5 w-2.5" />
+          </span>
+        )}
       </div>
-      {verified && (
-        <span
-          className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center border border-background bg-emerald-500 text-white"
-          style={{ borderRadius: "50%" }}
-          title="Verified"
+    </div>
+  );
+}
+
+function ReactionPicker({ open, onOpenChange, onPick, isOwn }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onMouseDown = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) {
+        onOpenChange(false);
+      }
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [open, onOpenChange]);
+
+  return (
+    <div ref={ref} className="relative inline-flex">
+      <button
+        type="button"
+        onClick={() => onOpenChange(!open)}
+        aria-label="Add reaction"
+        title="Add reaction"
+        className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-foreground"
+      >
+        <Smile className="h-4 w-4" />
+      </button>
+      {open && (
+        <div
+          className={`absolute bottom-full z-30 mb-1 flex gap-0.5 border border-border bg-card p-1 shadow-lg ${
+            isOwn ? "right-0" : "left-0"
+          }`}
         >
-          <Check className="h-2.5 w-2.5" strokeWidth={3} />
-        </span>
-      )}
-      {isAdmin && (
-        <span
-          className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center border border-background bg-accent text-accent-foreground"
-          style={{ borderRadius: "50%" }}
-          title="Admin"
-        >
-          <ShieldCheck className="h-2.5 w-2.5" />
-        </span>
+          {EMOJIS.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => onPick(emoji)}
+              className="grid h-9 w-9 place-items-center pb-0.5 text-lg hover:bg-muted"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -114,6 +164,10 @@ export function ChatPage() {
   const [editingText, setEditingText] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [typingUsers, setTypingUsers] = useState([]);
+  const [reactionPickerFor, setReactionPickerFor] = useState(null);
+  const [reactionUsersFor, setReactionUsersFor] = useState(null);
+  const reactionsRef = useRef(null);
+  const toggleReactionMutation = useToggleReaction();
 
   const scrollRef = useRef(null);
   const imageRef = useRef(null);
@@ -132,13 +186,21 @@ export function ChatPage() {
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [nextPage, setNextPage] = useState(null);
-  const messagesRef = useRef([]);
-
-  useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
 
   const { status: socketStatus, sendTyping } = useChatSocket({ chatId });
+
+  // When the socket (re)connects, sync the chat list so any chat:read events
+  // missed while disconnected are caught up (seen status stays live).
+  const prevSocketStatusRef = useRef(socketStatus);
+  useEffect(() => {
+    if (
+      socketStatus === "connected" &&
+      prevSocketStatusRef.current !== "connected"
+    ) {
+      queryClient.invalidateQueries({ queryKey: chatKeys.list });
+    }
+    prevSocketStatusRef.current = socketStatus;
+  }, [socketStatus, queryClient]);
 
   const sendMutation = useSendMessage();
   const updateMutation = useUpdateMessage();
@@ -254,6 +316,7 @@ export function ChatPage() {
             _id: m._id,
             text: m.text,
             hasAttachments: (m.attachments ?? []).length > 0,
+            deleted: Boolean(m.deleted),
             sender: m.sender,
             createdAt: m.createdAt,
           }
@@ -268,7 +331,14 @@ export function ChatPage() {
         patchChatList((chat) => ({
           ...chat,
           lastMessage: toLastMessage(d.message),
+          // A new latest message resets who has seen it.
+          lastReadBy: [],
         }));
+        // The active viewer immediately reads this new message — rebroadcast
+        // so the author sees the read receipt in realtime.
+        if (d.message.sender?._id !== currentUserId) {
+          markChatReadRef.current?.mutate(chatId);
+        }
       }),
       onChatEvent("chat:message-updated", (d) => {
         if (d.chatId !== chatId) return;
@@ -282,17 +352,36 @@ export function ChatPage() {
         );
       }),
       onChatEvent("chat:message-deleted", (d) => {
-        if (d.chatId !== chatId) return;
-        const next = messagesRef.current.filter((m) => m._id !== d.messageId);
-        setMessages(next);
+        if (d.chatId !== chatId || !d.message) return;
+        // Recall: keep the message slot in place as a tombstone.
+        setMessages((prev) =>
+          prev.map((m) => (m._id === d.message._id ? d.message : m)),
+        );
         patchChatList((chat) =>
           chat.lastMessage?._id === d.messageId
-            ? {
-                ...chat,
-                lastMessage: toLastMessage(next[next.length - 1] ?? null),
-              }
+            ? { ...chat, lastMessage: toLastMessage(d.message) }
             : chat,
         );
+      }),
+      onChatEvent("chat:reaction", (d) => {
+        if (d.chatId !== chatId) return;
+        setMessages((prev) =>
+          prev.map((m) => (m._id === d.messageId ? d.message : m)),
+        );
+      }),
+      onChatEvent("chat:read", (d) => {
+        if (d.chatId !== chatId) return;
+        patchChatList((chat) => {
+          const last = chat.lastMessage;
+          if (!last || last.sender?._id === d.user._id) return chat;
+          if (new Date(last.createdAt).getTime() > new Date(d.lastReadAt).getTime()) {
+            return chat;
+          }
+          if ((chat.lastReadBy ?? []).some((r) => r._id === d.user._id)) {
+            return chat;
+          }
+          return { ...chat, lastReadBy: [...(chat.lastReadBy ?? []), d.user] };
+        });
       }),
       onChatEvent("chat:typing", (d) => {
         if (d.chatId !== chatId || d.sender?._id === currentUserId) return;
@@ -321,6 +410,23 @@ export function ChatPage() {
       behavior: "smooth",
     });
   }, [messages.length, typingUsers.length]);
+
+  // Close the "who reacted" popover on outside click.
+  useEffect(() => {
+    if (!reactionUsersFor) return undefined;
+    const onMouseDown = (event) => {
+      if (reactionsRef.current && !reactionsRef.current.contains(event.target)) {
+        setReactionUsersFor(null);
+      }
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [reactionUsersFor]);
+
+  const handleReaction = (message, emoji) => {
+    toggleReactionMutation.mutate({ chatId, messageId: message._id, emoji });
+    setReactionPickerFor(null);
+  };
 
   const onPickFiles = async (e) => {
     const list = Array.from(e.target.files ?? []);
@@ -561,6 +667,7 @@ export function ChatPage() {
                 )}
                 {messages.map((m, i) => {
                   const isOwn = m.sender?._id === currentUserId;
+                  const isRecalled = Boolean(m.deleted);
                   const prev = messages[i - 1];
                   const showAuthor =
                     !isOwn && prev?.sender?._id !== m.sender?._id;
@@ -617,6 +724,15 @@ export function ChatPage() {
                             Cancel
                           </button>
                         </div>
+                      ) : isRecalled ? (
+                        <>
+                          <div className="border border-border bg-muted/60 px-4 py-2.5 text-sm italic leading-relaxed text-muted-foreground">
+                            This message has been recalled
+                          </div>
+                          <span className="mt-0.5 px-1 text-xs text-muted-foreground">
+                            {fmtTime(m.createdAt)}
+                          </span>
+                        </>
                       ) : (
                         <>
                           {renderAttachments(m)}
@@ -631,15 +747,78 @@ export function ChatPage() {
                               {m.text}
                             </div>
                           )}
-                          <span className="mt-0.5 px-1 text-xs text-muted-foreground">
-                            {fmtTime(m.createdAt)}
-                            {isEdited(m) && " · edited"}
-                          </span>
+                          {(m.reactions?.length ?? 0) > 0 && (
+                            <div
+                              ref={reactionsRef}
+                              className="mt-0.5 flex flex-wrap items-center gap-1"
+                            >
+                              {m.reactions.map((reaction) => (
+                                <button
+                                  key={reaction.emoji}
+                                  type="button"
+                                  onClick={() =>
+                                    setReactionUsersFor(
+                                      reactionUsersFor === m._id
+                                        ? null
+                                        : m._id,
+                                    )
+                                  }
+                                  className="inline-flex items-center gap-1 border border-border bg-card px-1.5 py-0.5 text-xs text-foreground hover:bg-muted"
+                                >
+                                  <span>{reaction.emoji}</span>
+                                  <span className="label-mono text-muted-foreground">
+                                    {reaction.count}
+                                  </span>
+                                </button>
+                              ))}
+                              {reactionUsersFor === m._id && (
+                                <div className="relative">
+                                  <div className="absolute bottom-full left-0 z-30 mb-1 min-w-[160px] border border-border bg-card p-2 shadow-lg">
+                                    {(m.reactions ?? []).map((reaction) => (
+                                      <div
+                                        key={reaction.emoji}
+                                        className="flex items-center gap-2 py-0.5 text-xs text-foreground"
+                                      >
+                                        <span>{reaction.emoji}</span>
+                                        <span>
+                                          {reaction.users
+                                            .map((u) => u.fullName)
+                                            .join(", ")}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          <div className="mt-0.5 flex items-center gap-1 px-1">
+                            <span className="text-xs text-muted-foreground">
+                              {fmtTime(m.createdAt)}
+                              {isEdited(m) && " · edited"}
+                            </span>
+                            <div
+                              className={`transition-opacity ${
+                                reactionPickerFor === m._id
+                                  ? "opacity-100"
+                                  : "opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                              }`}
+                            >
+                              <ReactionPicker
+                                isOwn={isOwn}
+                                open={reactionPickerFor === m._id}
+                                onOpenChange={(open) =>
+                                  setReactionPickerFor(open ? m._id : null)
+                                }
+                                onPick={(emoji) => handleReaction(m, emoji)}
+                              />
+                            </div>
+                          </div>
                         </>
                       )}
                     </div>
 
-                    {isOwn && editingId !== m._id && canModifyMessage(m) && (
+                    {isOwn && editingId !== m._id && !isRecalled && canModifyMessage(m) && (
                       <div className="flex shrink-0 flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                         <button
                           type="button"
@@ -664,6 +843,22 @@ export function ChatPage() {
                 })}
               </>
             )}
+
+            {/* Seen status of the latest message — below the last message */}
+            {!loadingInitial &&
+              messages.length > 0 &&
+              chat.lastReadBy?.length > 0 && (
+                <div className="flex justify-end px-1 pt-0.5 text-xs text-muted-foreground">
+                  Seen by{" "}
+                  {chat.lastReadBy
+                    .map((reader) =>
+                      reader._id === currentUserId
+                        ? "You"
+                        : reader.fullName.split(" ")[0],
+                    )
+                    .join(", ")}
+                </div>
+              )}
 
             {/* Typing indicator — inside the thread, at the bottom */}
             {typingUsers.length > 0 && (

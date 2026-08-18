@@ -4,6 +4,7 @@ import {
     getChatMessagesQuerySchema,
     sendMessageSchema,
     updateMessageSchema,
+    toggleReactionSchema,
 } from "../schemas/chat.schema.js";
 
 const validate = (schema) => (req, res, next) => {
@@ -63,3 +64,4 @@ export const validateGetChatMessagesQuery = validateQuery(
 );
 export const validateSendMessage = validate(sendMessageSchema);
 export const validateUpdateMessage = validate(updateMessageSchema);
+export const validateToggleReaction = validate(toggleReactionSchema);

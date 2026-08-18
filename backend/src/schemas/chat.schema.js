@@ -72,3 +72,11 @@ export const updateMessageSchema = z
     .refine((data) => Object.keys(data).length > 0, {
         message: "At least one field must be provided",
     });
+
+export const toggleReactionSchema = z.object({
+    emoji: z
+        .string({ error: "Reaction is required" })
+        .trim()
+        .min(1, "Reaction is required")
+        .max(32, "Reaction must not exceed 32 characters"),
+});

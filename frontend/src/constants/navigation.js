@@ -24,7 +24,7 @@ export const farmerNavSections = [
         items: [
             { to: "/farmer/inventory", label: "Inventory", icon: Package },
             { to: "/farmer/orders", label: "Order", icon: ClipboardList, badge: 3 },
-            { to: "/", label: "Store", icon: Store }
+            { to: "/products", label: "Store", icon: Store }
         ]
     },
     {
@@ -152,7 +152,7 @@ export const kaluppaNavSections = [
         items: [
             { to: "/kaluppa/inventory", label: "Inventory", icon: Package },
             { to: "/kaluppa/orders", label: "Order", icon: ClipboardList, badge: 3 },
-            { to: "/", label: "Store", icon: Store }
+            { to: "/products", label: "Store", icon: Store }
         ]
     },
     {

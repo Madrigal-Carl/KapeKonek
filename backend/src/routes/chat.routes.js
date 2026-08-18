@@ -7,6 +7,7 @@ import {
     sendMessageHandler,
     updateMessageHandler,
     deleteMessageHandler,
+    toggleReactionHandler,
 } from "../controllers/chat.controller.js";
 import {
     validateChatIdParam,
@@ -14,6 +15,7 @@ import {
     validateGetChatMessagesQuery,
     validateSendMessage,
     validateUpdateMessage,
+    validateToggleReaction,
 } from "../validators/chat.validator.js";
 import {
     authenticated,
@@ -64,6 +66,14 @@ router.patch(
     validateMessageIdParam,
     validateUpdateMessage,
     updateMessageHandler,
+);
+router.post(
+    "/:id/messages/:messageId/reactions",
+    authenticated,
+    allowRoles("manager", "farmer"),
+    validateMessageIdParam,
+    validateToggleReaction,
+    toggleReactionHandler,
 );
 router.delete(
     "/:id/messages/:messageId",

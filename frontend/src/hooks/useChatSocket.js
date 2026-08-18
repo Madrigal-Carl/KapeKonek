@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
     connectChatSocket,
-    disconnectChatSocket,
     joinChat,
     leaveChat,
     onChatEvent,
@@ -28,8 +27,15 @@ export function useChatSocket({ chatId, enabled = true } = {}) {
 
     useEffect(() => {
         if (!enabled || !chatId) return;
+        // Join immediately, and re-join on every (re)connect so a join emitted
+        // before the socket was ready is never permanently lost.
         joinChat(chatId);
-        return () => leaveChat(chatId);
+        const rejoin = () => joinChat(chatId);
+        const offConnected = onChatEvent("chat:connected", rejoin);
+        return () => {
+            offConnected();
+            leaveChat(chatId);
+        };
     }, [chatId, enabled]);
 
     return {

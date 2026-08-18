@@ -5,6 +5,7 @@ import {
     getChats,
     markChatRead,
     sendMessage,
+    toggleReaction,
     updateMessage,
 } from "@/services/chat.service";
 import { notifyError, notifySuccess } from "@/utils/notify";
@@ -19,6 +20,10 @@ export function useChats(options = {}) {
     return useQuery({
         queryKey: chatKeys.list,
         queryFn: () => getChats().then((response) => response.chats),
+        // Light automatic refresh so read-receipt state (lastReadBy) and
+        // unread counts stay live even without a socket push.
+        refetchInterval: 20000,
+        refetchIntervalInBackground: false,
         ...options,
     });
 }
@@ -89,5 +94,13 @@ export function useDeleteMessage() {
             notifySuccess("Message deleted");
         },
         onError: (error) => notifyError(error, "Failed to delete message"),
+    });
+}
+
+export function useToggleReaction() {
+    return useMutation({
+        mutationFn: ({ chatId, messageId, emoji }) =>
+            toggleReaction(chatId, messageId, emoji),
+        onError: (error) => notifyError(error, "Failed to react to message"),
     });
 }

@@ -6,6 +6,7 @@ import {
     sendMessage,
     updateMessage,
     deleteMessage,
+    toggleReaction,
 } from "../services/chat.service.js";
 import { broadcastToChat } from "../websocket/chatSocket.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -36,7 +37,13 @@ export const getChatsHandler = asyncHandler(async (req, res) => {
 });
 
 export const markChatReadHandler = asyncHandler(async (req, res) => {
-    const { lastReadAt } = await markChatRead(req.params.id, req.user);
+    const { lastReadAt, user } = await markChatRead(req.params.id, req.user);
+
+    broadcastToChat(req.params.id, "chat:read", {
+        chatId: req.params.id,
+        user,
+        lastReadAt,
+    });
 
     return res.status(200).json({
         message: "Chat marked as read",
@@ -101,10 +108,31 @@ export const deleteMessageHandler = asyncHandler(async (req, res) => {
     broadcastToChat(req.params.id, "chat:message-deleted", {
         chatId: req.params.id,
         messageId: req.params.messageId,
+        message,
     });
 
     return res.status(200).json({
         message: "Message deleted successfully",
+        message,
+    });
+});
+
+export const toggleReactionHandler = asyncHandler(async (req, res) => {
+    const message = await toggleReaction(
+        req.params.id,
+        req.params.messageId,
+        req.body,
+        req.user,
+    );
+
+    broadcastToChat(req.params.id, "chat:reaction", {
+        chatId: req.params.id,
+        messageId: message._id,
+        message,
+    });
+
+    return res.status(200).json({
+        message: "Reaction updated successfully",
         message,
     });
 });

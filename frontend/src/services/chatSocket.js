@@ -50,6 +50,8 @@ export const connectChatSocket = async () => {
         "chat:new-message",
         "chat:message-updated",
         "chat:message-deleted",
+        "chat:reaction",
+        "chat:read",
         "chat:typing",
         "chat:error",
     ]) {
