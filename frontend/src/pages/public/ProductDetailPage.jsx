@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Minus, Plus, ShoppingBag, ArrowLeft, Star } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import useAuth from "@/hooks/useAuth";
+import useProtectedAction from "@/hooks/useProtectedAction";
 import {
   useCreateProductReview,
   useProductDetail,
@@ -117,6 +118,7 @@ export function ProductDetailPage() {
   const { user, isAuthenticated } = useAuth();
   const { add, setOpen, formatPrice } = useCart();
   const showToast = useToastStore((s) => s.show);
+  const protectedAction = useProtectedAction();
 
   const { data: product, isLoading, isError } = useProductDetail(productId);
   const { data: reviews = [] } = useProductReviews(productId);
@@ -190,8 +192,7 @@ export function ProductDetailPage() {
     );
   };
 
-  const handleSubmitReview = (e) => {
-    e.preventDefault();
+  const submitReview = () => {
     if (newRating === 0) {
       setFormError("Please select a star rating.");
       return;
@@ -210,6 +211,15 @@ export function ProductDetailPage() {
         },
       },
     );
+  };
+
+  const handleSubmitReview = (e) => {
+    e.preventDefault();
+    // Guests are redirected to login, same as adding to cart.
+    protectedAction({
+      onSuccess: submitReview,
+      unauthorizedMessage: "Please log in to review this product.",
+    });
   };
 
   return (
@@ -403,56 +413,49 @@ export function ProductDetailPage() {
             Ratings &amp; Reviews
           </h2>
 
-          {/* Review form — logged-in users only */}
-          {isAuthenticated ? (
-            <form
-              onSubmit={handleSubmitReview}
-              className="mt-8 border border-[var(--color-border)] bg-[var(--color-background)] p-5"
-            >
-              <div className="flex items-center justify-between gap-4">
-                <span className="label-mono text-[var(--color-muted-foreground)]">
-                  Write a review
-                </span>
+          {/* Review form — logged-in users can submit; guests are sent to
+              login when they try */}
+          <form
+            onSubmit={handleSubmitReview}
+            className="mt-8 border border-[var(--color-border)] bg-[var(--color-background)] p-5"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <span className="label-mono text-[var(--color-muted-foreground)]">
+                Write a review
+              </span>
+              {isAuthenticated ? (
                 <span className="label-mono text-xs text-[var(--color-muted-foreground)]">
                   {user?.firstName} {user?.lastName}
                 </span>
-              </div>
-              <div className="mt-3">
-                <StarPicker value={newRating} onChange={setNewRating} />
-              </div>
-              <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Share your experience with this product..."
-                rows={3}
-                className="mt-4 w-full resize-none border border-[var(--color-border)] bg-[var(--color-background)] p-3 text-sm outline-none focus:border-[var(--color-foreground)]"
-              />
-              {formError && (
-                <p className="mt-2 text-sm text-[var(--color-destructive)]">
-                  {formError}
-                </p>
+              ) : (
+                <span className="label-mono text-xs text-[var(--color-muted-foreground)]">
+                  Log in to review — you&apos;ll be redirected.
+                </span>
               )}
-              <button
-                type="submit"
-                disabled={createReview.isPending}
-                className="label-mono mt-4 inline-flex items-center gap-2 bg-[var(--color-accent)] px-6 py-3 text-[var(--color-accent-foreground)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {createReview.isPending ? "Submitting…" : "Submit Review"}
-              </button>
-            </form>
-          ) : (
-            <div className="mt-8 border border-[var(--color-border)] bg-[var(--color-background)] p-5">
-              <p className="text-sm text-[var(--color-muted-foreground)]">
-                <Link
-                  to="/login"
-                  className="font-semibold text-[var(--color-foreground)] underline hover:text-[var(--color-accent)]"
-                >
-                  Log in
-                </Link>{" "}
-                to review this product.
-              </p>
             </div>
-          )}
+            <div className="mt-3">
+              <StarPicker value={newRating} onChange={setNewRating} />
+            </div>
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Share your experience with this product..."
+              rows={3}
+              className="mt-4 w-full resize-none border border-[var(--color-border)] bg-[var(--color-background)] p-3 text-sm outline-none focus:border-[var(--color-foreground)]"
+            />
+            {formError && (
+              <p className="mt-2 text-sm text-[var(--color-destructive)]">
+                {formError}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={createReview.isPending}
+              className="label-mono mt-4 inline-flex items-center gap-2 bg-[var(--color-accent)] px-6 py-3 text-[var(--color-accent-foreground)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {createReview.isPending ? "Submitting…" : "Submit Review"}
+            </button>
+          </form>
 
           {/* Review list */}
           <div className="mt-10 divide-y divide-[var(--color-border)]">

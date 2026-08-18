@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -14,8 +14,14 @@ import {
 import hero from "@/assets/images/hero-coffee.jpg";
 import community from "@/assets/images/community.jpg";
 import { ProductCard } from "@/components/public";
-import { PRODUCTS } from "@/constants/products";
+import { useCatalogProducts } from "@/hooks/useProducts";
 import useAuth from "@/hooks/useAuth";
+
+const capitalize = (value) =>
+  value
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 
 const AUTOPLAY_MS = 6000;
 
@@ -105,7 +111,32 @@ function HeroCarousel() {
 export function HomePage() {
   const { user } = useAuth();
 
-  const featured = PRODUCTS.slice(0, 4);
+  // The catalog applies the role rule server-side (kaluppa -> farmer-owned,
+  // everyone else -> kaluppa-owned). Featured = most popular: highest rating,
+  // then most ratings, capped at 4.
+  const { data: catalog = [], isLoading } = useCatalogProducts();
+
+  const featured = useMemo(
+    () =>
+      catalog
+        .slice()
+        .sort(
+          (a, b) =>
+            (b.rating ?? 0) - (a.rating ?? 0) ||
+            (b.ratingCount ?? 0) - (a.ratingCount ?? 0),
+        )
+        .slice(0, 4)
+        .map((p) => ({
+          id: p._id,
+          image: p.imageUrls?.[0]?.url,
+          category: capitalize(p.category),
+          variety: capitalize(p.variety),
+          price: typeof p.price === "number" ? p.price : undefined,
+          description: p.description ?? "",
+          sellerRating: typeof p.rating === "number" ? p.rating : 0,
+        })),
+    [catalog],
+  );
   return (
     <div>
       {/* HERO — image-only carousel */}
@@ -128,9 +159,13 @@ export function HomePage() {
             </Link>
           </div>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {featured.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
+            {isLoading ? (
+              <p className="col-span-full py-8 text-center text-muted-foreground sm:py-4">
+                Loading featured products…
+              </p>
+            ) : (
+              featured.map((p) => <ProductCard key={p.id} product={p} />)
+            )}
           </div>
         </div>
       </section>
@@ -289,15 +324,6 @@ export function HomePage() {
           </div>
         </div>
       </section>
-    </div>
-  );
-}
-
-function Stat({ k, v }) {
-  return (
-    <div>
-      <dt className="label-mono text-muted-foreground">{k}</dt>
-      <dd className="mt-2 text-2xl font-extrabold">{v}</dd>
     </div>
   );
 }
