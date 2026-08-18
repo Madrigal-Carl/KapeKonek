@@ -57,6 +57,7 @@ export function HarvestModal({ mode, initial, onClose }) {
   }));
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const readOnly = mode === "view";
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -105,16 +106,18 @@ export function HarvestModal({ mode, initial, onClose }) {
           <div>
             <p className="label-mono mb-1 text-accent">Harvest</p>
             <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              {mode === "add"
-                ? "Add New Harvest"
-                : `Edit ${initial?.farm?.propertyNumber ?? "Harvest"}`}
+              {mode === "view"
+                ? `View Harvest`
+                : mode === "add"
+                  ? "Add New Harvest"
+                  : `Edit ${initial?.farm?.propertyNumber ?? "Harvest"}`}
             </h2>
           </div>
           <IconButton icon={X} label="Close" onClick={onClose} />
         </div>
 
         <form onSubmit={submit} className="flex-1 overflow-y-auto px-6 py-5">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <fieldset disabled={readOnly} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Variety" full>
               <div className="relative">
                 <select
@@ -193,20 +196,28 @@ export function HarvestModal({ mode, initial, onClose }) {
                 <FieldError message={errors.farmer} />
               </Field>
             )}
-          </div>
+          </fieldset>
         </form>
 
         <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border bg-muted/40 px-6 py-4">
-          <Button variant="outline" type="button" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="button" onClick={submit} disabled={isPending}>
-            {isPending
-              ? "Saving…"
-              : mode === "add"
-                ? "Add Harvest"
-                : "Save Changes"}
-          </Button>
+          {readOnly ? (
+            <Button type="button" onClick={onClose}>
+              Close
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" type="button" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={submit} disabled={isPending}>
+                {isPending
+                  ? "Saving…"
+                  : mode === "add"
+                    ? "Add Harvest"
+                    : "Save Changes"}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

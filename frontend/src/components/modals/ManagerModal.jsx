@@ -42,6 +42,8 @@ export function ManagerModal({ mode, initial, onClose }) {
     });
   };
 
+  const readOnly = mode === "view";
+
   const { data: availableFarmers = [] } = useAvailableFarmers();
 
   const farmerOptions = useMemo(() => {
@@ -105,9 +107,11 @@ export function ManagerModal({ mode, initial, onClose }) {
   };
 
   const modalTitle =
-    mode === "add"
-      ? "Add New Manager"
-      : `Edit ${initial.fullName || initial.firstName || "Manager"}`;
+    mode === "view"
+      ? `View ${initial.fullName || initial.firstName || "Manager"}`
+      : mode === "add"
+        ? "Add New Manager"
+        : `Edit ${initial.fullName || initial.firstName || "Manager"}`;
 
   return (
     <div
@@ -129,7 +133,7 @@ export function ManagerModal({ mode, initial, onClose }) {
         </div>
 
         <form onSubmit={submit} className="flex-1 overflow-y-auto px-6 py-5">
-          <div className="space-y-8">
+          <fieldset disabled={readOnly} className="space-y-8">
             {/* Personal information section */}
             <SectionGroup title="Personal Information">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -243,20 +247,28 @@ export function ManagerModal({ mode, initial, onClose }) {
                 </Field>
               </div>
             </SectionGroup>
-          </div>
+          </fieldset>
         </form>
 
         <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border bg-muted/40 px-6 py-4">
-          <Button variant="outline" type="button" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="button" onClick={submit} disabled={isPending}>
-            {isPending
-              ? "Saving…"
-              : mode === "add"
-                ? "Add Manager"
-                : "Save Changes"}
-          </Button>
+          {readOnly ? (
+            <Button type="button" onClick={onClose}>
+              Close
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" type="button" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={submit} disabled={isPending}>
+                {isPending
+                  ? "Saving…"
+                  : mode === "add"
+                    ? "Add Manager"
+                    : "Save Changes"}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Archive, Pencil, Plus } from "lucide-react";
+import { Archive, Eye, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui";
 import { fmtDate } from "@/utils/format";
 import { DataTable, RowActions } from "@/components/dashboard";
@@ -58,6 +58,21 @@ export function ManagersPage() {
       render: (row) => (
         <RowActions
           actions={[
+            {
+              key: "view",
+              label: "View",
+              icon: Eye,
+              onClick: () =>
+                setModal({
+                  mode: "view",
+                  data: {
+                    ...row,
+                    password: DEFAULT_PASSWORD,
+                    association: row.association || "",
+                    assignedFarmers: row.assignedFarmers || [],
+                  },
+                }),
+            },
             {
               key: "edit",
               label: "Edit",

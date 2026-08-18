@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Archive, Check, Pencil, Plus, X } from "lucide-react";
+import { Archive, Check, Eye, Pencil, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import { fmtDate } from "@/utils/format";
 import { DataTable, RowActions, StatusPill } from "@/components/dashboard";
@@ -45,6 +45,7 @@ export function FarmersPage() {
 
   const onEdit = (r) =>
     setModal({ mode: "edit", data: { ...r, password: DEFAULT_PASSWORD } });
+  const onView = (r) => setModal({ mode: "view", data: r });
   const onDelete = (r) => setConfirmDelete(r);
   const onApproveAccount = (r) =>
     setConfirmAccount({ row: r, action: "approve" });
@@ -96,6 +97,13 @@ export function FarmersPage() {
           canReviewAssociation && r.associationStatus === "pending";
 
         const actions = [];
+
+        actions.push({
+          key: "view",
+          label: "View",
+          icon: Eye,
+          onClick: () => onView(r),
+        });
 
         if (showAccountActions) {
           actions.push({
@@ -220,7 +228,7 @@ export function FarmersPage() {
         }
       />
 
-      {modal && canManage && (
+      {modal && (canManage || modal.mode === "view") && (
         <FarmerModal
           mode={modal.mode}
           initial={modal.data}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Archive, Pencil, Plus, Star, Tag } from "lucide-react";
+import { Archive, Eye, Pencil, Plus, Star, Tag } from "lucide-react";
 import { Button } from "@/components/ui";
 import { DataTable, PageSection, RowActions, StatusPill } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
@@ -108,8 +108,14 @@ export function InventoryPage() {
       align: "right",
       render: (row) => (
         <RowActions
-          actions={
-            isDTI
+          actions={[
+            {
+              key: "view",
+              label: "View",
+              icon: Eye,
+              onClick: () => setModal({ mode: "view", data: { ...row } }),
+            },
+            ...(isDTI
               ? [
                   {
                     key: "price",
@@ -132,8 +138,8 @@ export function InventoryPage() {
                     danger: true,
                     onClick: () => setConfirmDelete(row),
                   },
-                ]
-          }
+                ]),
+          ]}
         />
       ),
     },
@@ -185,7 +191,7 @@ export function InventoryPage() {
         minWidth="920px"
       />
 
-      {modal && !isDTI && (
+      {modal && (
         <ProductModal
           mode={modal.mode}
           initial={modal.data}

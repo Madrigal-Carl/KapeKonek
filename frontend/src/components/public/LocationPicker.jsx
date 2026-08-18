@@ -8,6 +8,7 @@ export function LocationPicker({
   onChange,
   highlight = null,
   status = { kind: "idle", message: "" },
+  readOnly = false,
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -39,14 +40,19 @@ export function LocationPicker({
     <div className="space-y-3 border border-border bg-muted/30 p-3">
       <div className="flex items-start gap-2 text-xs text-muted-foreground">
         <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
-        <span>
-          Click anywhere on the map to drop a pin. Drag it to refine the
-          farm&apos;s exact location.
-        </span>
+        {readOnly ? (
+          <span>Recorded farm location and geotag.</span>
+        ) : (
+          <span>
+            Click anywhere on the map to drop a pin. Drag it to refine the
+            farm&apos;s exact location.
+          </span>
+        )}
       </div>
       <LeafletMap
         location={value}
         onPick={onChange}
+        interactive={!readOnly}
         area={highlight}
         className="h-64"
       />
@@ -78,26 +84,28 @@ export function LocationPicker({
             <span className="text-muted-foreground">No pin dropped yet.</span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={useMyLocation}
-            disabled={busy}
-            className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted disabled:opacity-60"
-          >
-            <Crosshair className="h-3.5 w-3.5 text-accent" />
-            {busy ? "Locating…" : "Use my location"}
-          </button>
-          {value && (
+        {!readOnly && (
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => onChange(null)}
-              className="inline-flex items-center gap-1 border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
+              onClick={useMyLocation}
+              disabled={busy}
+              className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted disabled:opacity-60"
             >
-              <X className="h-3.5 w-3.5" /> Clear
+              <Crosshair className="h-3.5 w-3.5 text-accent" />
+              {busy ? "Locating…" : "Use my location"}
             </button>
-          )}
-        </div>
+            {value && (
+              <button
+                type="button"
+                onClick={() => onChange(null)}
+                className="inline-flex items-center gap-1 border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" /> Clear
+              </button>
+            )}
+          </div>
+        )}
       </div>
       {error && (
         <div className="flex items-start gap-1.5 text-xs text-destructive">

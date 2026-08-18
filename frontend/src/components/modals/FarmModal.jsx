@@ -48,6 +48,8 @@ export function FarmModal({ mode, initial, onClose }) {
   const [errors, setErrors] = useState({});
   const [geocode, setGeocode] = useState({ kind: "idle", message: "", area: null });
 
+  const readOnly = mode === "view";
+
   const createFarm = useCreateFarm();
   const updateFarm = useUpdateFarm();
   const isPending = (mode === "add" ? createFarm : updateFarm).isPending;
@@ -70,6 +72,7 @@ export function FarmModal({ mode, initial, onClose }) {
   // map: drop the pin at the found coordinates and show a border around the
   // matched area so they can see where the address is.
   const locateAddress = async (event) => {
+    if (readOnly) return;
     const address = String(event?.target?.value ?? "").trim();
     if (!address) {
       setGeocode({ kind: "idle", message: "", area: null });
@@ -160,16 +163,18 @@ export function FarmModal({ mode, initial, onClose }) {
           <div>
             <p className="label-mono mb-1 text-accent">Farm</p>
             <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              {mode === "add"
-                ? "Add New Farm"
-                : `Edit ${initial.propertyNumber || "Farm"}`}
+              {mode === "view"
+                ? `View ${initial?.propertyNumber || "Farm"}`
+                : mode === "add"
+                  ? "Add New Farm"
+                  : `Edit ${initial.propertyNumber || "Farm"}`}
             </h2>
           </div>
           <IconButton icon={X} label="Close" onClick={onClose} />
         </div>
 
         <form onSubmit={submit} className="flex-1 overflow-y-auto px-6 py-5">
-          <div className="space-y-8">
+          <fieldset disabled={readOnly} className="space-y-8">
             <SectionGroup title="Property Information">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="Address" full>
@@ -232,23 +237,32 @@ export function FarmModal({ mode, initial, onClose }) {
                 onChange={(v) => set("location", v)}
                 highlight={geocode.area}
                 status={geocode}
+                readOnly={readOnly}
               />
               <FieldError message={locationError} />
             </SectionGroup>
-          </div>
+          </fieldset>
         </form>
 
         <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border bg-muted/40 px-6 py-4">
-          <Button variant="outline" type="button" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="button" onClick={submit} disabled={isPending}>
-            {isPending
-              ? "Saving…"
-              : mode === "add"
-                ? "Add Farm"
-                : "Save Changes"}
-          </Button>
+          {readOnly ? (
+            <Button type="button" onClick={onClose}>
+              Close
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" type="button" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={submit} disabled={isPending}>
+                {isPending
+                  ? "Saving…"
+                  : mode === "add"
+                    ? "Add Farm"
+                    : "Save Changes"}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

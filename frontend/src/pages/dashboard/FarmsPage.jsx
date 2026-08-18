@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Archive, DoorOpen, Pencil, Plus } from "lucide-react";
+import { Archive, DoorOpen, Eye, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui";
 import { DataTable, RowActions } from "@/components/dashboard";
 import useAuth from "@/hooks/useAuth";
@@ -63,45 +63,42 @@ export function FarmsPage() {
       label: "",
       align: "right",
       render: (r) => {
+        const actions = [
+          {
+            key: "view",
+            label: "View",
+            icon: Eye,
+            onClick: () => setModal({ mode: "view", data: r }),
+          },
+        ];
+
         if (canEdit(r)) {
-          return (
-            <RowActions
-              actions={[
-                {
-                  key: "edit",
-                  label: "Edit",
-                  icon: Pencil,
-                  onClick: () => setModal({ mode: "edit", data: r }),
-                },
-                {
-                  key: "archive",
-                  label: "Archive",
-                  icon: Archive,
-                  danger: true,
-                  onClick: () => setConfirmDelete(r),
-                },
-              ]}
-            />
+          actions.push(
+            {
+              key: "edit",
+              label: "Edit",
+              icon: Pencil,
+              onClick: () => setModal({ mode: "edit", data: r }),
+            },
+            {
+              key: "archive",
+              label: "Archive",
+              icon: Archive,
+              danger: true,
+              onClick: () => setConfirmDelete(r),
+            },
           );
+        } else if (isFarmer) {
+          actions.push({
+            key: "leave",
+            label: "Leave Farm",
+            icon: DoorOpen,
+            danger: true,
+            onClick: () => setConfirmLeave(r),
+          });
         }
 
-        if (isFarmer) {
-          return (
-            <RowActions
-              actions={[
-                {
-                  key: "leave",
-                  label: "Leave Farm",
-                  icon: DoorOpen,
-                  danger: true,
-                  onClick: () => setConfirmLeave(r),
-                },
-              ]}
-            />
-          );
-        }
-
-        return <span className="text-muted-foreground">—</span>;
+        return <RowActions actions={actions} />;
       },
     },
   ];

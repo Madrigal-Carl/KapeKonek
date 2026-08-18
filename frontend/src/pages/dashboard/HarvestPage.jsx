@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Archive, Pencil, Plus } from "lucide-react";
+import { Archive, Eye, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui";
 import { fmtDate } from "@/utils/format";
 import { DataTable, RowActions } from "@/components/dashboard";
@@ -71,28 +71,35 @@ export function HarvestPage() {
       key: "actions",
       label: "",
       align: "right",
-      render: (row) =>
-        isViewOnly ? (
-          <span className="text-muted-foreground">—</span>
-        ) : (
-          <RowActions
-            actions={[
-              {
-                key: "edit",
-                label: "Edit",
-                icon: Pencil,
-                onClick: () => setModal({ mode: "edit", data: { ...row } }),
-              },
-              {
-                key: "archive",
-                label: "Archive",
-                icon: Archive,
-                danger: true,
-                onClick: () => setConfirmDelete(row),
-              },
-            ]}
-          />
-        ),
+      render: (row) => (
+        <RowActions
+          actions={[
+            {
+              key: "view",
+              label: "View",
+              icon: Eye,
+              onClick: () => setModal({ mode: "view", data: { ...row } }),
+            },
+            ...(!isViewOnly
+              ? [
+                  {
+                    key: "edit",
+                    label: "Edit",
+                    icon: Pencil,
+                    onClick: () => setModal({ mode: "edit", data: { ...row } }),
+                  },
+                  {
+                    key: "archive",
+                    label: "Archive",
+                    icon: Archive,
+                    danger: true,
+                    onClick: () => setConfirmDelete(row),
+                  },
+                ]
+              : []),
+          ]}
+        />
+      ),
     },
   ];
 
@@ -149,7 +156,7 @@ export function HarvestPage() {
         minWidth="820px"
       />
 
-      {modal && !isViewOnly && (
+      {modal && (
         <HarvestModal
           mode={modal.mode}
           initial={modal.data}

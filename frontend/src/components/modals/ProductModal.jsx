@@ -73,6 +73,7 @@ export function ProductModal({ mode, initial, onClose }) {
 
   const set = (key, value) =>
     setForm((current) => ({ ...current, [key]: value }));
+  const readOnly = mode === "view";
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -196,14 +197,18 @@ export function ProductModal({ mode, initial, onClose }) {
           <div>
             <p className="label-mono mb-1 text-accent">Product</p>
             <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              {mode === "add" ? "Add New Product" : `Edit ${initial.name}`}
+              {mode === "view"
+                ? `View ${initial.name}`
+                : mode === "add"
+                  ? "Add New Product"
+                  : `Edit ${initial.name}`}
             </h2>
           </div>
           <IconButton icon={X} label="Close" onClick={onClose} />
         </div>
 
         <form onSubmit={submit} className="flex-1 overflow-y-auto px-6 py-5">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <fieldset disabled={readOnly} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Product Name" full>
               <TextInput
                 value={form.name}
@@ -348,6 +353,7 @@ export function ProductModal({ mode, initial, onClose }) {
             </Field>
 
             <Field label="Images" full>
+              {!readOnly && (
               <label
                 htmlFor="product-images-upload"
                 className="flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed border-border bg-muted/30 px-4 py-8 text-center transition-colors hover:border-foreground-40 hover:bg-muted/50"
@@ -360,6 +366,7 @@ export function ProductModal({ mode, initial, onClose }) {
                   PNG, JPG up to 5MB each
                 </div>
               </label>
+              )}
               <input
                 id="product-images-upload"
                 ref={fileInputRef}
@@ -409,6 +416,7 @@ export function ProductModal({ mode, initial, onClose }) {
                           <Star className="h-3 w-3 fill-current" /> Primary
                         </span>
                       )}
+                      {!readOnly && (
                       <div className="absolute right-1 top-1 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                         {!image.isPrimary && (
                           <button
@@ -430,29 +438,38 @@ export function ProductModal({ mode, initial, onClose }) {
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
             </Field>
-          </div>
+          </fieldset>
         </form>
 
         <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border bg-muted/40 px-6 py-4">
-          <Button variant="outline" type="button" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={submit}
-            disabled={isPending || uploading.active}
-          >
-            {isPending
-              ? "Saving…"
-              : mode === "add"
-                ? "Add Product"
-                : "Save Changes"}
-          </Button>
+          {readOnly ? (
+            <Button type="button" onClick={onClose}>
+              Close
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" type="button" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={submit}
+                disabled={isPending || uploading.active}
+              >
+                {isPending
+                  ? "Saving…"
+                  : mode === "add"
+                    ? "Add Product"
+                    : "Save Changes"}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
