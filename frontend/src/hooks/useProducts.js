@@ -1,8 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     createProduct,
+    createProductReview,
     deleteProduct,
     getCatalogProducts,
+    getProductDetail,
+    getProductReviews,
     getProducts,
     updateProduct,
     updateProductPrice,
@@ -13,6 +16,8 @@ export const productKeys = {
     all: ["products"],
     list: (filters) => ["products", "list", filters],
     catalog: ["products", "catalog"],
+    detail: (id) => ["products", "detail", id],
+    reviews: (id) => ["products", "reviews", id],
 };
 
 export function useProducts(filters = {}, options = {}) {
@@ -32,6 +37,38 @@ export function useCatalogProducts(options = {}) {
                 (response) => response.products,
             ),
         ...options,
+    });
+}
+
+export function useProductDetail(id, options = {}) {
+    return useQuery({
+        queryKey: productKeys.detail(id),
+        queryFn: () => getProductDetail(id).then((response) => response.product),
+        enabled: Boolean(id),
+        ...options,
+    });
+}
+
+export function useProductReviews(id, options = {}) {
+    return useQuery({
+        queryKey: productKeys.reviews(id),
+        queryFn: () =>
+            getProductReviews(id).then((response) => response.reviews),
+        enabled: Boolean(id),
+        ...options,
+    });
+}
+
+export function useCreateProductReview() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, data }) => createProductReview(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: productKeys.all });
+            notifySuccess("Review submitted");
+        },
+        onError: (error) => notifyError(error, "Failed to submit review"),
     });
 }
 

@@ -57,7 +57,10 @@ const description = z
     .optional();
 
 const imageItem = z.object({
-    url: z.string().url("Invalid image URL"),
+    url: z
+        .string()
+        .url("Invalid image URL")
+        .regex(/\.(jpe?g|png)$/i, "Image must be JPG, JPEG, or PNG"),
     isPrimary: z.boolean().optional(),
 });
 

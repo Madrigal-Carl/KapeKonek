@@ -35,7 +35,7 @@ export function ProductsPage() {
         owner: p.owner?.fullName ?? "KapeKonek",
         price: typeof p.price === "number" ? p.price : undefined,
         description: p.description ?? "",
-        sellerRating: typeof p.rating === "number" ? p.rating : undefined,
+        sellerRating: typeof p.rating === "number" ? p.rating : 0,
       })),
     [products],
   );

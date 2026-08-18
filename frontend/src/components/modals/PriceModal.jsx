@@ -14,7 +14,22 @@ export function PriceModal({ product, onClose }) {
   const updatePrice = useUpdateProductPrice();
   const isPending = updatePrice.isPending;
 
-  const invalid = price !== "" && (Number(price) < 0 || Number.isNaN(Number(price)));
+  const decimalPlaces = (value) => String(value).split(".")[1]?.length ?? 0;
+  const invalid =
+    price !== "" &&
+    (Number(price) < 0 ||
+      Number.isNaN(Number(price)) ||
+      decimalPlaces(price) > 2);
+
+  // Limit typed values to at most 2 decimal places.
+  const handleChange = (e) => {
+    const value = e.target.value;
+    if (decimalPlaces(value) <= 2) {
+      setPrice(value);
+      return;
+    }
+    setPrice(value.replace(/(\.\d{2})\d+$/, "$1"));
+  };
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -26,7 +41,7 @@ export function PriceModal({ product, onClose }) {
     e?.preventDefault();
     if (invalid) return;
     updatePrice.mutate(
-      { id: product._id, price: Number(price) || 0 },
+      { id: product._id, price: Math.round(Number(price) * 100) / 100 || 0 },
       { onSuccess: onClose },
     );
   };
@@ -64,15 +79,15 @@ export function PriceModal({ product, onClose }) {
             <TextInput
               type="number"
               min="0"
-              step="any"
+              step="0.01"
               value={String(price)}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="0"
+              onChange={handleChange}
+              placeholder="0.00"
               aria-invalid={invalid}
             />
             {invalid && (
               <p className="mt-1.5 text-xs text-destructive">
-                Price must be 0 or more.
+                Price must be 0 or more, with at most 2 decimal places.
               </p>
             )}
           </Field>

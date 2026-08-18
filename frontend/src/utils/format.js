@@ -16,5 +16,8 @@ export function fmtDate(s) {
 
 export function fmtPrice(price) {
     if (price === null || price === undefined) return "—";
-    return `\u20B1${Number(price).toLocaleString()}`;
+    return `\u20B1${Number(price).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })}`;
 }

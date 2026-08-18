@@ -32,7 +32,7 @@ function StarRating({ rating = 0, size = 14 }) {
         })}
       </div>
       <span className="label-mono text-[var(--color-muted-foreground)]">
-        {rating.toFixed(1)}
+        {rating > 0 ? rating.toFixed(1) : "0"}
       </span>
     </div>
   );
@@ -79,14 +79,9 @@ export function ProductCard({ product, variant = "grid" }) {
           <p className="mt-2 line-clamp-2 text-sm text-[var(--color-muted-foreground)]">
             {product.description}
           </p>
-          {typeof product.sellerRating === "number" && (
-            <div className="mt-2">
-              <StarRating rating={product.sellerRating} />
-            </div>
-          )}
-          <p className="label-mono mt-auto pt-3 text-[var(--color-muted-foreground)]">
-            By {product.owner}
-          </p>
+          <div className="mt-2">
+            <StarRating rating={product.sellerRating ?? 0} />
+          </div>
         </div>
         <div className="flex flex-col items-end justify-between">
           {typeof product.price === "number" && (
@@ -131,14 +126,9 @@ export function ProductCard({ product, variant = "grid" }) {
         <p className="mt-2 line-clamp-2 text-sm text-[var(--color-muted-foreground)]">
           {product.description}
         </p>
-        {typeof product.sellerRating === "number" && (
-          <div className="mt-2">
-            <StarRating rating={product.sellerRating} />
-          </div>
-        )}
-        <p className="label-mono mt-3 text-[var(--color-muted-foreground)]">
-          {product.owner}
-        </p>
+        <div className="mt-2">
+          <StarRating rating={product.sellerRating ?? 0} />
+        </div>
         <div className="mt-5 flex items-center justify-between border-t border-[var(--color-border)] pt-4">
           {typeof product.price === "number" && (
             <span className="text-lg font-bold">

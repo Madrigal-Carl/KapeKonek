@@ -22,7 +22,7 @@ import {
   updateProductSchema,
 } from "@/schemas/product.schema";
 import { uploadToCloudinary } from "@/services/upload.service";
-import { notifyError } from "@/utils/notify";
+import { notify, notifyError } from "@/utils/notify";
 
 const capitalize = (value) =>
   value
@@ -97,11 +97,25 @@ export function ProductModal({ mode, initial, onClose }) {
     e.target.value = "";
     if (!list.length) return;
 
-    const totalBytes = list.reduce((sum, file) => sum + file.size, 0);
+    // Only JPG / JPEG / PNG are accepted for product images.
+    const ALLOWED_TYPES = ["image/jpeg", "image/png"];
+    const valid = list.filter((file) => ALLOWED_TYPES.includes(file.type));
+    const skipped = list.length - valid.length;
+
+    if (skipped > 0) {
+      notify(
+        `${skipped} file${skipped === 1 ? "" : "s"} skipped — only JPG, JPEG, or PNG images are allowed.`,
+        { type: "error" },
+      );
+    }
+
+    if (!valid.length) return;
+
+    const totalBytes = valid.reduce((sum, file) => sum + file.size, 0);
     let completedBytes = 0;
     setUploading({ active: true, percent: 0 });
 
-    for (const file of list) {
+    for (const file of valid) {
       try {
         const result = await uploadToCloudinary(file, "product", (loaded) => {
           const overall = ((completedBytes + loaded) / totalBytes) * 100;
@@ -368,16 +382,16 @@ export function ProductModal({ mode, initial, onClose }) {
                 </div>
               </label>
               )}
-              <input
-                id="product-images-upload"
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                disabled={uploading.active}
-                className="hidden"
-                onChange={onPickImages}
-              />
+                <input
+                  id="product-images-upload"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  multiple
+                  disabled={uploading.active}
+                  className="hidden"
+                  onChange={onPickImages}
+                />
 
               {uploading.active && (
                 <div className="mt-3 flex items-center gap-3 border border-border bg-muted/30 p-3">

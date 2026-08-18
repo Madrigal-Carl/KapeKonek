@@ -3,6 +3,7 @@ import Farm from "../models/farm.model.js";
 import User from "../models/user.model.js";
 import Association from "../models/association.model.js";
 import Rating from "../models/rating.model.js";
+import Order from "../models/order.model.js";
 import mongoose from "mongoose";
 
 const getFullName = (user) =>
@@ -180,6 +181,104 @@ export const getCatalogProducts = async (
     };
 };
 
+export const getProductById = async (id, viewer) => {
+    const product = await Product.findOne({ _id: id, deletedAt: null });
+
+    if (!product) {
+        const notFoundError = new Error("Product not found");
+        notFoundError.statusCode = 404;
+        throw notFoundError;
+    }
+
+    const [attached] = await attachProductData([product]);
+
+    // Sold volume for this seller: total ordered quantity across all of the
+    // owner's listings on the same farm.
+    const ownerFarmProductIds = await Product.find({
+        owner: product.owner,
+        farm: product.farm,
+        deletedAt: null,
+    }).distinct("_id");
+
+    const [soldAgg] = await Order.aggregate([
+        { $match: { "orderedProducts.product": { $in: ownerFarmProductIds } } },
+        { $unwind: "$orderedProducts" },
+        { $match: { "orderedProducts.product": { $in: ownerFarmProductIds } } },
+        { $group: { _id: null, sold: { $sum: "$orderedProducts.quantity" } } },
+    ]);
+
+    return { ...attached, soldCount: soldAgg?.sold ?? 0 };
+};
+
+const findProductForReviews = async (id) => {
+    const product = await Product.findOne({ _id: id, deletedAt: null });
+
+    if (!product) {
+        const notFoundError = new Error("Product not found");
+        notFoundError.statusCode = 404;
+        throw notFoundError;
+    }
+
+    return product;
+};
+
+const attachReviewAuthor = (review) => ({
+    _id: review._id,
+    author: review.author
+        ? {
+              _id: review.author._id,
+              fullName: getFullName(review.author),
+          }
+        : null,
+    rating: review.rating,
+    message: review.message ?? "",
+    createdAt: review.createdAt,
+});
+
+// Reviews live on the { farm, category, variety } key (same key the product
+// rating is aggregated from), so every product with that key shares reviews.
+export const getProductReviews = async (id) => {
+    const product = await findProductForReviews(id);
+
+    const reviews = await Rating.find({
+        farm: product.farm,
+        category: product.category,
+        variety: product.variety,
+    })
+        .populate("author", "firstName middleName lastName")
+        .sort({ createdAt: -1 });
+
+    return reviews.map(attachReviewAuthor);
+};
+
+export const createProductReview = async (id, data, authenticatedUser) => {
+    const product = await findProductForReviews(id);
+
+    // One review per user per product — submitting again replaces it.
+    const review = await Rating.findOneAndUpdate(
+        {
+            author: authenticatedUser._id,
+            farm: product.farm,
+            category: product.category,
+            variety: product.variety,
+        },
+        {
+            $set: {
+                rating: data.rating,
+                message: data.message ?? "",
+            },
+        },
+        { upsert: true, returnDocument: "after" },
+    );
+
+    const full = await Rating.findById(review._id).populate(
+        "author",
+        "firstName middleName lastName",
+    );
+
+    return attachReviewAuthor(full);
+};
+
 export const createProduct = async (data, authenticatedUser) => {
     let owner;
 
@@ -350,7 +449,7 @@ const attachProductData = async (products) => {
     const [owners, farms, ratingAgg] = await Promise.all([
         ownerIds.length
             ? User.find({ _id: { $in: ownerIds } }).select(
-                  "firstName middleName lastName",
+                  "firstName middleName lastName role",
               )
             : [],
         farmIds.length
@@ -409,7 +508,12 @@ const attachProductData = async (products) => {
         return {
             ...obj,
             owner: ownerId
-                ? { _id: ownerId, fullName: nameByUser.get(ownerId) ?? ownerId }
+                ? {
+                      _id: ownerId,
+                      fullName: nameByUser.get(ownerId) ?? ownerId,
+                      role: owners.find((o) => o._id.toString() === ownerId)
+                          ?.role ?? null,
+                  }
                 : null,
             farm: farm
                 ? {

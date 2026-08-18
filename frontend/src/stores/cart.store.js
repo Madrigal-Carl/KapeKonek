@@ -5,13 +5,14 @@ export function formatPrice(n) {
     return new Intl.NumberFormat("en-PH", {
         style: "currency",
         currency: "PHP",
-        maximumFractionDigits: 0,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
     }).format(n);
 }
 
 export const useCartStore = create(
     persist(
-        (set, get) => ({
+        (set) => ({
             items: [],
             open: false,
 

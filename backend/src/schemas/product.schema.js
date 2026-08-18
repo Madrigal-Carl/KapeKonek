@@ -32,6 +32,10 @@ const weight = z.coerce
 const price = z.coerce
     .number("Price must be a number")
     .nonnegative("Price must not be negative")
+    .refine(
+        (value) => value === undefined || Number.isInteger(value * 100),
+        { message: "Price must have at most 2 decimal places" },
+    )
     .optional();
 
 const description = z
@@ -41,7 +45,10 @@ const description = z
     .optional();
 
 const imageItem = z.object({
-    url: z.string().url("Invalid image URL"),
+    url: z
+        .string()
+        .url("Invalid image URL")
+        .regex(/\.(jpe?g|png)$/i, "Image must be JPG, JPEG, or PNG"),
     isPrimary: z.boolean().optional(),
 });
 
@@ -78,6 +85,19 @@ export const updateProductSchema = z
 
 export const productIdParamSchema = z.object({
     id: objectId("product id"),
+});
+
+export const createReviewSchema = z.object({
+    rating: z.coerce
+        .number("Rating is required")
+        .int("Rating must be a whole number")
+        .min(1, "Rating must be at least 1")
+        .max(5, "Rating must be at most 5"),
+    message: z
+        .string()
+        .trim()
+        .max(2000, "Review must not exceed 2000 characters")
+        .optional(),
 });
 
 export const updateProductPriceSchema = z.object({

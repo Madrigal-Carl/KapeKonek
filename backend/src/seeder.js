@@ -6,9 +6,9 @@ import { wipeUsers, seedUsers } from "./seeders/user.seeder.js";
 import { wipeFarmerVerifications, seedFarmerVerifications } from "./seeders/farmerVerification.seeder.js";
 import { wipeFarms, seedFarms } from "./seeders/farm.seeder.js";
 import { wipeHarvests, seedHarvests } from "./seeders/harvest.seeder.js";
+import { wipeProducts, seedProducts } from "./seeders/product.seeder.js";
 
 // Models with no seed data yet — still wiped so every collection starts clean.
-import Product from "./models/product.model.js";
 import Order from "./models/order.model.js";
 import Post from "./models/post.model.js";
 import Comment from "./models/comment.model.js";
@@ -18,7 +18,6 @@ import ChatMessage from "./models/chatMessage.model.js";
 import ChatRead from "./models/chatRead.model.js";
 
 const WIPE_ONLY_MODELS = [
-    Product,
     Order,
     Post,
     Comment,
@@ -42,6 +41,8 @@ const WIPE_ONLY_MODELS = [
 //   Harvests            -> needs Farms + Users (each harvest points at a
 //                          farm, one of its farmers, and the farm's
 //                          association)
+//   Products            -> needs Users + Farms (farmer/kaluppa owners and the
+//                          farm each product belongs to)
 //
 // To add a new model seeder later: create seeders/xxx.seeder.js exporting
 // wipeXxx()/seedXxx(context), import it above, and add one entry below in
@@ -52,6 +53,7 @@ const SEEDERS = [
     { name: "Farmer Verifications", wipe: wipeFarmerVerifications, seed: seedFarmerVerifications },
     { name: "Farms", wipe: wipeFarms, seed: seedFarms },
     { name: "Harvests", wipe: wipeHarvests, seed: seedHarvests },
+    { name: "Products", wipe: wipeProducts, seed: seedProducts },
 ];
 
 async function runSeeders() {

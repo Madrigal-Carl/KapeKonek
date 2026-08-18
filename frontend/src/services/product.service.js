@@ -13,6 +13,24 @@ export async function getCatalogProducts(params = {}) {
     return response.data;
 }
 
+export async function getProductDetail(id) {
+    const response = await api.get(`/products/${id}`);
+
+    return response.data;
+}
+
+export async function getProductReviews(id) {
+    const response = await api.get(`/products/${id}/reviews`);
+
+    return response.data;
+}
+
+export async function createProductReview(id, data) {
+    const response = await api.post(`/products/${id}/reviews`, data);
+
+    return response.data;
+}
+
 export async function updateProductPrice(id, price) {
     const response = await api.patch(`/products/${id}/price`, { price });
 
