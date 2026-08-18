@@ -32,9 +32,9 @@ export function ProductsPage() {
         image: p.imageUrls?.[0]?.url,
         category: capitalize(p.category),
         variety: capitalize(p.variety),
+        owner: p.owner?.fullName ?? "KapeKonek",
         price: typeof p.price === "number" ? p.price : undefined,
         description: p.description ?? "",
-        seller: p.owner?.fullName ?? "KapeKonek",
         sellerRating: typeof p.rating === "number" ? p.rating : undefined,
       })),
     [products],
@@ -48,8 +48,8 @@ export function ProductsPage() {
         (p) =>
           p.variety.toLowerCase().includes(ql) ||
           p.category.toLowerCase().includes(ql) ||
-          p.description.toLowerCase().includes(ql) ||
-          p.seller.toLowerCase().includes(ql),
+          p.owner.toLowerCase().includes(ql) ||
+          p.description.toLowerCase().includes(ql),
       );
     if (cat !== "All")
       list = list.filter(

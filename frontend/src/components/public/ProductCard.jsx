@@ -85,7 +85,7 @@ export function ProductCard({ product, variant = "grid" }) {
             </div>
           )}
           <p className="label-mono mt-auto pt-3 text-[var(--color-muted-foreground)]">
-            By {product.seller}
+            By {product.owner}
           </p>
         </div>
         <div className="flex flex-col items-end justify-between">
@@ -137,7 +137,7 @@ export function ProductCard({ product, variant = "grid" }) {
           </div>
         )}
         <p className="label-mono mt-3 text-[var(--color-muted-foreground)]">
-          {product.seller}
+          {product.owner}
         </p>
         <div className="mt-5 flex items-center justify-between border-t border-[var(--color-border)] pt-4">
           {typeof product.price === "number" && (

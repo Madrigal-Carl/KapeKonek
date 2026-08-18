@@ -137,6 +137,8 @@ export const getCatalogProducts = async (
         deletedAt: null,
         status: "active",
         owner: { $in: ownerIds },
+        // Only listings that DTI has priced show up in the marketplace.
+        price: { $ne: null },
     };
 
     if (category) {
