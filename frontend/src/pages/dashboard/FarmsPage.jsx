@@ -6,18 +6,11 @@ import useAuth from "@/hooks/useAuth";
 import {
   useDeleteFarm,
   useFarms,
-  useJoinableFarms,
-  useJoinFarm,
   useLeaveFarm,
 } from "@/hooks/useFarms";
 import { ROLES } from "@/constants/roles";
 import { fmtDate } from "@/utils/format";
-import {
-  AddChooserModal,
-  ArchiveConfirmModal,
-  ExistingFarmModal,
-  FarmModal,
-} from "@/components/modals";
+import { ArchiveConfirmModal, FarmModal } from "@/components/modals";
 
 export function FarmsPage() {
   const { role, user } = useAuth();
@@ -27,14 +20,10 @@ export function FarmsPage() {
   const canManageAll = isManager || isKaluppa;
 
   const { data: farms = [], isLoading } = useFarms({ all: true });
-  const { data: joinableFarms = [] } = useJoinableFarms({ enabled: isFarmer });
   const deleteFarm = useDeleteFarm();
-  const joinFarm = useJoinFarm();
   const leaveFarm = useLeaveFarm();
 
   const [modal, setModal] = useState(null);
-  const [addChooserOpen, setAddChooserOpen] = useState(false);
-  const [existingOpen, setExistingOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [confirmLeave, setConfirmLeave] = useState(null);
 
@@ -150,12 +139,7 @@ export function FarmsPage() {
             Land assets, sizes, geotagged plots, and crop allocations.
           </p>
         </div>
-        <Button
-          onClick={() =>
-            isFarmer ? setAddChooserOpen(true) : openAddNew()
-          }
-          className="gap-2"
-        >
+        <Button onClick={openAddNew} className="gap-2">
           <Plus className="h-4 w-4" /> Add Farm
         </Button>
       </div>
@@ -178,30 +162,6 @@ export function FarmsPage() {
           mode={modal.mode}
           initial={modal.data}
           onClose={() => setModal(null)}
-        />
-      )}
-
-      {addChooserOpen && (
-        <AddChooserModal
-          onClose={() => setAddChooserOpen(false)}
-          onNew={() => {
-            setAddChooserOpen(false);
-            openAddNew();
-          }}
-          onExisting={() => {
-            setAddChooserOpen(false);
-            setExistingOpen(true);
-          }}
-        />
-      )}
-
-      {existingOpen && (
-        <ExistingFarmModal
-          options={joinableFarms}
-          onClose={() => setExistingOpen(false)}
-          onSelect={(farmId) =>
-            joinFarm.mutate(farmId, { onSuccess: () => setExistingOpen(false) })
-          }
         />
       )}
 

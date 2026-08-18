@@ -6,20 +6,8 @@ export async function getFarms(params = {}) {
     return response.data;
 }
 
-export async function getJoinableFarms() {
-    const response = await api.get("/farms/joinable");
-
-    return response.data;
-}
-
 export async function getFarmFarmers(farmId) {
     const response = await api.get(`/farms/${farmId}/farmers`);
-
-    return response.data;
-}
-
-export async function joinFarm(id) {
-    const response = await api.post(`/farms/${id}/join`);
 
     return response.data;
 }

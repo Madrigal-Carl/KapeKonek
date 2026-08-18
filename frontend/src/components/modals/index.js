@@ -2,8 +2,6 @@ export { AccountReviewModal } from "./AccountReviewModal";
 export { AssociationReviewModal } from "./AssociationReviewModal";
 export { ArchiveConfirmModal } from "./ArchiveConfirmModal";
 export { FarmerModal } from "./FarmerModal";
-export { AddChooserModal } from "./AddChooserModal";
-export { ExistingFarmModal } from "./ExistingFarmModal";
 export { FarmModal } from "./FarmModal";
 export { HarvestModal } from "./HarvestModal";
 export { ProductModal } from "./ProductModal";

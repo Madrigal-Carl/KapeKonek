@@ -4,8 +4,6 @@ import {
     deleteFarm,
     getFarms,
     getFarmFarmers,
-    getJoinableFarms,
-    joinFarm,
     leaveFarm,
     updateFarm,
 } from "@/services/farm.service";
@@ -14,7 +12,6 @@ import { notifyError, notifySuccess } from "@/utils/notify";
 export const farmKeys = {
     all: ["farms"],
     list: (filters) => ["farms", "list", filters],
-    joinable: ["farms", "joinable"],
     farmers: (farmId) => ["farms", "farmers", farmId],
 };
 
@@ -22,14 +19,6 @@ export function useFarms(filters = {}, options = {}) {
     return useQuery({
         queryKey: farmKeys.list(filters),
         queryFn: () => getFarms(filters).then((response) => response.farms),
-        ...options,
-    });
-}
-
-export function useJoinableFarms(options = {}) {
-    return useQuery({
-        queryKey: farmKeys.joinable,
-        queryFn: () => getJoinableFarms().then((response) => response.farms),
         ...options,
     });
 }
@@ -81,20 +70,6 @@ export function useDeleteFarm() {
     });
 }
 
-export function useJoinFarm() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: (id) => joinFarm(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: farmKeys.all });
-            queryClient.invalidateQueries({ queryKey: farmKeys.joinable });
-            notifySuccess("Farm added successfully");
-        },
-        onError: (error) => notifyError(error, "Failed to add farm"),
-    });
-}
-
 export function useLeaveFarm() {
     const queryClient = useQueryClient();
 
@@ -102,7 +77,6 @@ export function useLeaveFarm() {
         mutationFn: (id) => leaveFarm(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: farmKeys.all });
-            queryClient.invalidateQueries({ queryKey: farmKeys.joinable });
             notifySuccess("Left farm successfully");
         },
         onError: (error) => notifyError(error, "Failed to leave farm"),

@@ -67,27 +67,6 @@ export const getFarms = async (
     };
 };
 
-export const getJoinableFarms = async (authenticatedUser) => {
-    const verification = await FarmerVerification.findOne({
-        user: authenticatedUser._id,
-    }).select("association");
-
-    if (!verification?.association) {
-        return { farms: [] };
-    }
-
-    const farms = await Farm.find({
-        deletedAt: null,
-        association: verification.association,
-        assignedFarmers: { $ne: authenticatedUser._id },
-        owner: { $ne: authenticatedUser._id },
-    }).sort({ createdAt: -1 });
-
-    return {
-        farms: await attachFarmData(farms),
-    };
-};
-
 export const getFarmFarmers = async (id) => {
     const farm = await Farm.findOne({ _id: id, deletedAt: null }).select(
         "assignedFarmers",
@@ -114,49 +93,6 @@ export const getFarmFarmers = async (id) => {
         _id: farmer._id,
         fullName: getFullName(farmer),
     }));
-};
-
-export const joinFarm = async (id, authenticatedUser) => {
-    const verification = await FarmerVerification.findOne({
-        user: authenticatedUser._id,
-    }).select("association");
-
-    if (!verification?.association) {
-        const forbiddenError = new Error(
-            "You must belong to an association to join a farm",
-        );
-        forbiddenError.statusCode = 403;
-        throw forbiddenError;
-    }
-
-    const farm = await Farm.findOne({ _id: id, deletedAt: null });
-
-    if (!farm) {
-        const notFoundError = new Error("Farm not found");
-        notFoundError.statusCode = 404;
-        throw notFoundError;
-    }
-
-    if (
-        !farm.association ||
-        !farm.association.equals(verification.association)
-    ) {
-        const forbiddenError = new Error(
-            "You can only join farms in your own association",
-        );
-        forbiddenError.statusCode = 403;
-        throw forbiddenError;
-    }
-
-    if (farm.owner && farm.owner.equals(authenticatedUser._id)) {
-        const badRequestError = new Error("You already own this farm");
-        badRequestError.statusCode = 400;
-        throw badRequestError;
-    }
-
-    await addFarmerToFarm(farm, authenticatedUser._id);
-
-    return attachFarmData([farm]).then(([attached]) => attached);
 };
 
 export const leaveFarm = async (id, authenticatedUser) => {
@@ -384,13 +320,6 @@ const assertCanModifyFarm = async (farm, authenticatedUser) => {
     const forbiddenError = new Error("Forbidden: insufficient permissions");
     forbiddenError.statusCode = 403;
     throw forbiddenError;
-};
-
-const addFarmerToFarm = async (farm, farmerId) => {
-    if (!farm.assignedFarmers.some((id) => id.equals(farmerId))) {
-        farm.assignedFarmers.push(farmerId);
-        await farm.save();
-    }
 };
 
 const attachFarmData = async (farms) => {

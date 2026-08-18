@@ -1,12 +1,10 @@
 import express from "express";
 import {
     getFarmsHandler,
-    getJoinableFarmsHandler,
     getFarmFarmersHandler,
     createFarmHandler,
     updateFarmHandler,
     deleteFarmHandler,
-    joinFarmHandler,
     leaveFarmHandler,
 } from "../controllers/farm.controller.js";
 import {
@@ -30,12 +28,6 @@ router.get(
     getFarmsHandler,
 );
 router.get(
-    "/joinable",
-    authenticated,
-    allowRoles("farmer"),
-    getJoinableFarmsHandler,
-);
-router.get(
     "/:id/farmers",
     authenticated,
     allowRoles("kaluppa", "manager"),
@@ -48,13 +40,6 @@ router.post(
     allowRoles("kaluppa", "manager", "farmer"),
     validateCreateFarm,
     createFarmHandler,
-);
-router.post(
-    "/:id/join",
-    authenticated,
-    allowRoles("farmer"),
-    validateFarmIdParam,
-    joinFarmHandler,
 );
 router.post(
     "/:id/leave",

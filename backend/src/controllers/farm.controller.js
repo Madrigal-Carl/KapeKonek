@@ -1,11 +1,9 @@
 import {
     getFarms,
-    getJoinableFarms,
     getFarmFarmers,
     createFarm,
     updateFarm,
     deleteFarm,
-    joinFarm,
     leaveFarm,
 } from "../services/farm.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -17,15 +15,6 @@ export const getFarmsHandler = asyncHandler(async (req, res) => {
         message: "Farms fetched successfully",
         farms,
         pagination,
-    });
-});
-
-export const getJoinableFarmsHandler = asyncHandler(async (req, res) => {
-    const { farms } = await getJoinableFarms(req.user);
-
-    return res.status(200).json({
-        message: "Joinable farms fetched successfully",
-        farms,
     });
 });
 
@@ -61,15 +50,6 @@ export const deleteFarmHandler = asyncHandler(async (req, res) => {
 
     return res.status(200).json({
         message: "Farm deleted successfully",
-        farm,
-    });
-});
-
-export const joinFarmHandler = asyncHandler(async (req, res) => {
-    const farm = await joinFarm(req.params.id, req.user);
-
-    return res.status(200).json({
-        message: "Farm joined successfully",
         farm,
     });
 });
