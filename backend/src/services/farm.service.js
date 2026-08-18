@@ -154,9 +154,15 @@ export const createFarm = async (data, authenticatedUser) => {
 
         association = managerAssociation._id;
         owner = authenticatedUser._id;
-        assignedFarmers = (data.assignedFarmers ?? []).filter((farmerId) =>
-            managerAssociation.assignedFarmers.some((id) => id.equals(farmerId)),
-        );
+        // A farm can have only one assigned farmer — take the first valid
+        // selection.
+        assignedFarmers = (data.assignedFarmers ?? [])
+            .filter((farmerId) =>
+                managerAssociation.assignedFarmers.some((id) =>
+                    id.equals(farmerId),
+                ),
+            )
+            .slice(0, 1);
     } else if (authenticatedUser.role === "kaluppa") {
         // Kaluppa picks the association the farm should belong to; the
         // manager of that association later assigns the farmers.
@@ -262,9 +268,13 @@ export const updateFarm = async (id, data, authenticatedUser) => {
                 user: authenticatedUser._id,
             }).select("assignedFarmers");
 
-            updateData.assignedFarmers = data.assignedFarmers.filter((farmerId) =>
-                (association?.assignedFarmers ?? []).some((id) => id.equals(farmerId)),
-            );
+            updateData.assignedFarmers = data.assignedFarmers
+                .filter((farmerId) =>
+                    (association?.assignedFarmers ?? []).some((id) =>
+                        id.equals(farmerId),
+                    ),
+                )
+                .slice(0, 1);
         }
     }
 

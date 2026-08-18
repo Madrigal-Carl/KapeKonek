@@ -216,7 +216,7 @@ export function ProductModal({ mode, initial, onClose }) {
             <Field label="Farm" full>
               <MultiSelect
                 values={form.farm ? [form.farm] : []}
-                onChange={(v) => set("farm", v[0] ?? "")}
+                onChange={(v) => set("farm", v.length ? v[v.length - 1] : "")}
                 options={farmOptions}
                 placeholder="Select a farm…"
                 searchPlaceholder="Search farms…"
@@ -322,7 +322,9 @@ export function ProductModal({ mode, initial, onClose }) {
               <Field label="Farmer" full>
                 <MultiSelect
                   values={form.owner ? [form.owner] : []}
-                  onChange={(v) => set("owner", v[0] ?? "")}
+                  onChange={(v) =>
+                    set("owner", v.length ? v[v.length - 1] : "")
+                  }
                   options={farmerOptions}
                   placeholder={
                     associationId

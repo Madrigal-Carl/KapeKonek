@@ -154,12 +154,17 @@ export function FarmModal({ mode, initial, onClose }) {
                 </Field>
 
                 {isManager && (
-                  <Field label="Farmer(s)" full>
+                  <Field label="Farmer" full>
                     <MultiSelect
-                      values={form.assignedFarmers}
-                      onChange={(v) => set("assignedFarmers", v)}
+                      values={form.assignedFarmers.slice(0, 1)}
+                      onChange={(v) =>
+                        set(
+                          "assignedFarmers",
+                          v.length ? [v[v.length - 1]] : [],
+                        )
+                      }
                       options={farmerOptions}
-                      placeholder="Select farmer(s)…"
+                      placeholder="Select a farmer…"
                     />
                     <FieldError message={errors.assignedFarmers} />
                   </Field>
@@ -169,7 +174,9 @@ export function FarmModal({ mode, initial, onClose }) {
                   <Field label="Association" full>
                     <MultiSelect
                       values={form.association ? [form.association] : []}
-                      onChange={(v) => set("association", v[0] ?? "")}
+                      onChange={(v) =>
+                        set("association", v.length ? v[v.length - 1] : "")
+                      }
                       options={associationOptions}
                       placeholder="Select association…"
                     />

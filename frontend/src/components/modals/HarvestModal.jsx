@@ -20,7 +20,6 @@ import {
 } from "@/schemas/harvest.schema";
 export function HarvestModal({ mode, initial, onClose }) {
   const { role } = useAuth();
-  const isFarmer = role === ROLES.FARMER;
   const isManagerKaluppa =
     role === ROLES.MANAGER || role === ROLES.KALUPPA;
 
@@ -164,7 +163,7 @@ export function HarvestModal({ mode, initial, onClose }) {
               <MultiSelect
                 values={form.farm ? [form.farm] : []}
                 onChange={(v) => {
-                  set("farm", v[0] ?? "");
+                  set("farm", v.length ? v[v.length - 1] : "");
                   set("farmer", "");
                 }}
                 options={farmOptions}
@@ -178,7 +177,9 @@ export function HarvestModal({ mode, initial, onClose }) {
               <Field label="Farmer" full>
                 <MultiSelect
                   values={form.farmer ? [form.farmer] : []}
-                  onChange={(v) => set("farmer", v[0] ?? "")}
+                  onChange={(v) =>
+                    set("farmer", v.length ? v[v.length - 1] : "")
+                  }
                   options={farmerOptions}
                   placeholder={
                     !form.farm
