@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import {
   ArrowLeft,
   Upload,
@@ -16,6 +16,8 @@ import {
 import { useCart } from "@/hooks/useCart";
 import useAuth from "@/hooks/useAuth";
 import { updateMyProfile } from "@/services/user.service";
+import { createOrder } from "@/services/order.service";
+import { uploadToCloudinary } from "@/services/upload.service";
 
 const EWALLETS = [
   { id: "gcash", name: "GCash" },
@@ -23,15 +25,17 @@ const EWALLETS = [
 ];
 
 export function CheckoutPage() {
-  const { items, count, subtotal, setQty, remove, formatPrice } = useCart();
+  const { items, count, subtotal, setQty, remove, formatPrice, clear } =
+    useCart();
   const { user, isAuthenticated, fetchCurrentUser } = useAuth();
   const [method, setMethod] = useState("ewallet");
   const [wallet] = useState("gcash");
   const [delivery, setDelivery] = useState("pickup"); // "pickup" | "delivery"
-  const [receipt, setReceipt] = useState(null); // { file, url, progress, uploading }
+  const [receipt, setReceipt] = useState(null); // { file, url, progress, uploading, receiptUrl }
   const [preview, setPreview] = useState(false);
   const [placed, setPlaced] = useState(false);
-  const timerRef = useRef(null);
+  const [placing, setPlacing] = useState(false);
+  const [placeError, setPlaceError] = useState("");
 
   // Address missing on the account -> must set it before placing an order.
   const [addressDraft, setAddressDraft] = useState(user?.address ?? "");
@@ -46,7 +50,10 @@ export function CheckoutPage() {
     items.length > 0 &&
     !needsAddress &&
     (method === "cash" ||
-      (method === "ewallet" && receipt && !receipt.uploading));
+      (method === "ewallet" &&
+        receipt &&
+        !receipt.uploading &&
+        Boolean(receipt.receiptUrl)));
 
   async function handleSaveAddress(e) {
     e.preventDefault();
@@ -74,51 +81,86 @@ export function CheckoutPage() {
     }
   }
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (receipt?.url) URL.revokeObjectURL(receipt.url);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function handleFile(e) {
+  async function handleFile(e) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
     if (receipt?.url) URL.revokeObjectURL(receipt.url);
-    if (timerRef.current) clearInterval(timerRef.current);
 
     const url = URL.createObjectURL(file);
-    setReceipt({ file, url, progress: 0, uploading: true });
+    setReceipt({ file, url, progress: 0, uploading: true, receiptUrl: null });
+    setPlaceError("");
 
-    timerRef.current = setInterval(() => {
-      setReceipt((curr) => {
-        if (!curr) return curr;
-        const next = Math.min(100, curr.progress + Math.random() * 18 + 8);
-        if (next >= 100) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-          return { ...curr, progress: 100, uploading: false };
-        }
-        return { ...curr, progress: next };
-      });
-    }, 250);
+    try {
+      const result = await uploadToCloudinary(
+        file,
+        "receipt",
+        (loaded, total) => {
+          setReceipt((curr) =>
+            curr
+              ? {
+                  ...curr,
+                  progress: Math.round((loaded / Math.max(total, 1)) * 100),
+                }
+              : curr,
+          );
+        },
+      );
+      setReceipt((curr) =>
+        curr
+          ? {
+              ...curr,
+              progress: 100,
+              uploading: false,
+              receiptUrl: result.secure_url,
+            }
+          : curr,
+      );
+    } catch (err) {
+      setReceipt((curr) =>
+        curr ? { ...curr, uploading: false, progress: 100 } : curr,
+      );
+      setPlaceError(
+        `Receipt upload failed: ${err?.message ?? "Please try again."}`,
+      );
+    }
   }
 
   function removeReceipt() {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
     if (receipt?.url) URL.revokeObjectURL(receipt.url);
     setReceipt(null);
     setPreview(false);
+    setPlaceError("");
   }
 
-  function placeOrder() {
+  async function placeOrder() {
     if (!canPlace) return;
-    setPlaced(true);
+    setPlacing(true);
+    setPlaceError("");
+    try {
+      const order = await createOrder({
+        paymentMethod: method === "ewallet" ? "e-wallet" : "cash",
+        deliveryMethod: delivery,
+        items: items.map((it) => ({
+          product: it.product.id,
+          quantity: it.qty,
+        })),
+        receipts:
+          method === "ewallet" && receipt?.receiptUrl
+            ? [receipt.receiptUrl]
+            : [],
+      });
+      clear();
+      setPlaced(true);
+    } catch (err) {
+      setPlaceError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to place your order.",
+      );
+    } finally {
+      setPlacing(false);
+    }
   }
 
   if (placed) {
@@ -131,7 +173,7 @@ export function CheckoutPage() {
           Order placed
         </h1>
         <p className="mt-3 text-base text-muted-foreground">
-          Thank you for your purchase. We'll send a confirmation shortly.
+          Thank you for your purchase. We&apos;ll send a confirmation shortly.
         </p>
         <Link
           to="/products"
@@ -168,8 +210,7 @@ export function CheckoutPage() {
                     Delivery address required
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    You need to set your address before you can place an
-                    order.
+                    You need to set your address before you can place an order.
                   </p>
                 </div>
               </div>
@@ -252,7 +293,9 @@ export function CheckoutPage() {
                         className="flex flex-col gap-4 border-b border-border p-4 last:border-b-0 sm:flex-row sm:items-center sm:p-5"
                       >
                         <img
-                          src={it.product.imageUrls?.[0]?.url ?? it.product.image}
+                          src={
+                            it.product.imageUrls?.[0]?.url ?? it.product.image
+                          }
                           alt={it.product.variety ?? it.product.name}
                           className="h-24 w-24 flex-shrink-0 object-cover bg-[var(--color-neutral-warm)] sm:h-20 sm:w-20"
                         />
@@ -262,7 +305,9 @@ export function CheckoutPage() {
                           </h3>
                           <p className="label-mono mt-1 text-muted-foreground">
                             {formatPrice(it.product.price)} /{" "}
-                            {it.product.unit ?? it.product.weightKg ? "kg" : "item"}
+                            {(it.product.unit ?? it.product.weightKg)
+                              ? "kg"
+                              : "item"}
                           </p>
                           <div className="mt-3 flex flex-wrap items-center gap-4">
                             <div className="flex items-center border border-border">
@@ -486,6 +531,11 @@ export function CheckoutPage() {
                       </div>
                     </div>
                   )}
+                  {placeError && (
+                    <p className="mt-3 text-sm text-[var(--color-destructive)]">
+                      {placeError}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -523,11 +573,16 @@ export function CheckoutPage() {
 
               <button
                 onClick={placeOrder}
-                disabled={!canPlace}
+                disabled={!canPlace || placing}
                 className="label-mono mt-6 w-full bg-[var(--color-accent)] px-5 py-4 text-[var(--color-accent-foreground)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Place Order
+                {placing ? "Placing order…" : "Place Order"}
               </button>
+              {placeError && (
+                <p className="mt-3 text-center text-sm text-[var(--color-destructive)]">
+                  {placeError}
+                </p>
+              )}
               <Link
                 to="/products"
                 className="label-mono mt-2 block w-full border border-border px-5 py-4 text-center text-foreground hover:bg-[var(--color-neutral-warm)]"

@@ -15,6 +15,7 @@ import chatRoutes from "./routes/chat.routes.js";
 import postRoutes from "./routes/post.routes.js";
 import productRoutes from "./routes/product.routes.js";
 import associationRoutes from "./routes/association.routes.js";
+import orderRoutes from "./routes/order.routes.js";
 
 const app = express();
 
@@ -54,6 +55,7 @@ app.use("/api/chats", chatRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/associations", associationRoutes);
+app.use("/api/orders", orderRoutes);
 
 app.use(errorHandler);
 

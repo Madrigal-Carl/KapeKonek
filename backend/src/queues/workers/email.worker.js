@@ -5,6 +5,7 @@ import { EMAIL_JOBS } from "../email.jobs.js";
 import { accountApprovedTemplate } from "../../templates/email/account-approved.template.js";
 import { associationApprovedTemplate } from "../../templates/email/association-approved.template.js";
 import { verifyEmailTemplate } from "../../templates/email/verify-email.template.js";
+import { orderConfirmationTemplate } from "../../templates/email/order-confirmation.template.js";
 
 const emailWorker = new Worker(
   "emailQueue",
@@ -33,6 +34,20 @@ const emailWorker = new Worker(
           html: associationApprovedTemplate({
             name: data.name,
             association: data.association,
+          }),
+        });
+      },
+      [EMAIL_JOBS.ORDER_CONFIRMATION]: async () => {
+        return sendEmail({
+          to: data.to,
+          subject: `Order Confirmation — ${data.referenceNumber}`,
+          html: orderConfirmationTemplate({
+            name: data.name,
+            referenceNumber: data.referenceNumber,
+            items: data.items,
+            totalPrice: data.totalPrice,
+            deliveryMethod: data.deliveryMethod,
+            noteDelivery: data.deliveryMethod === "delivery",
           }),
         });
       },
