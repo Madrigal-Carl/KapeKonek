@@ -1,53 +1,125 @@
-import { useState } from "react";
-import { Check, Eye, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Bookmark, Check, Eye, X } from "lucide-react";
 import { DataTable, PageSection, RowActions, StatusPill } from "@/components/dashboard";
 import { fmtPrice } from "@/utils/format";
-import { ORDERS } from "@/constants/data";
+import { useAuth } from "@/hooks/useAuth";
 import {
+  useCancelOrder,
+  useCompleteOrder,
+  useOrders,
+  useReserveOrder,
+} from "@/hooks/useOrders";
+import {
+  CancelOrderModal,
   OrderDetailsModal,
   UpdateStatusModal,
-  CancelOrderModal,
 } from "@/components/modals";
 
-export function OrdersPage() {
-  const [rows, setRows] = useState(ORDERS);
-  const [view, setView] = useState(null);
-  const [completeDialog, setCompleteDialog] = useState(null);
-  const [cancelDialog, setCancelDialog] = useState(null);
+const CANCELLATION_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
-  const updateStatus = (ref, patch) => {
-    setRows((r) => r.map((x) => (x.ref === ref ? { ...x, ...patch } : x)));
-  };
+export function OrdersPage() {
+  const { user } = useAuth();
+  const isKaluppa = user?.role === "kaluppa";
+
+  const { data: orders = [], isLoading } = useOrders({ all: true });
+  const reserveOrder = useReserveOrder();
+  const completeOrder = useCompleteOrder();
+  const cancelOrder = useCancelOrder();
+
+  const [viewModal, setViewModal] = useState(null);
+  const [statusModal, setStatusModal] = useState(null);
+  const [cancelModal, setCancelModal] = useState(null);
+
+  // Auto-refresh timer to keep 1-hour cancellation calculation accurate
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const canFarmerCancel = (order) =>
+    order.status === "pending" &&
+    order.createdAt &&
+    now - new Date(order.createdAt).getTime() <= CANCELLATION_WINDOW_MS;
 
   const columns = [
     {
-      key: "ref",
+      key: "referenceNumber",
       label: "Reference #",
       render: (row) => (
         <div>
-          <div className="font-semibold text-foreground">{row.ref}</div>
-          <div className="label-mono text-muted-foreground">{row.customer}</div>
+          <div className="font-semibold text-foreground">
+            {row.referenceNumber}
+          </div>
+          {isKaluppa && row.customer && (
+            <div className="label-mono text-xs text-muted-foreground">
+              {row.customer.fullName || row.customer.email}
+            </div>
+          )}
         </div>
       ),
     },
     {
-      key: "method",
-      label: "Payment Method",
-      render: (row) => <StatusPill status={row.method} />,
+      key: "createdAt",
+      label: "Date",
+      render: (row) => (
+        <span className="text-muted-foreground">
+          {row.createdAt
+            ? new Date(row.createdAt).toLocaleDateString("en-PH", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "items",
+      label: "Items",
+      render: (row) => {
+        const count = (row.orderedProducts ?? []).reduce(
+          (sum, item) => sum + (item.quantity || 1),
+          0,
+        );
+        return (
+          <span className="text-foreground">
+            {count} item{count !== 1 ? "s" : ""}
+          </span>
+        );
+      },
+    },
+    {
+      key: "paymentMethod",
+      label: "Payment",
+      render: (row) => <StatusPill status={row.paymentMethod} />,
     },
     {
       key: "deliveryMethod",
-      label: "Delivery Method",
+      label: "Fulfillment",
       render: (row) => <StatusPill status={row.deliveryMethod} />,
     },
     {
-      key: "total",
+      key: "totalPrice",
       label: "Total Price",
-      render: (row) => (
-        <span className="font-semibold text-foreground">
-          {fmtPrice(row.total)}
-        </span>
-      ),
+      render: (row) => {
+        const isDelivery = row.deliveryMethod === "delivery";
+        const fee = isDelivery && row.deliveryFee != null ? row.deliveryFee : 0;
+        const finalAmount = (row.totalPrice || 0) + fee;
+
+        return (
+          <div>
+            <div className="font-semibold text-foreground">
+              {fmtPrice(finalAmount)}
+            </div>
+            {isDelivery && row.deliveryFee != null && (
+              <div className="label-mono text-[11px] text-muted-foreground">
+                incl. {fmtPrice(row.deliveryFee)} fee
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "status",
@@ -59,38 +131,63 @@ export function OrdersPage() {
       label: "",
       align: "right",
       render: (row) => {
-        const isFinal =
-          row.status === "completed" || row.status === "cancelled";
-        return (
-          <RowActions
-            actions={[
-              {
-                key: "view",
-                label: "View",
-                icon: Eye,
-                onClick: () => setView(row),
-              },
-              {
-                key: "complete",
-                label:
-                  row.status === "reserved"
-                    ? "Mark as completed"
-                    : "Mark as completed or reserved",
-                icon: Check,
-                disabled: isFinal,
-                onClick: () => setCompleteDialog({ order: row }),
-              },
-              {
-                key: "cancel",
-                label: "Cancel order",
-                icon: X,
-                danger: true,
-                disabled: isFinal,
-                onClick: () => setCancelDialog({ order: row }),
-              },
-            ]}
-          />
-        );
+        if (isKaluppa) {
+          const actions = [
+            {
+              key: "view",
+              label: "View",
+              icon: Eye,
+              onClick: () => setViewModal(row),
+            },
+          ];
+
+          if (row.status === "pending") {
+            actions.push({
+              key: "reserve",
+              label: "Mark as Reserved",
+              icon: Bookmark,
+              onClick: () => setStatusModal(row),
+            });
+            actions.push({
+              key: "cancel",
+              label: "Cancel order",
+              icon: X,
+              danger: true,
+              onClick: () => setCancelModal(row),
+            });
+          } else if (row.status === "reserved") {
+            actions.push({
+              key: "complete",
+              label: "Mark as Completed",
+              icon: Check,
+              onClick: () => setStatusModal(row),
+            });
+          }
+
+          return <RowActions actions={actions} />;
+        }
+
+        // Farmer Role (Customer)
+        const farmerActions = [
+          {
+            key: "view",
+            label: "View",
+            icon: Eye,
+            onClick: () => setViewModal(row),
+          },
+        ];
+
+        if (canFarmerCancel(row)) {
+          farmerActions.push({
+            key: "cancel",
+            label: "Cancel order",
+            icon: X,
+            danger: true,
+            onClick: () => setCancelModal(row),
+          });
+        }
+
+        return <RowActions actions={farmerActions} />;
       },
     },
   ];
@@ -108,56 +205,90 @@ export function OrdersPage() {
       ],
       matcher: (row, value) => row.status === value,
     },
+    {
+      key: "deliveryMethod",
+      initialValue: "all",
+      options: [
+        { value: "all", label: "All Fulfillment" },
+        { value: "delivery", label: "Delivery" },
+        { value: "pickup", label: "Pickup" },
+      ],
+      matcher: (row, value) => row.deliveryMethod === value,
+    },
   ];
 
   return (
     <div className="py-8">
       <PageSection
-        eyebrow="Marketplace"
-        title="Orders"
-        description="Track incoming orders, mark them as reserved or completed, and handle cancellations."
+        eyebrow={isKaluppa ? "Marketplace" : "Purchases"}
+        title={isKaluppa ? "Orders Management" : "My Orders"}
+        description={
+          isKaluppa
+            ? "Review incoming customer orders, mark them as reserved or completed, and handle pending cancellations."
+            : "Track your placed orders, review items, and manage pending cancellations within 1 hour."
+        }
       />
 
       <DataTable
-        rows={rows}
+        rows={orders}
         columns={columns}
         searchKeys={[
           (row, query) =>
-            row.ref.toLowerCase().includes(query) ||
-            (row.customer ?? "").toLowerCase().includes(query) ||
-            row.method.toLowerCase().includes(query),
+            (row.referenceNumber ?? "").toLowerCase().includes(query) ||
+            (row.customer?.fullName ?? "").toLowerCase().includes(query) ||
+            (row.customer?.email ?? "").toLowerCase().includes(query) ||
+            (row.paymentMethod ?? "").toLowerCase().includes(query) ||
+            (row.deliveryMethod ?? "").toLowerCase().includes(query) ||
+            (row.orderedProducts ?? []).some((p) =>
+              (p.name ?? "").toLowerCase().includes(query),
+            ),
         ]}
-        searchPlaceholder="Search by reference, customer, or payment…"
+        searchPlaceholder="Search by reference, customer, or product…"
         filters={filters}
-        getRowKey={(row) => row.ref}
+        getRowKey={(row) => row._id}
+        loading={isLoading}
         emptyTitle="No orders found"
         emptyDescription="Try adjusting your search or filters."
-        minWidth="900px"
+        minWidth="920px"
       />
 
-      {view && <OrderDetailsModal order={view} onClose={() => setView(null)} />}
+      {viewModal && (
+        <OrderDetailsModal
+          order={viewModal}
+          onClose={() => setViewModal(null)}
+        />
+      )}
 
-      {completeDialog && (
+      {statusModal && (
         <UpdateStatusModal
-          order={completeDialog.order}
-          onClose={() => setCompleteDialog(null)}
-          onSelect={(next, extra) => {
-            updateStatus(completeDialog.order.ref, { status: next, ...extra });
-            setCompleteDialog(null);
+          order={statusModal}
+          onClose={() => setStatusModal(null)}
+          isPending={reserveOrder.isPending || completeOrder.isPending}
+          onReserve={(id, payload) => {
+            reserveOrder.mutate(
+              { id, data: payload },
+              { onSuccess: () => setStatusModal(null) },
+            );
+          }}
+          onComplete={(id) => {
+            completeOrder.mutate(id, {
+              onSuccess: () => setStatusModal(null),
+            });
           }}
         />
       )}
 
-      {cancelDialog && (
+      {cancelModal && (
         <CancelOrderModal
-          order={cancelDialog.order}
-          onClose={() => setCancelDialog(null)}
-          onConfirm={(reason) => {
-            updateStatus(cancelDialog.order.ref, {
-              status: "cancelled",
-              cancelReason: reason,
-            });
-            setCancelDialog(null);
+          order={cancelModal}
+          isKaluppa={isKaluppa}
+          isPending={cancelOrder.isPending}
+          onClose={() => setCancelModal(null)}
+          onConfirm={(payload) => {
+            cancelOrder.mutate(
+              { id: cancelModal._id, data: payload },
+              { onSuccess: () => setCancelModal(null) },
+            );
           }}
         />
       )}

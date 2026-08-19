@@ -6,6 +6,9 @@ import { accountApprovedTemplate } from "../../templates/email/account-approved.
 import { associationApprovedTemplate } from "../../templates/email/association-approved.template.js";
 import { verifyEmailTemplate } from "../../templates/email/verify-email.template.js";
 import { orderConfirmationTemplate } from "../../templates/email/order-confirmation.template.js";
+import { orderReservedTemplate } from "../../templates/email/order-reserved.template.js";
+import { orderCompletedTemplate } from "../../templates/email/order-completed.template.js";
+import { orderCancelledTemplate } from "../../templates/email/order-cancelled.template.js";
 
 const emailWorker = new Worker(
   "emailQueue",
@@ -48,6 +51,48 @@ const emailWorker = new Worker(
             totalPrice: data.totalPrice,
             deliveryMethod: data.deliveryMethod,
             noteDelivery: data.deliveryMethod === "delivery",
+          }),
+        });
+      },
+      [EMAIL_JOBS.ORDER_RESERVED]: async () => {
+        return sendEmail({
+          to: data.to,
+          subject: `Order Reserved — ${data.referenceNumber}`,
+          html: orderReservedTemplate({
+            name: data.name,
+            referenceNumber: data.referenceNumber,
+            items: data.items,
+            totalPrice: data.totalPrice,
+            deliveryFee: data.deliveryFee,
+            deliveryMethod: data.deliveryMethod,
+          }),
+        });
+      },
+      [EMAIL_JOBS.ORDER_COMPLETED]: async () => {
+        return sendEmail({
+          to: data.to,
+          subject: `Order Completed — ${data.referenceNumber}`,
+          html: orderCompletedTemplate({
+            name: data.name,
+            referenceNumber: data.referenceNumber,
+            items: data.items,
+            totalPrice: data.totalPrice,
+            deliveryFee: data.deliveryFee,
+            deliveryMethod: data.deliveryMethod,
+          }),
+        });
+      },
+      [EMAIL_JOBS.ORDER_CANCELLED]: async () => {
+        return sendEmail({
+          to: data.to,
+          subject: `Order Cancelled — ${data.referenceNumber}`,
+          html: orderCancelledTemplate({
+            name: data.name,
+            referenceNumber: data.referenceNumber,
+            items: data.items,
+            totalPrice: data.totalPrice,
+            remarks: data.remarks,
+            cancelledByRole: data.cancelledByRole,
           }),
         });
       },

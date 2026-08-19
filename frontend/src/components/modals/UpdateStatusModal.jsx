@@ -1,32 +1,40 @@
 import { useState } from "react";
-import { Bookmark, Check, CircleCheck, X } from "lucide-react";
+import { Bookmark, CircleCheck, X } from "lucide-react";
 import { Button, Field, IconButton, TextInput } from "@/components/ui";
 
-const STATUS_LABEL = {
-  pending: "Pending",
-  reserved: "Reserved",
-  completed: "Completed",
-  cancelled: "Cancelled",
-};
+export function UpdateStatusModal({
+  order,
+  onClose,
+  onReserve,
+  onComplete,
+  isPending,
+}) {
+  if (!order) return null;
 
-export function UpdateStatusModal({ order, onClose, onSelect }) {
-  const isReserved = order.status === "reserved";
-  const needsDeliveryFee = !isReserved && order.deliveryMethod === "delivery";
+  const isPendingStatus = order.status === "pending";
+  const isReservedStatus = order.status === "reserved";
+  const isDelivery = order.deliveryMethod === "delivery";
+  const refNumber = order.referenceNumber || order.ref || "Order";
 
   const [deliveryFee, setDeliveryFee] = useState(
     order.deliveryFee != null ? String(order.deliveryFee) : "",
   );
 
   const feeIsValid =
-    !needsDeliveryFee ||
-    (deliveryFee.trim() !== "" && Number(deliveryFee) >= 0);
+    !isDelivery ||
+    !isPendingStatus ||
+    (deliveryFee.trim() !== "" && !isNaN(Number(deliveryFee)) && Number(deliveryFee) >= 0);
 
-  const handleSelect = (next) => {
+  const handleReserve = () => {
     if (!feeIsValid) return;
-    const extra = needsDeliveryFee
+    const payload = isDelivery && deliveryFee.trim() !== ""
       ? { deliveryFee: Number(deliveryFee) }
-      : undefined;
-    onSelect(next, extra);
+      : {};
+    onReserve(order._id, payload);
+  };
+
+  const handleComplete = () => {
+    onComplete(order._id);
   };
 
   return (
@@ -40,69 +48,89 @@ export function UpdateStatusModal({ order, onClose, onSelect }) {
       >
         <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-            <Check className="h-5 w-5 text-accent" />
-            Update order status
+            {isPendingStatus ? (
+              <>
+                <Bookmark className="h-5 w-5 text-accent" />
+                Reserve Order
+              </>
+            ) : (
+              <>
+                <CircleCheck className="h-5 w-5 text-accent" />
+                Complete Order
+              </>
+            )}
           </h2>
           <IconButton icon={X} label="Close" onClick={onClose} />
         </div>
 
-        <div className="px-6 py-5 text-sm text-muted-foreground">
-          <p>
-            Order{" "}
-            <span className="font-semibold text-foreground">{order.ref}</span>{" "}
-            is currently{" "}
-            <span className="font-semibold text-foreground">
-              {STATUS_LABEL[order.status]}
-            </span>
-            .
-          </p>
-          <p className="mt-2">
-            {isReserved
-              ? "Confirm this order has been fulfilled and paid for."
-              : "Choose to mark this order as reserved (held for the customer) or fully completed."}
-          </p>
+        <div className="flex-1 overflow-y-auto px-6 py-5 text-sm text-muted-foreground">
+          {isPendingStatus && (
+            <div className="space-y-3">
+              <p>
+                Order <span className="font-semibold text-foreground">{refNumber}</span> is currently <span className="font-semibold text-foreground uppercase">Pending</span>.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Reserving will deduct item quantities from your inventory stock and send an <strong>Order Reserved</strong> notice email to the customer.
+              </p>
 
-          {needsDeliveryFee && (
-            <div className="mt-4">
-              <Field label="Delivery Fee (₱)">
-                <TextInput
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={deliveryFee}
-                  onChange={(e) => setDeliveryFee(e.target.value)}
-                  placeholder="e.g. 150"
-                />
-              </Field>
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                This order is for delivery — enter the delivery fee before
-                reserving or completing it.
+              {isDelivery && (
+                <div className="mt-4 pt-2">
+                  <Field label="Delivery Fee (₱)">
+                    <TextInput
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={deliveryFee}
+                      onChange={(e) => setDeliveryFee(e.target.value)}
+                      placeholder="e.g. 150.00"
+                    />
+                  </Field>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    This order is for delivery. Enter the delivery fee to include in the customer's reservation email.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {isReservedStatus && (
+            <div className="space-y-2">
+              <p>
+                Order <span className="font-semibold text-foreground">{refNumber}</span> is currently <span className="font-semibold text-foreground uppercase">Reserved</span>.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Confirm that this order has been fully fulfilled and delivered or collected by the customer. An <strong>Order Completed</strong> email will be sent automatically.
               </p>
             </div>
           )}
         </div>
 
-        <div className="flex shrink-0 flex-nowrap items-center justify-end gap-2 border-t border-border px-6 py-3">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border px-6 py-3">
+          <Button variant="outline" onClick={onClose} disabled={isPending}>
+            Close
           </Button>
-          {!isReserved && (
+
+          {isPendingStatus && (
             <Button
-              variant="secondary"
-              onClick={() => handleSelect("reserved")}
-              disabled={!feeIsValid}
+              onClick={handleReserve}
+              disabled={!feeIsValid || isPending}
               className="gap-2"
             >
-              <Bookmark className="h-4 w-4" /> Reserve
+              <Bookmark className="h-4 w-4" />
+              {isPending ? "Reserving…" : "Mark as Reserved"}
             </Button>
           )}
-          <Button
-            onClick={() => handleSelect("completed")}
-            disabled={!feeIsValid}
-            className="gap-2"
-          >
-            <CircleCheck className="h-4 w-4" /> Complete
-          </Button>
+
+          {isReservedStatus && (
+            <Button
+              onClick={handleComplete}
+              disabled={isPending}
+              className="gap-2"
+            >
+              <CircleCheck className="h-4 w-4" />
+              {isPending ? "Completing…" : "Mark as Completed"}
+            </Button>
+          )}
         </div>
       </div>
     </div>

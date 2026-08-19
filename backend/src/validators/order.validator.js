@@ -1,6 +1,10 @@
 import {
     createOrderSchema,
     orderIdParamSchema,
+    updateOrderStatusSchema,
+    reserveOrderSchema,
+    cancelOrderSchema,
+    getOrdersQuerySchema,
 } from "../schemas/order.schema.js";
 
 const validate = (schema) => (req, res, next) => {
@@ -31,5 +35,31 @@ const validateParams = (schema) => (req, res, next) => {
     next();
 };
 
+const validateQuery = (schema) => (req, res, next) => {
+    const result = schema.safeParse(req.query);
+
+    if (!result.success) {
+        return res.status(400).json({
+            message: "Validation error",
+            errors: result.error.issues,
+        });
+    }
+
+    // req.query is a getter-only property in newer Express/Node — can't
+    // reassign it directly, so redefine it instead.
+    Object.defineProperty(req, "query", {
+        value: result.data,
+        writable: true,
+        configurable: true,
+        enumerable: true,
+    });
+
+    next();
+};
+
 export const validateCreateOrder = validate(createOrderSchema);
+export const validateUpdateOrderStatus = validate(updateOrderStatusSchema);
+export const validateReserveOrder = validate(reserveOrderSchema);
+export const validateCancelOrder = validate(cancelOrderSchema);
 export const validateOrderIdParam = validateParams(orderIdParamSchema);
+export const validateGetOrdersQuery = validateQuery(getOrdersQuerySchema);

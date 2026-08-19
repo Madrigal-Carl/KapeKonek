@@ -1,3 +1,5 @@
+import { isValidElement } from "react";
+
 export function IconButton({
   icon: Icon,
   label,
@@ -5,6 +7,16 @@ export function IconButton({
   className,
   ...props
 }) {
+  const renderIcon = () => {
+    if (!Icon) return null;
+    if (isValidElement(Icon)) return Icon;
+    if (typeof Icon === "function" || typeof Icon === "object") {
+      const Component = Icon;
+      return <Component className="h-4 w-4" />;
+    }
+    return null;
+  };
+
   return (
     <button
       type="button"
@@ -19,7 +31,7 @@ export function IconButton({
         .join(" ")}
       {...props}
     >
-      {Icon ? <Icon className="h-4 w-4" /> : null}
+      {renderIcon()}
     </button>
   );
 }
