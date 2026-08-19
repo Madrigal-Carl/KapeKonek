@@ -16,6 +16,7 @@ import Like from "./models/like.model.js";
 import Rating from "./models/rating.model.js";
 import ChatMessage from "./models/chatMessage.model.js";
 import ChatRead from "./models/chatRead.model.js";
+import CoffeeBean from "./models/coffeeBean.model.js";
 
 const WIPE_ONLY_MODELS = [
     Order,
@@ -25,6 +26,7 @@ const WIPE_ONLY_MODELS = [
     Rating,
     ChatMessage,
     ChatRead,
+    CoffeeBean,
 ];
 
 // Order matters: each entry is listed after every seeder whose output it

@@ -7,6 +7,10 @@ const SUBFOLDER_MAP = {
     receipt: "receipts",
     chat: "chats",
     post: "posts",
+    report: "reports",
+    bean: "beans",
+    beans: "beans",
+    coffee_bean: "beans",
 };
 
 export const createUploadSignature = ({ type }) => {

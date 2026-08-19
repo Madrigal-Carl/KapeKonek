@@ -16,6 +16,7 @@ import postRoutes from "./routes/post.routes.js";
 import productRoutes from "./routes/product.routes.js";
 import associationRoutes from "./routes/association.routes.js";
 import orderRoutes from "./routes/order.routes.js";
+import coffeeBeanRoutes from "./routes/coffeeBean.routes.js";
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/associations", associationRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/coffee-beans", coffeeBeanRoutes);
 
 app.use(errorHandler);
 

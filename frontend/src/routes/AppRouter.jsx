@@ -29,6 +29,7 @@ import {
   ManagersPage,
   ReportsPage,
   FarmMapPage,
+  BeansPage,
 } from "@/pages/dashboard";
 
 import UnauthorizedPage from "@/pages/shared/UnauthorizedPage";
@@ -103,6 +104,7 @@ export default function AppRouter() {
             <Route path="harvests" element={<HarvestPage />} />
             <Route path="chat" element={<ChatPage />} />
             <Route path="knowledge-hub" element={<HubPage />} />
+            <Route path="beans" element={<BeansPage />} />
             <Route path="inventory" element={<InventoryPage />} />
             <Route path="orders" element={<DashboardOrdersPage />} />
             <Route path="settings" element={<FarmerSettingsPage />} />
@@ -118,6 +120,7 @@ export default function AppRouter() {
             <Route path="harvests" element={<HarvestPage />} />
             <Route path="chat" element={<ChatPage />} />
             <Route path="knowledge-hub" element={<HubPage />} />
+            <Route path="beans" element={<BeansPage />} />
             <Route path="inventory" element={<InventoryPage />} />
             <Route path="farm-maps" element={<FarmMapPage />} />
             <Route path="reports" element={<ReportsPage />} />
@@ -132,6 +135,7 @@ export default function AppRouter() {
             <Route path="farmers" element={<FarmersPage />} />
             <Route path="harvests" element={<HarvestPage />} />
             <Route path="knowledge-hub" element={<HubPage />} />
+            <Route path="beans" element={<BeansPage />} />
             <Route path="inventory" element={<InventoryPage />} />
             <Route path="farm-maps" element={<FarmMapPage />} />
             <Route path="reports" element={<ReportsPage />} />
@@ -147,6 +151,7 @@ export default function AppRouter() {
             <Route path="farms" element={<FarmerFarmsPage />} />
             <Route path="harvests" element={<HarvestPage />} />
             <Route path="knowledge-hub" element={<HubPage />} />
+            <Route path="beans" element={<BeansPage />} />
             <Route path="inventory" element={<InventoryPage />} />
             <Route path="orders" element={<DashboardOrdersPage />} />
             <Route path="farm-maps" element={<FarmMapPage />} />
