@@ -7,6 +7,7 @@ import {
   getMe,
 } from "@/services/auth.service";
 import { queryClient } from "@/api/queryClient";
+import { useCartStore } from "@/stores/cart.store";
 
 const useAuthStore = create((set) => ({
   user: null,
@@ -35,11 +36,17 @@ const useAuthStore = create((set) => ({
   },
 
   logout: async () => {
-    await logoutUser();
-    // Wipe all cached server data — queries are user-scoped, so nothing
-    // should leak across sessions.
-    queryClient.clear();
-    set({ user: null });
+    // Local cleanup first so nothing leaks across sessions even if the API
+    // call fails.
+    useCartStore.getState().clear();
+    try {
+      await logoutUser();
+    } finally {
+      // Wipe all cached server data — queries are user-scoped, so nothing
+      // should leak across sessions.
+      queryClient.clear();
+      set({ user: null });
+    }
   },
 }));
 
