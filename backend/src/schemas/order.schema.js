@@ -3,6 +3,10 @@ import { z } from "zod";
 const objectId = (label) =>
     z.string().regex(/^[0-9a-fA-F]{24}$/, `Invalid ${label}`);
 
+export const orderIdParamSchema = z.object({
+    id: objectId("order id"),
+});
+
 export const createOrderSchema = z.object({
     paymentMethod: z.enum(["cash", "e-wallet"]),
     deliveryMethod: z.enum(["delivery", "pickup"]),

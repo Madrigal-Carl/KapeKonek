@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -12,6 +12,7 @@ import {
   X,
   Check,
 } from "lucide-react";
+import { getMyOrders, cancelOrder } from "@/services/order.service";
 
 const STATUS_META = {
   pending: {
@@ -38,79 +39,78 @@ const STATUS_META = {
 
 const STATUS_FILTERS = ["all", "pending", "reserved", "completed", "cancelled"];
 
-const INITIAL_ORDERS = [
-  {
-    id: "ORD-1042",
-    status: "pending",
-    paymentMethod: "E-Wallet",
-    items: [
-      { name: "Arabica Beans (250g)", price: 320, quantity: 2 },
-      { name: "Robusta Beans (250g)", price: 280, quantity: 1 },
-    ],
-  },
-  {
-    id: "ORD-1038",
-    status: "reserved",
-    paymentMethod: "Cash",
-    items: [{ name: "Civet Coffee (100g)", price: 950, quantity: 1 }],
-  },
-  {
-    id: "ORD-1029",
-    status: "completed",
-    paymentMethod: "E-Wallet",
-    items: [
-      { name: "Liberica Beans (250g)", price: 310, quantity: 3 },
-      { name: "Drip Bags (Pack of 10)", price: 250, quantity: 1 },
-    ],
-  },
-  {
-    id: "ORD-1021",
-    status: "completed",
-    paymentMethod: "Cash",
-    items: [{ name: "Excelsa Beans (250g)", price: 295, quantity: 2 }],
-  },
-  {
-    id: "ORD-1015",
-    status: "pending",
-    paymentMethod: "E-Wallet",
-    items: [
-      { name: "Arabica Beans (500g)", price: 580, quantity: 1 },
-      { name: "Drip Bags (Pack of 10)", price: 250, quantity: 2 },
-    ],
-  },
-  {
-    id: "ORD-1009",
-    status: "reserved",
-    paymentMethod: "Cash",
-    items: [{ name: "Robusta Beans (1kg)", price: 980, quantity: 1 }],
-  },
-  {
-    id: "ORD-1003",
-    status: "completed",
-    paymentMethod: "E-Wallet",
-    items: [{ name: "Civet Coffee (100g)", price: 950, quantity: 2 }],
-  },
-];
-
 const PAGE_SIZE = 4;
+const CANCELLATION_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
-function getOrderTotal(items) {
-  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-}
+const getOrderTotal = (items) =>
+  items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-function getItemCount(items) {
-  return items.reduce((sum, item) => sum + item.quantity, 0);
-}
+const getItemCount = (items) =>
+  items.reduce((sum, item) => sum + item.quantity, 0);
+
+const toOrder = (o) => ({
+  id: o._id,
+  referenceNumber: o.referenceNumber,
+  status: o.status,
+  paymentMethod: o.paymentMethod === "e-wallet" ? "E-Wallet" : "Cash",
+  createdAt: o.createdAt,
+  items: (o.orderedProducts ?? []).map((item) => ({
+    name: item.name,
+    price: item.price,
+    quantity: item.quantity,
+  })),
+});
 
 export function OrdersPage() {
-  const [orders, setOrders] = useState(INITIAL_ORDERS);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [confirmingId, setConfirmingId] = useState(null);
+  const [cancelError, setCancelError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await getMyOrders();
+        if (!cancelled) setOrders((result.orders ?? []).map(toOrder));
+      } catch (err) {
+        if (!cancelled)
+          setLoadError(
+            err?.response?.data?.message || err?.message || "Failed to load orders.",
+          );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+          setNow(Date.now());
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Current timestamp kept in state (refreshed every 30s) so the 1-hour
+  // cancellation window stays accurate on screen.
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // A pending order can only be cancelled within 1 hour of placing it.
+  const canCancel = (order) =>
+    order.status === "pending" &&
+    order.createdAt &&
+    now - new Date(order.createdAt).getTime() <= CANCELLATION_WINDOW_MS;
 
   const lifetimeTotal = orders.reduce(
-    (sum, o) => sum + (o.status !== "cancelled" ? getOrderTotal(o.items) : 0),
+    (sum, o) =>
+      sum + (o.status !== "cancelled" ? getOrderTotal(o.items) : 0),
     0,
   );
 
@@ -123,7 +123,7 @@ export function OrdersPage() {
 
       const matchesQuery =
         q === "" ||
-        order.id.toLowerCase().includes(q) ||
+        order.referenceNumber.toLowerCase().includes(q) ||
         order.items.some((item) => item.name.toLowerCase().includes(q));
 
       return matchesStatus && matchesQuery;
@@ -147,11 +147,24 @@ export function OrdersPage() {
     setPage(1);
   }
 
-  function handleCancelOrder(orderId) {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: "cancelled" } : o)),
-    );
-    setConfirmingId(null);
+  async function handleCancelOrder(orderId) {
+    setCancelError("");
+    try {
+      const result = await cancelOrder(orderId);
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === result.order._id
+            ? { ...o, status: "cancelled" }
+            : o,
+        ),
+      );
+      setConfirmingId(null);
+    } catch (err) {
+      setCancelError(
+        err?.response?.data?.message || err?.message || "Failed to cancel order.",
+      );
+      setConfirmingId(null);
+    }
   }
 
   return (
@@ -230,13 +243,29 @@ export function OrdersPage() {
         {filteredOrders.length} result{filteredOrders.length !== 1 ? "s" : ""}
       </p>
 
-      {/* Order list */}
-      {paginatedOrders.length > 0 ? (
+      {cancelError && (
+        <p className="mt-4 border border-destructive bg-card px-4 py-3 text-sm text-destructive">
+          {cancelError}
+        </p>
+      )}
+
+      {loading ? (
+        <div className="mt-4 flex items-center justify-center border border-dashed border-border py-16 text-center">
+          <p className="text-muted-foreground">Loading your orders…</p>
+        </div>
+      ) : loadError ? (
+        <div className="mt-4 flex flex-col items-center gap-3 border border-dashed border-border py-16 text-center">
+          <Inbox size={28} className="text-muted-foreground" />
+          <p className="font-medium">Could not load your orders.</p>
+          <p className="text-sm text-muted-foreground">{loadError}</p>
+        </div>
+      ) : paginatedOrders.length > 0 ? (
         <div className="mt-4 grid gap-5 sm:gap-6 lg:grid-cols-2">
           {paginatedOrders.map((order) => {
             const status = STATUS_META[order.status];
             const total = getOrderTotal(order.items);
             const isConfirming = confirmingId === order.id;
+            const cancellable = canCancel(order);
 
             return (
               <div
@@ -247,7 +276,7 @@ export function OrdersPage() {
                 <div className="flex items-start justify-between gap-3 px-5 pt-5">
                   <div>
                     <p className="label-mono text-muted-foreground">
-                      {order.id}
+                      {order.referenceNumber}
                     </p>
                     <div className="mt-1.5 flex items-center gap-2">
                       <span
@@ -315,44 +344,49 @@ export function OrdersPage() {
                   </span>
                 </div>
 
-                {/* Cancel action for pending orders */}
-                {order.status === "pending" && (
-                  <div className="border-t border-border px-5 py-3">
-                    {isConfirming ? (
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-xs font-medium text-muted-foreground">
-                          Cancel this order?
-                        </span>
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setConfirmingId(null)}
-                            className="label-mono inline-flex items-center gap-1 border border-border px-3 py-1.5 text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
-                          >
-                            <X size={12} />
-                            Keep it
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleCancelOrder(order.id)}
-                            className="label-mono inline-flex items-center gap-1 border border-destructive bg-destructive px-3 py-1.5 text-destructive-foreground transition-colors hover:opacity-90"
-                          >
-                            <Check size={12} />
-                            Yes, cancel
-                          </button>
+                {/* Cancel action — pending orders within the 1-hour window */}
+                {order.status === "pending" &&
+                  (cancellable ? (
+                    <div className="border-t border-border px-5 py-3">
+                      {isConfirming ? (
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-xs font-medium text-muted-foreground">
+                            Cancel this order?
+                          </span>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setConfirmingId(null)}
+                              className="label-mono inline-flex items-center gap-1 border border-border px-3 py-1.5 text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+                            >
+                              <X size={12} />
+                              Keep it
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleCancelOrder(order.id)}
+                              className="label-mono inline-flex items-center gap-1 border border-destructive bg-destructive px-3 py-1.5 text-destructive-foreground transition-colors hover:opacity-90"
+                            >
+                              <Check size={12} />
+                              Yes, cancel
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setConfirmingId(order.id)}
-                        className="label-mono w-full border border-border py-2 text-center text-destructive transition-colors hover:border-destructive hover:bg-destructive/5"
-                      >
-                        Cancel Order
-                      </button>
-                    )}
-                  </div>
-                )}
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingId(order.id)}
+                          className="label-mono w-full border border-border py-2 text-center text-destructive transition-colors hover:border-destructive hover:bg-destructive/5"
+                        >
+                          Cancel Order
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="border-t border-border px-5 py-3 text-center text-xs text-muted-foreground">
+                      Cancellation is no longer available for this order.
+                    </div>
+                  ))}
               </div>
             );
           })}

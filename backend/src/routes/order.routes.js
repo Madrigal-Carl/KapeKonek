@@ -2,8 +2,12 @@ import express from "express";
 import {
     createOrderHandler,
     getMyOrdersHandler,
+    cancelOrderHandler,
 } from "../controllers/order.controller.js";
-import { validateCreateOrder } from "../validators/order.validator.js";
+import {
+    validateCreateOrder,
+    validateOrderIdParam,
+} from "../validators/order.validator.js";
 import {
     authenticated,
     allowRoles,
@@ -18,6 +22,12 @@ router.post(
     allowRoles("buyer", "farmer", "kaluppa"),
     validateCreateOrder,
     createOrderHandler,
+);
+router.patch(
+    "/:id/cancel",
+    authenticated,
+    validateOrderIdParam,
+    cancelOrderHandler,
 );
 
 export default router;

@@ -165,3 +165,39 @@ export const getMyOrders = async (authenticatedUser) => {
 
     return orders.map(attachOrderData);
 };
+
+const CANCELLATION_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+export const cancelOrder = async (id, authenticatedUser) => {
+    const order = await Order.findOne({
+        _id: id,
+        customer: authenticatedUser._id,
+    });
+
+    if (!order) {
+        const notFoundError = new Error("Order not found");
+        notFoundError.statusCode = 404;
+        throw notFoundError;
+    }
+
+    if (order.status !== "pending") {
+        const badRequestError = new Error(
+            "Only pending orders can be cancelled",
+        );
+        badRequestError.statusCode = 400;
+        throw badRequestError;
+    }
+
+    if (Date.now() - order.createdAt.getTime() > CANCELLATION_WINDOW_MS) {
+        const badRequestError = new Error(
+            "Orders can only be cancelled within 1 hour of placing",
+        );
+        badRequestError.statusCode = 400;
+        throw badRequestError;
+    }
+
+    order.status = "cancelled";
+    await order.save();
+
+    return attachOrderData(order);
+};
