@@ -23,7 +23,6 @@ export const farmerNavSections = [
         label: "Marketplace",
         items: [
             { to: "/farmer/beans", label: "Beans", icon: Bean },
-            { to: "/farmer/inventory", label: "Inventory", icon: Package },
             { to: "/farmer/orders", label: "Order", icon: ClipboardList, badge: 3 },
             { to: "/products", label: "Store", icon: Store }
         ]
@@ -61,7 +60,6 @@ export const managerNavSections = [
         label: "Marketplace",
         items: [
             { to: "/manager/beans", label: "Beans", icon: Bean },
-            { to: "/manager/inventory", label: "Inventory", icon: Package },
         ]
     },
     {
@@ -107,7 +105,6 @@ export const dtiNavSections = [
         label: "Marketplace",
         items: [
             { to: "/dti/beans", label: "Beans", icon: Bean },
-            { to: "/dti/inventory", label: "Inventory", icon: Package },
         ]
     },
     {
@@ -156,7 +153,6 @@ export const kaluppaNavSections = [
             { to: "/kaluppa/beans", label: "Beans", icon: Bean },
             { to: "/kaluppa/inventory", label: "Inventory", icon: Package },
             { to: "/kaluppa/orders", label: "Order", icon: ClipboardList, badge: 3 },
-            { to: "/products", label: "Store", icon: Store }
         ]
     },
     {

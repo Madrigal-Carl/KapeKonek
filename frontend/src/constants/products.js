@@ -4,7 +4,6 @@ import farm from "@/assets/images/coffee-farm.jpg";
 
 export const CATEGORIES = [
     "Coffee Seedlings",
-    "Coffee Cherries",
     "Fertilizer",
     "Coffee Beans",
 ];

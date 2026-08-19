@@ -319,7 +319,6 @@ export const HARVESTS = [
 
 export const PRODUCT_CATEGORY_OPTIONS = [
     "Coffee Seedlings",
-    "Coffee Cherries",
     "Fertilizer",
     "Coffee Beans",
 ];

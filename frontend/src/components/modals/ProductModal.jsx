@@ -4,14 +4,9 @@ import {
   Button,
   Field,
   IconButton,
-  MultiSelect,
   TextInput,
 } from "@/components/ui";
 import FieldError from "@/components/ui/FieldError";
-import useAuth from "@/hooks/useAuth";
-import { ROLES } from "@/constants/roles";
-import { useFarms } from "@/hooks/useFarms";
-import { useAssociationFarmers } from "@/hooks/useAssociations";
 import { useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
 import {
   PRODUCT_CATEGORY_OPTIONS,
@@ -26,15 +21,13 @@ import { notify, notifyError } from "@/utils/notify";
 
 const capitalize = (value) =>
   value
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+    ? value
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
+    : "";
 
 export function ProductModal({ mode, initial, onClose }) {
-  const { role } = useAuth();
-  const isManager = role === ROLES.MANAGER;
-  const isKaluppa = role === ROLES.KALUPPA;
-
   const productLabel = (item) =>
     [item?.category, item?.variety]
       .filter(Boolean)
@@ -42,21 +35,16 @@ export function ProductModal({ mode, initial, onClose }) {
       .join(" · ") || "Product";
 
   const [form, setForm] = useState(() => ({
-    farm: initial?.farm?._id ?? initial?.farm ?? "",
-    category:
-      role === ROLES.KALUPPA
-        ? (initial?.category ?? "")
-        : (initial?.category ?? "coffee_cherries"),
+    category: initial?.category ?? "",
     variety: initial?.variety ?? "",
     stock: initial?.stock != null ? String(initial.stock) : "",
+    price: initial?.price != null ? String(initial.price) : "",
     status: initial?.status ?? "active",
-    weight: initial?.weight != null ? String(initial.weight) : "",
     description: initial?.description ?? "",
     imageUrls: (initial?.imageUrls ?? []).map((image) => ({
       url: image.url,
       isPrimary: Boolean(image.isPrimary),
     })),
-    owner: initial?.owner?._id ?? initial?.owner ?? "",
   }));
   const [errors, setErrors] = useState({});
   const [uploading, setUploading] = useState({ active: false, percent: 0 });
@@ -65,22 +53,6 @@ export function ProductModal({ mode, initial, onClose }) {
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const isPending = (mode === "add" ? createProduct : updateProduct).isPending;
-
-  const { data: farms = [] } = useFarms({ all: true });
-  const associationId = farms[0]?.association?._id;
-  const { data: associationFarmers = [] } = useAssociationFarmers(
-    associationId,
-    { enabled: isManager && Boolean(associationId) },
-  );
-
-  const farmOptions = farms.map((farm) => ({
-    value: farm._id,
-    label: `${farm.propertyNumber} · ${farm.address}`,
-  }));
-  const farmerOptions = associationFarmers.map((farmer) => ({
-    value: farmer._id,
-    label: farmer.fullName,
-  }));
 
   const set = (key, value) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -175,18 +147,13 @@ export function ProductModal({ mode, initial, onClose }) {
     e?.preventDefault();
 
     const payload = {
-      farm: form.farm,
       category: form.category,
       variety: form.variety,
+      stock: form.stock === "" ? undefined : form.stock,
+      price: form.price === "" ? undefined : form.price,
       status: form.status,
       description: form.description.trim() || undefined,
       imageUrls: form.imageUrls.length ? form.imageUrls : undefined,
-      // Kaluppa tracks by stock; farmers and managers by weight.
-      ...(isKaluppa ? { stock: form.stock } : {}),
-      ...(isKaluppa
-        ? {}
-        : { weight: form.weight === "" ? undefined : form.weight }),
-      ...(isManager ? { owner: form.owner || undefined } : {}),
     };
 
     const schema = mode === "add" ? createProductSchema : updateProductSchema;
@@ -233,43 +200,24 @@ export function ProductModal({ mode, initial, onClose }) {
 
         <form onSubmit={submit} className="flex-1 overflow-y-auto px-6 py-5">
           <fieldset disabled={readOnly} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Farm" full>
-              <MultiSelect
-                values={form.farm ? [form.farm] : []}
-                onChange={(v) => set("farm", v.length ? v[v.length - 1] : "")}
-                options={farmOptions}
-                placeholder="Select a farm…"
-                searchPlaceholder="Search farms…"
-              />
-              <FieldError message={errors.farm} />
-            </Field>
-
             <Field label="Category">
-              {isKaluppa ? (
-                <div className="relative">
-                  <select
-                    value={form.category}
-                    onChange={(e) => set("category", e.target.value)}
-                    className="w-full appearance-none border border-border bg-background px-3 py-2.5 pr-9 text-sm text-foreground outline-none focus:border-foreground"
-                  >
-                    <option value="" disabled>
-                      Select category…
+              <div className="relative">
+                <select
+                  value={form.category}
+                  onChange={(e) => set("category", e.target.value)}
+                  className="w-full appearance-none border border-border bg-background px-3 py-2.5 pr-9 text-sm text-foreground outline-none focus:border-foreground"
+                >
+                  <option value="" disabled>
+                    Select category…
+                  </option>
+                  {PRODUCT_CATEGORY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
-                    {PRODUCT_CATEGORY_OPTIONS.filter(
-                      (option) => option.value !== "coffee_cherries",
-                    ).map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                </div>
-              ) : (
-                <div className="flex w-full items-center border border-border bg-muted/40 px-3 py-2.5 text-sm text-muted-foreground">
-                  Coffee Cherries
-                </div>
-              )}
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              </div>
               <FieldError message={errors.category} />
             </Field>
 
@@ -294,34 +242,31 @@ export function ProductModal({ mode, initial, onClose }) {
               <FieldError message={errors.variety} />
             </Field>
 
-            {isKaluppa && (
-              <Field label="Stock">
-                <TextInput
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.stock}
-                  onChange={(e) => set("stock", e.target.value)}
-                  placeholder="0"
-                />
-                <FieldError message={errors.stock} />
-              </Field>
-            )}
+            <Field label="Stock">
+              <TextInput
+                type="number"
+                min="0"
+                step="1"
+                value={form.stock}
+                onChange={(e) => set("stock", e.target.value)}
+                placeholder="0"
+              />
+              <FieldError message={errors.stock} />
+            </Field>
 
-            {!isKaluppa && (
-              <Field label="Weight (kg)">
-                <TextInput
-                  type="number"
-                  min="0"
-                  step="any"
-                  value={form.weight}
-                  onChange={(e) => set("weight", e.target.value)}
-                  placeholder="0"
-                />
-              </Field>
-            )}
+            <Field label="Price (PHP)">
+              <TextInput
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.price}
+                onChange={(e) => set("price", e.target.value)}
+                placeholder="0.00"
+              />
+              <FieldError message={errors.price} />
+            </Field>
 
-            <Field label="Status">
+            <Field label="Status" full>
               <div className="relative">
                 <select
                   value={form.status}
@@ -336,26 +281,8 @@ export function ProductModal({ mode, initial, onClose }) {
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               </div>
+              <FieldError message={errors.status} />
             </Field>
-
-            {isManager && (
-              <Field label="Farmer" full>
-                <MultiSelect
-                  values={form.owner ? [form.owner] : []}
-                  onChange={(v) =>
-                    set("owner", v.length ? v[v.length - 1] : "")
-                  }
-                  options={farmerOptions}
-                  placeholder={
-                    associationId
-                      ? "Select a farmer…"
-                      : "No association found…"
-                  }
-                  searchPlaceholder="Search farmers…"
-                />
-                <FieldError message={errors.owner} />
-              </Field>
-            )}
 
             <Field label="Description" full>
               <textarea
@@ -365,33 +292,34 @@ export function ProductModal({ mode, initial, onClose }) {
                 rows={4}
                 className="w-full resize-none border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-foreground"
               />
+              <FieldError message={errors.description} />
             </Field>
 
             <Field label="Images" full>
               {!readOnly && (
-              <label
-                htmlFor="product-images-upload"
-                className="flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed border-border bg-muted/30 px-4 py-8 text-center transition-colors hover:border-foreground-40 hover:bg-muted/50"
-              >
-                <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                <div className="text-sm font-medium text-foreground">
-                  Click to upload images
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  PNG, JPG up to 5MB each
-                </div>
-              </label>
+                <label
+                  htmlFor="product-images-upload"
+                  className="flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed border-border bg-muted/30 px-4 py-8 text-center transition-colors hover:border-foreground-40 hover:bg-muted/50"
+                >
+                  <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                  <div className="text-sm font-medium text-foreground">
+                    Click to upload images
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    PNG, JPG up to 5MB each
+                  </div>
+                </label>
               )}
-                <input
-                  id="product-images-upload"
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  multiple
-                  disabled={uploading.active}
-                  className="hidden"
-                  onChange={onPickImages}
-                />
+              <input
+                id="product-images-upload"
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png"
+                multiple
+                disabled={uploading.active}
+                className="hidden"
+                onChange={onPickImages}
+              />
 
               {uploading.active && (
                 <div className="mt-3 flex items-center gap-3 border border-border bg-muted/30 p-3">
@@ -432,27 +360,27 @@ export function ProductModal({ mode, initial, onClose }) {
                         </span>
                       )}
                       {!readOnly && (
-                      <div className="absolute right-1 top-1 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                        {!image.isPrimary && (
+                        <div className="absolute right-1 top-1 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                          {!image.isPrimary && (
+                            <button
+                              type="button"
+                              onClick={() => setPrimary(image.url)}
+                              className="grid h-6 w-6 place-items-center bg-background/90 text-foreground hover:bg-accent hover:text-accent-foreground"
+                              aria-label="Set as primary"
+                              title="Set as primary"
+                            >
+                              <Star className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={() => setPrimary(image.url)}
-                            className="grid h-6 w-6 place-items-center bg-background/90 text-foreground hover:bg-accent hover:text-accent-foreground"
-                            aria-label="Set as primary"
-                            title="Set as primary"
+                            onClick={() => removeImage(image.url)}
+                            className="grid h-6 w-6 place-items-center bg-background/90 text-foreground hover:bg-destructive hover:text-destructive-foreground"
+                            aria-label="Remove image"
                           >
-                            <Star className="h-3.5 w-3.5" />
+                            <X className="h-3.5 w-3.5" />
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => removeImage(image.url)}
-                          className="grid h-6 w-6 place-items-center bg-background/90 text-foreground hover:bg-destructive hover:text-destructive-foreground"
-                          aria-label="Remove image"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
+                        </div>
                       )}
                     </div>
                   ))}

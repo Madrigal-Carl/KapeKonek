@@ -1,58 +1,44 @@
 import { useState } from "react";
-import { Archive, Eye, Pencil, Plus, Star, Tag } from "lucide-react";
+import { Archive, Eye, Pencil, Plus, Star } from "lucide-react";
 import { Button } from "@/components/ui";
 import { fmtPrice } from "@/utils/format";
-import { DataTable, PageSection, RowActions, StatusPill } from "@/components/dashboard";
-import useAuth from "@/hooks/useAuth";
-import { ROLES } from "@/constants/roles";
+import {
+  DataTable,
+  PageSection,
+  RowActions,
+  StatusPill,
+} from "@/components/dashboard";
 import { useDeleteProduct, useProducts } from "@/hooks/useProducts";
 import {
+  PRODUCT_CATEGORY_OPTIONS,
   PRODUCT_STATUS_OPTIONS,
 } from "@/schemas/product.schema";
 import {
-  ProductModal,
-  PriceModal,
   ArchiveConfirmModal,
+  ProductModal,
 } from "@/components/modals";
 
 const capitalize = (value) =>
   value
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+    ? value
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
+    : "";
 
 export function InventoryPage() {
-  const { role } = useAuth();
-  const isDTI = role === ROLES.DTI;
-  const isKaluppa = role === ROLES.KALUPPA;
-
   const { data: products = [], isLoading } = useProducts({ all: true });
   const deleteProduct = useDeleteProduct();
 
   const [modal, setModal] = useState(null);
-  const [priceModal, setPriceModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   const columns = [
     {
-      key: "farm",
-      label: "Farm",
-      render: (row) => (
-        <div>
-          <div className="font-semibold text-foreground">
-            {row.farm?.propertyNumber ?? "—"}
-          </div>
-          <div className="label-mono text-muted-foreground">
-            {row.owner?.fullName ?? "—"}
-          </div>
-        </div>
-      ),
-    },
-    {
       key: "category",
       label: "Category",
       render: (row) => (
-        <span className="text-foreground">
+        <span className="font-semibold text-foreground">
           {capitalize(row.category ?? "")}
         </span>
       ),
@@ -66,54 +52,18 @@ export function InventoryPage() {
         </span>
       ),
     },
-    ...(isKaluppa
-      ? [
-          {
-            key: "stock",
-            label: "Stock",
-            render: (row) =>
-              row.stock != null ? (
-                <span className="text-foreground">
-                  {row.stock.toLocaleString()} left
-                </span>
-              ) : (
-                <span className="text-muted-foreground">—</span>
-              ),
-          },
-        ]
-      : isDTI
-        ? [
-            {
-              key: "quantity",
-              label: "Weight/Stock",
-              render: (row) =>
-                row.weight != null ? (
-                  <span className="text-foreground">
-                    {row.weight.toLocaleString()} kg
-                  </span>
-                ) : row.stock != null ? (
-                  <span className="text-foreground">
-                    {row.stock.toLocaleString()} left
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                ),
-            },
-          ]
-        : [
-            {
-              key: "weight",
-              label: "Weight",
-              render: (row) =>
-                row.weight != null ? (
-                  <span className="text-foreground">
-                    {row.weight.toLocaleString()} kg
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                ),
-            },
-          ]),
+    {
+      key: "stock",
+      label: "Stock",
+      render: (row) =>
+        row.stock != null ? (
+          <span className="text-foreground">
+            {row.stock.toLocaleString()} left
+          </span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+    },
     {
       key: "price",
       label: "Price",
@@ -129,7 +79,12 @@ export function InventoryPage() {
     {
       key: "rating",
       label: "Rating",
-      render: (row) => <RatingStars value={row.rating ?? 0} count={row.ratingCount ?? 0} />,
+      render: (row) => (
+        <RatingStars
+          value={row.rating ?? 0}
+          count={row.ratingCount ?? 0}
+        />
+      ),
     },
     {
       key: "status",
@@ -149,30 +104,19 @@ export function InventoryPage() {
               icon: Eye,
               onClick: () => setModal({ mode: "view", data: { ...row } }),
             },
-            ...(isDTI
-              ? [
-                  {
-                    key: "price",
-                    label: "Edit Price",
-                    icon: Tag,
-                    onClick: () => setPriceModal(row),
-                  },
-                ]
-              : [
-                  {
-                    key: "edit",
-                    label: "Edit",
-                    icon: Pencil,
-                    onClick: () => setModal({ mode: "edit", data: { ...row } }),
-                  },
-                  {
-                    key: "archive",
-                    label: "Archive",
-                    icon: Archive,
-                    danger: true,
-                    onClick: () => setConfirmDelete(row),
-                  },
-                ]),
+            {
+              key: "edit",
+              label: "Edit",
+              icon: Pencil,
+              onClick: () => setModal({ mode: "edit", data: { ...row } }),
+            },
+            {
+              key: "archive",
+              label: "Archive",
+              icon: Archive,
+              danger: true,
+              onClick: () => setConfirmDelete(row),
+            },
           ]}
         />
       ),
@@ -180,6 +124,15 @@ export function InventoryPage() {
   ];
 
   const filters = [
+    {
+      key: "category",
+      initialValue: "all",
+      options: [
+        { value: "all", label: "All Categories" },
+        ...PRODUCT_CATEGORY_OPTIONS,
+      ],
+      matcher: (row, value) => row.category === value,
+    },
     {
       key: "status",
       initialValue: "all",
@@ -198,11 +151,12 @@ export function InventoryPage() {
         title="Inventory"
         description="Products, stock levels, ratings, and pricing."
         action={
-          !isDTI ? (
-            <Button onClick={() => setModal({ mode: "add", data: null })} className="gap-2">
-              <Plus className="h-4 w-4" /> Add Product
-            </Button>
-          ) : null
+          <Button
+            onClick={() => setModal({ mode: "add", data: null })}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" /> Add Product
+          </Button>
         }
       />
 
@@ -211,19 +165,17 @@ export function InventoryPage() {
         columns={columns}
         searchKeys={[
           (row, query) =>
-            (row.farm?.propertyNumber ?? "").toLowerCase().includes(query) ||
-            (row.farm?.address ?? "").toLowerCase().includes(query) ||
-            (row.owner?.fullName ?? "").toLowerCase().includes(query) ||
             (row.category ?? "").toLowerCase().includes(query) ||
-            (row.variety ?? "").toLowerCase().includes(query),
+            (row.variety ?? "").toLowerCase().includes(query) ||
+            (row.description ?? "").toLowerCase().includes(query),
         ]}
-        searchPlaceholder="Search by farm, owner, category, or variety…"
+        searchPlaceholder="Search by category, variety, or description…"
         filters={filters}
         getRowKey={(row) => row._id}
         loading={isLoading}
         emptyTitle="No products found"
         emptyDescription="Try adjusting your search or add a new product."
-        minWidth="920px"
+        minWidth="860px"
       />
 
       {modal && (
@@ -234,21 +186,14 @@ export function InventoryPage() {
         />
       )}
 
-      {priceModal && isDTI && (
-        <PriceModal
-          product={priceModal}
-          onClose={() => setPriceModal(null)}
-        />
-      )}
-
-      {confirmDelete && !isDTI && (
+      {confirmDelete && (
         <ArchiveConfirmModal
           title="Archive product?"
           description={
             <>
               You're about to archive{" "}
               <strong className="text-foreground">
-                {confirmDelete.farm?.propertyNumber ?? "this product"}
+                {capitalize(confirmDelete.category)} ({capitalize(confirmDelete.variety)})
               </strong>
               . It will no longer appear in active lists.
             </>

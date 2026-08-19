@@ -4,7 +4,7 @@ const objectId = (label) =>
     z.string().regex(/^[0-9a-fA-F]{24}$/, `Invalid ${label}`);
 
 const category = z.enum(
-    ["coffee_seedlings", "coffee_cherries", "fertilizer", "coffee_beans"],
+    ["coffee_seedlings", "fertilizer", "coffee_beans"],
     { error: "Category is required" },
 );
 
@@ -24,19 +24,13 @@ const stock = z.preprocess(
 
 const status = z.enum(["active", "inactive"]).optional();
 
-const weight = z.coerce
-    .number()
-    .nonnegative("Weight must not be negative")
-    .optional();
-
 const price = z.coerce
     .number("Price must be a number")
     .nonnegative("Price must not be negative")
     .refine(
-        (value) => value === undefined || Number.isInteger(value * 100),
+        (value) => value === undefined || Number.isInteger(Math.round(value * 100)),
         { message: "Price must have at most 2 decimal places" },
-    )
-    .optional();
+    );
 
 const description = z
     .string()
@@ -52,30 +46,28 @@ const imageItem = z.object({
     isPrimary: z.boolean().optional(),
 });
 
-const imageUrls = z.array(imageItem).max(10, "A product can have at most 10 images").optional();
+const imageUrls = z
+    .array(imageItem)
+    .max(10, "A product can have at most 10 images")
+    .optional();
 
 export const createProductSchema = z.object({
-    farm: objectId("farm id"),
     category,
     variety,
     stock,
+    price,
     status,
-    weight,
     description,
     imageUrls,
-    // Required for managers — resolved from the authenticated account for
-    // farmers and kaluppa.
-    owner: objectId("owner id").optional(),
 });
 
 export const updateProductSchema = z
     .object({
-        farm: objectId("farm id").optional(),
         category: category.optional(),
         variety: variety.optional(),
         stock: stock.optional(),
+        price: price.optional(),
         status: status.optional(),
-        weight: weight.optional(),
         description: description.optional(),
         imageUrls: imageUrls.optional(),
     })
@@ -115,7 +107,10 @@ export const getProductsQuerySchema = z.object({
     limit: z.coerce.number().int().positive().optional().default(10),
     status: z.enum(["active", "inactive"]).optional(),
     category: z
-        .enum(["coffee_seedlings", "coffee_cherries", "fertilizer", "coffee_beans"])
+        .enum(["coffee_seedlings", "fertilizer", "coffee_beans"])
+        .optional(),
+    variety: z
+        .enum(["arabica", "robusta", "liberica", "excelsa"])
         .optional(),
     search: z
         .string()

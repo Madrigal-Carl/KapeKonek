@@ -7,16 +7,17 @@ const PAGE_SIZE = 8;
 
 const CATEGORY_OPTIONS = [
   { label: "Coffee Seedlings", value: "coffee_seedlings" },
-  { label: "Coffee Cherries", value: "coffee_cherries" },
   { label: "Fertilizer", value: "fertilizer" },
   { label: "Coffee Beans", value: "coffee_beans" },
 ];
 
 const capitalize = (value) =>
   value
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+    ? value
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
+    : "";
 
 export function ProductsPage() {
   const [q, setQ] = useState("");
@@ -32,8 +33,7 @@ export function ProductsPage() {
         image: p.imageUrls?.[0]?.url,
         category: capitalize(p.category),
         variety: capitalize(p.variety),
-        owner: p.owner?.fullName ?? "KapeKonek",
-        unit: p.owner?.role === "kaluppa" ? "stock" : "kg",
+        owner: p.owner?.fullName ?? "Kaluppa",
         price: typeof p.price === "number" ? p.price : undefined,
         description: p.description ?? "",
         sellerRating: typeof p.rating === "number" ? p.rating : 0,
@@ -49,7 +49,6 @@ export function ProductsPage() {
         (p) =>
           p.variety.toLowerCase().includes(ql) ||
           p.category.toLowerCase().includes(ql) ||
-          p.owner.toLowerCase().includes(ql) ||
           p.description.toLowerCase().includes(ql),
       );
     if (cat !== "All")
@@ -76,11 +75,10 @@ export function ProductsPage() {
             Marketplace
           </span>
           <h1 className="mt-4 text-4xl font-extrabold sm:text-5xl">
-            Coffee, direct from farm.
+            Storefront
           </h1>
           <p className="mt-4 max-w-xl text-muted-foreground">
-            Browse {products.length} products from verified farmers and
-            cooperatives.
+            Browse and purchase products supplied by Kaluppa.
           </p>
         </div>
       </section>

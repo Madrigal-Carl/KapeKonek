@@ -151,45 +151,46 @@ export function ProductDetailPage() {
   const unitLabel = isKaluppaOwned ? "stock" : "kg";
   const isWeightMode = !isKaluppaOwned; // farmer owner -> enter a weight
 
-  // How much is sellable for this listing.
-  const available = isKaluppaOwned ? product.stock : product.weight;
-  const availableLabel = isKaluppaOwned ? "Available Stock" : "Available Weight";
+  const available = product.stock;
+  const availableLabel = "Available Stock";
 
-  const quantityStep = isWeightMode ? 0.25 : 1;
-  const quantityLabel = isWeightMode ? "Weight (kg)" : "Quantity (stock)";
+  const quantityStep = 1;
+  const quantityLabel = "Quantity";
   const overLimit = available != null && qty > available;
 
   const setQtyValue = (value) => {
-    const parsed = Number(value);
-    const minimum = isWeightMode ? 0.25 : 1;
-    if (Number.isNaN(parsed)) return setQty(minimum);
-    setQty(Math.max(minimum, parsed));
+    const parsed = parseInt(value, 10);
+    if (Number.isNaN(parsed) || parsed < 1) return setQty(1);
+    setQty(parsed);
   };
 
   const stepQty = (delta) => {
-    const minimum = isWeightMode ? 0.25 : 1;
     const maximum = available ?? Infinity;
-    const next = Math.min(maximum, Math.max(minimum, qty + delta));
-    setQty(Math.round(next * 100) / 100);
+    const next = Math.min(maximum, Math.max(1, qty + delta));
+    setQty(next);
   };
 
   const total = product.price * qty;
 
   const handleAddToCart = () => {
     if (overLimit) return;
-    const line = {
-      ...product,
-      id: product._id,
-      unit: unitLabel,
-    };
-    add(line, qty);
-    showToast(
-      `${capitalize(product.variety)} · ${qty} ${unitLabel} added to cart`,
-      {
-        actionLabel: "View Cart",
-        onAction: () => setOpen(true),
+    protectedAction({
+      role: ["buyer", "farmer"],
+      onSuccess: () => {
+        const line = {
+          ...product,
+          id: product._id,
+        };
+        add(line, qty);
+        showToast(
+          `${capitalize(product.variety)} (${capitalize(product.category)}) · ${qty} added to cart`,
+          {
+            actionLabel: "View Cart",
+            onAction: () => setOpen(true),
+          },
+        );
       },
-    );
+    });
   };
 
   const submitReview = () => {
@@ -285,19 +286,16 @@ export function ProductDetailPage() {
           </div>
 
           <p className="label-mono mt-3 text-base text-[var(--color-muted-foreground)]">
-            By {product.owner?.fullName ?? "KapeKonek"}
+            By {product.owner?.fullName ?? "Kaluppa"}
           </p>
 
           <div className="mt-6 flex items-end gap-4 border-y border-[var(--color-border)] py-6">
             <span className="text-4xl font-extrabold sm:text-5xl">
               {formatPrice(product.price)}
             </span>
-            <span className="label-mono pb-1 text-base text-[var(--color-muted-foreground)]">
-              / {unitLabel}
-            </span>
           </div>
 
-          {/* Availability — follows the owner: stock for kaluppa, weight for farmers */}
+          {/* Availability */}
           {available != null && (
             <dl className="mt-6 grid grid-cols-1 gap-px bg-[var(--color-border)]">
               <div className="flex items-center justify-between bg-[var(--color-background)] p-4">
@@ -305,8 +303,7 @@ export function ProductDetailPage() {
                   {availableLabel}
                 </dt>
                 <dd className="mt-0 text-base font-semibold">
-                  {available.toLocaleString()}
-                  {isWeightMode ? " kg" : ""}
+                  {available.toLocaleString()} left
                 </dd>
               </div>
             </dl>
@@ -316,7 +313,7 @@ export function ProductDetailPage() {
             {product.description}
           </p>
 
-          {/* Quantity / weight */}
+          {/* Quantity */}
           <div className="mt-8 flex flex-wrap items-end gap-6">
             <div>
               <span className="label-mono text-[var(--color-muted-foreground)]">
@@ -333,8 +330,7 @@ export function ProductDetailPage() {
                 <input
                   value={qty}
                   onChange={(e) => setQtyValue(e.target.value)}
-                  inputMode="decimal"
-                  step={quantityStep}
+                  inputMode="numeric"
                   className="w-16 border-x border-[var(--color-border)] bg-[var(--color-background)] text-center text-base outline-none"
                 />
                 <button
@@ -347,8 +343,7 @@ export function ProductDetailPage() {
               </div>
               {overLimit && (
                 <p className="mt-1.5 text-sm text-[var(--color-destructive)]">
-                  Only {available} {unitLabel}
-                  {available === 1 ? "" : "s"} available.
+                  Only {available} available.
                 </p>
               )}
             </div>
@@ -391,13 +386,9 @@ export function ProductDetailPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-bold text-[var(--color-foreground)]">
-                  {product.owner?.fullName ?? "KapeKonek"}
+                  {product.owner?.fullName ?? "Kaluppa"}
                 </p>
-                <p className="label-mono mt-1 text-xs text-[var(--color-muted-foreground)]">
-                  {product.farm?.propertyNumber}
-                  {product.farm?.address ? ` · ${product.farm.address}` : ""}
-                </p>
-                <p className="mt-2 text-sm text-[var(--color-muted-foreground)]">
+                <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
                   {product.soldCount ?? 0} sold
                 </p>
               </div>

@@ -1,10 +1,7 @@
 import Product from "../models/product.model.js";
-import Farm from "../models/farm.model.js";
 import User from "../models/user.model.js";
-import Association from "../models/association.model.js";
 import Rating from "../models/rating.model.js";
 import Order from "../models/order.model.js";
-import mongoose from "mongoose";
 
 const getFullName = (user) =>
     [user.firstName, user.middleName, user.lastName]
@@ -12,39 +9,14 @@ const getFullName = (user) =>
         .join(" ")
         .trim();
 
-// Kaluppa can sell everything except coffee cherries; farmers and managers
-// always register coffee cherries.
-const KALUPPA_CATEGORIES = [
-    "fertilizer",
-    "coffee_beans",
-    "coffee_seedlings",
-];
-
-const resolveCategory = (category, authenticatedUser) => {
-    if (authenticatedUser.role === "kaluppa") {
-        if (!KALUPPA_CATEGORIES.includes(category)) {
-            const badRequestError = new Error(
-                "Kaluppa can only register fertilizer, coffee beans, or coffee seedlings",
-            );
-            badRequestError.statusCode = 400;
-            throw badRequestError;
-        }
-
-        return category;
-    }
-
-    // Farmers and managers always register coffee cherries.
-    return "coffee_cherries";
-};
-
 const escapeRegex = (str) =>
     str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 export const getProducts = async (
-    { all, page, limit, status, category, search },
+    { all, page, limit, status, category, variety, search },
     authenticatedUser,
 ) => {
-    const filter = { deletedAt: null };
+    const filter = { deletedAt: null, owner: authenticatedUser._id };
 
     if (status) {
         filter.status = status;
@@ -54,43 +26,17 @@ export const getProducts = async (
         filter.category = category;
     }
 
+    if (variety) {
+        filter.variety = variety;
+    }
+
     if (search) {
-        // Products are identified by category/variety (no product name).
         filter.$or = [
             { category: new RegExp(escapeRegex(search), "i") },
             { variety: new RegExp(escapeRegex(search), "i") },
             { description: new RegExp(escapeRegex(search), "i") },
         ];
     }
-
-    if (authenticatedUser.role === "farmer") {
-        // Farmers only see products registered to them.
-        filter.owner = authenticatedUser._id;
-    } else if (authenticatedUser.role === "kaluppa") {
-        // Kaluppa only sees their own products.
-        filter.owner = authenticatedUser._id;
-    } else if (authenticatedUser.role === "manager") {
-        // Managers see the products of all farmers in their association.
-        const association = await Association.findOne({
-            user: authenticatedUser._id,
-        }).select("assignedFarmers");
-
-        const farmerIds = (association?.assignedFarmers ?? []).map((id) =>
-            id.toString(),
-        );
-
-        if (!farmerIds.length) {
-            return all
-                ? { products: [], pagination: null }
-                : {
-                      products: [],
-                      pagination: { page, limit, total: 0, totalPages: 1 },
-                  };
-        }
-
-        filter.owner = { $in: farmerIds };
-    }
-    // DTI sees all products.
 
     if (all) {
         const products = await Product.find(filter).sort({ createdAt: -1 });
@@ -120,30 +66,27 @@ export const getProducts = async (
 };
 
 export const getCatalogProducts = async (
-    { all, page, limit, category, search },
+    { all, page, limit, category, variety, search },
     viewer,
 ) => {
-    // The public catalog bucket depends on who's browsing:
-    //   guest / buyer / farmer / manager / dti -> kaluppa-owned listings
-    //   kaluppa                                    -> farmer-owned listings
-    const role = viewer?.role ?? "guest";
-    const ownerRole = role === "kaluppa" ? "farmer" : "kaluppa";
-
-    const ownerIds = await User.find({
-        role: ownerRole,
+    const kaluppaUsers = await User.find({
+        role: "kaluppa",
         deletedAt: null,
     }).distinct("_id");
 
     const filter = {
         deletedAt: null,
         status: "active",
-        owner: { $in: ownerIds },
-        // Only listings that DTI has priced show up in the marketplace.
+        owner: { $in: kaluppaUsers },
         price: { $ne: null },
     };
 
     if (category) {
         filter.category = category;
+    }
+
+    if (variety) {
+        filter.variety = variety;
     }
 
     if (search) {
@@ -192,18 +135,10 @@ export const getProductById = async (id, viewer) => {
 
     const [attached] = await attachProductData([product]);
 
-    // Sold volume for this seller: total ordered quantity across all of the
-    // owner's listings on the same farm.
-    const ownerFarmProductIds = await Product.find({
-        owner: product.owner,
-        farm: product.farm,
-        deletedAt: null,
-    }).distinct("_id");
-
     const [soldAgg] = await Order.aggregate([
-        { $match: { "orderedProducts.product": { $in: ownerFarmProductIds } } },
+        { $match: { "orderedProducts.product": product._id } },
         { $unwind: "$orderedProducts" },
-        { $match: { "orderedProducts.product": { $in: ownerFarmProductIds } } },
+        { $match: { "orderedProducts.product": product._id } },
         { $group: { _id: null, sold: { $sum: "$orderedProducts.quantity" } } },
     ]);
 
@@ -235,13 +170,10 @@ const attachReviewAuthor = (review) => ({
     createdAt: review.createdAt,
 });
 
-// Reviews live on the { farm, category, variety } key (same key the product
-// rating is aggregated from), so every product with that key shares reviews.
 export const getProductReviews = async (id) => {
     const product = await findProductForReviews(id);
 
     const reviews = await Rating.find({
-        farm: product.farm,
         category: product.category,
         variety: product.variety,
     })
@@ -254,16 +186,17 @@ export const getProductReviews = async (id) => {
 export const createProductReview = async (id, data, authenticatedUser) => {
     const product = await findProductForReviews(id);
 
-    // One review per user per product — submitting again replaces it.
     const review = await Rating.findOneAndUpdate(
         {
             author: authenticatedUser._id,
-            farm: product.farm,
             category: product.category,
             variety: product.variety,
         },
         {
             $set: {
+                product: product._id,
+                category: product.category,
+                variety: product.variety,
                 rating: data.rating,
                 message: data.message ?? "",
             },
@@ -280,58 +213,21 @@ export const createProductReview = async (id, data, authenticatedUser) => {
 };
 
 export const createProduct = async (data, authenticatedUser) => {
-    let owner;
-
-    if (authenticatedUser.role === "manager") {
-        if (!data.owner) {
-            const badRequestError = new Error("Owner is required");
-            badRequestError.statusCode = 400;
-            throw badRequestError;
-        }
-
-        const managerAssociation = await Association.findOne({
-            user: authenticatedUser._id,
-        }).select("assignedFarmers");
-
-        const farmerDoc = await User.findOne({
-            _id: data.owner,
-            role: "farmer",
-            deletedAt: null,
-        });
-
-        if (!farmerDoc) {
-            const notFoundError = new Error("Farmer not found");
-            notFoundError.statusCode = 404;
-            throw notFoundError;
-        }
-
-        if (
-            !managerAssociation?.assignedFarmers.some((farmerId) =>
-                farmerId.equals(data.owner),
-            )
-        ) {
-            const badRequestError = new Error(
-                "Farmer must belong to your association",
-            );
-            badRequestError.statusCode = 400;
-            throw badRequestError;
-        }
-
-        owner = data.owner;
-    } else {
-        // Farmers and kaluppa own what they register.
-        owner = authenticatedUser._id;
+    if (authenticatedUser.role !== "kaluppa") {
+        const forbiddenError = new Error("Forbidden: only Kaluppa can manage products");
+        forbiddenError.statusCode = 403;
+        throw forbiddenError;
     }
 
     const { owner: _ignoredOwner, ...rest } = data;
 
     const product = await Product.create({
         ...rest,
-        category: resolveCategory(rest.category, authenticatedUser),
-        // Farmers and managers manage by weight, kaluppa by stock — stock
-        // stays null when the creator doesn't track it.
+        category: rest.category,
+        variety: rest.variety,
         stock: rest.stock ?? null,
-        owner,
+        price: rest.price,
+        owner: authenticatedUser._id,
     });
 
     return attachProductData([product]).then(([attached]) => attached);
@@ -346,7 +242,11 @@ export const updateProduct = async (id, data, authenticatedUser) => {
         throw notFoundError;
     }
 
-    await assertCanModifyProduct(product, authenticatedUser);
+    if (authenticatedUser.role !== "kaluppa" || !product.owner.equals(authenticatedUser._id)) {
+        const forbiddenError = new Error("Forbidden: insufficient permissions");
+        forbiddenError.statusCode = 403;
+        throw forbiddenError;
+    }
 
     const updated = await Product.findOneAndUpdate(
         { _id: product._id, deletedAt: null },
@@ -357,22 +257,19 @@ export const updateProduct = async (id, data, authenticatedUser) => {
     return attachProductData([updated]).then(([attached]) => attached);
 };
 
-// DTI is the only role that sets product pricing.
 export const updateProductPrice = async (id, price, authenticatedUser) => {
-    if (authenticatedUser.role !== "dti") {
-        const forbiddenError = new Error(
-            "Forbidden: insufficient permissions",
-        );
-        forbiddenError.statusCode = 403;
-        throw forbiddenError;
-    }
-
     const product = await Product.findOne({ _id: id, deletedAt: null });
 
     if (!product) {
         const notFoundError = new Error("Product not found");
         notFoundError.statusCode = 404;
         throw notFoundError;
+    }
+
+    if (authenticatedUser.role !== "kaluppa" || !product.owner.equals(authenticatedUser._id)) {
+        const forbiddenError = new Error("Forbidden: insufficient permissions");
+        forbiddenError.statusCode = 403;
+        throw forbiddenError;
     }
 
     const updated = await Product.findOneAndUpdate(
@@ -393,7 +290,11 @@ export const deleteProduct = async (id, authenticatedUser) => {
         throw notFoundError;
     }
 
-    await assertCanModifyProduct(product, authenticatedUser);
+    if (authenticatedUser.role !== "kaluppa" || !product.owner.equals(authenticatedUser._id)) {
+        const forbiddenError = new Error("Forbidden: insufficient permissions");
+        forbiddenError.statusCode = 403;
+        throw forbiddenError;
+    }
 
     const deleted = await Product.findOneAndUpdate(
         { _id: product._id, deletedAt: null },
@@ -404,34 +305,6 @@ export const deleteProduct = async (id, authenticatedUser) => {
     return { _id: deleted._id, deletedAt: deleted.deletedAt };
 };
 
-const assertCanModifyProduct = async (product, authenticatedUser) => {
-    if (authenticatedUser.role === "farmer" || authenticatedUser.role === "kaluppa") {
-        if (product.owner.equals(authenticatedUser._id)) return;
-
-        const forbiddenError = new Error("Forbidden: insufficient permissions");
-        forbiddenError.statusCode = 403;
-        throw forbiddenError;
-    }
-
-    if (authenticatedUser.role === "manager") {
-        const association = await Association.findOne({
-            user: authenticatedUser._id,
-        }).select("assignedFarmers");
-
-        if (
-            association?.assignedFarmers.some((farmerId) =>
-                farmerId.equals(product.owner),
-            )
-        ) {
-            return;
-        }
-    }
-
-    const forbiddenError = new Error("Forbidden: insufficient permissions");
-    forbiddenError.statusCode = 403;
-    throw forbiddenError;
-};
-
 const attachProductData = async (products) => {
     if (!products.length) return [];
 
@@ -440,38 +313,33 @@ const attachProductData = async (products) => {
             products.map((product) => product.owner?.toString()).filter(Boolean),
         ),
     ];
-    const farmIds = [
+    const categoryVarietyPairs = [
         ...new Set(
-            products.map((product) => product.farm?.toString()).filter(Boolean),
+            products
+                .filter((p) => p.category && p.variety)
+                .map((p) => `${p.category}|${p.variety}`),
         ),
     ];
 
-    const [owners, farms, ratingAgg] = await Promise.all([
+    const [owners, ratingAgg] = await Promise.all([
         ownerIds.length
             ? User.find({ _id: { $in: ownerIds } }).select(
                   "firstName middleName lastName role",
               )
             : [],
-        farmIds.length
-            ? Farm.find({ _id: { $in: farmIds } }).select(
-                  "propertyNumber address",
-              )
-            : [],
-        farmIds.length
+        categoryVarietyPairs.length
             ? Rating.aggregate([
                   {
                       $match: {
-                          farm: {
-                              $in: farmIds.map(
-                                  (id) => new mongoose.Types.ObjectId(id),
-                              ),
-                          },
+                          $or: categoryVarietyPairs.map((pair) => {
+                              const [cat, varr] = pair.split("|");
+                              return { category: cat, variety: varr };
+                          }),
                       },
                   },
                   {
                       $group: {
                           _id: {
-                              farm: "$farm",
                               category: "$category",
                               variety: "$variety",
                           },
@@ -486,24 +354,17 @@ const attachProductData = async (products) => {
     const nameByUser = new Map(
         owners.map((user) => [user._id.toString(), getFullName(user)]),
     );
-    const farmMap = new Map(
-        farms.map((farm) => [farm._id.toString(), farm]),
-    );
     const ratingByKey = new Map(
-        ratingAgg.map((entry) => {
-            const key = `${entry._id.farm.toString()}|${entry._id.category}|${entry._id.variety}`;
-            return [key, entry];
-        }),
+        ratingAgg.map((entry) => [
+            `${entry._id.category}|${entry._id.variety}`,
+            entry,
+        ]),
     );
 
     return products.map((product) => {
         const obj = product.toObject();
         const ownerId = obj.owner?.toString();
-        const farmId = obj.farm?.toString();
-        const farm = farmMap.get(farmId);
-        const ratingEntry = ratingByKey.get(
-            `${farmId}|${obj.category}|${obj.variety}`,
-        );
+        const ratingEntry = ratingByKey.get(`${obj.category}|${obj.variety}`);
 
         return {
             ...obj,
@@ -513,13 +374,6 @@ const attachProductData = async (products) => {
                       fullName: nameByUser.get(ownerId) ?? ownerId,
                       role: owners.find((o) => o._id.toString() === ownerId)
                           ?.role ?? null,
-                  }
-                : null,
-            farm: farm
-                ? {
-                      _id: farm._id,
-                      propertyNumber: farm.propertyNumber,
-                      address: farm.address,
                   }
                 : null,
             rating: ratingEntry

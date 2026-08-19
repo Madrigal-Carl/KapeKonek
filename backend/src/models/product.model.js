@@ -2,11 +2,6 @@ import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema(
     {
-        farm: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Farm",
-            required: true,
-        },
         owner: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
@@ -14,7 +9,7 @@ const productSchema = new mongoose.Schema(
         },
         category: {
             type: String,
-            enum: ["coffee_seedlings", "coffee_cherries", "fertilizer", "coffee_beans"],
+            enum: ["coffee_seedlings", "fertilizer", "coffee_beans"],
             required: true,
         },
         variety: {
@@ -28,15 +23,13 @@ const productSchema = new mongoose.Schema(
         },
         price: {
             type: Number,
-            default: null,
+            required: true,
+            min: 0,
         },
         status: {
             type: String,
             enum: ["active", "inactive"],
             default: "active",
-        },
-        weight: {
-            type: Number,
         },
         description: {
             type: String,

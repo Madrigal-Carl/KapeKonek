@@ -7,14 +7,14 @@ const ratingSchema = new mongoose.Schema(
             ref: "User",
             required: true,
         },
-        farm: {
+        product: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Farm",
-            required: true,
+            ref: "Product",
+            default: null,
         },
         category: {
             type: String,
-            enum: ["coffee_seedlings", "coffee_cherries", "fertilizer", "coffee_beans"],
+            enum: ["coffee_seedlings", "fertilizer", "coffee_beans"],
             required: true,
         },
         variety: {

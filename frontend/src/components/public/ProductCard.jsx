@@ -45,10 +45,10 @@ export function ProductCard({ product, variant = "grid" }) {
 
   const handleAdd = () => {
     protectedAction({
-      role: ["buyer", "farmer", "kaluppa"],
+      role: ["buyer", "farmer"],
       onSuccess: () => {
         add(product);
-        showToast(`${product.variety} added to cart`, {
+        showToast(`${product.variety} (${product.category}) added to cart`, {
           actionLabel: "View Cart",
           onAction: () => setOpen(true),
         });

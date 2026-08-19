@@ -58,38 +58,29 @@ router.post(
 router.get(
     "/",
     authenticated,
-    allowRoles("kaluppa", "manager", "farmer", "dti"),
+    allowRoles("kaluppa"),
     validateGetProductsQuery,
     getProductsHandler,
 );
 router.post(
     "/",
     authenticated,
-    allowRoles("kaluppa", "manager", "farmer"),
+    allowRoles("kaluppa"),
     validateCreateProduct,
     createProductHandler,
 );
 router.patch(
     "/:id",
     authenticated,
-    allowRoles("kaluppa", "manager", "farmer"),
+    allowRoles("kaluppa"),
     validateProductIdParam,
     validateUpdateProduct,
     updateProductHandler,
 );
-// DTI is the only role that sets product pricing.
-router.patch(
-    "/:id/price",
-    authenticated,
-    allowRoles("dti"),
-    validateProductIdParam,
-    validateUpdateProductPrice,
-    updateProductPriceHandler,
-);
 router.delete(
     "/:id",
     authenticated,
-    allowRoles("kaluppa", "manager", "farmer"),
+    allowRoles("kaluppa"),
     validateProductIdParam,
     deleteProductHandler,
 );

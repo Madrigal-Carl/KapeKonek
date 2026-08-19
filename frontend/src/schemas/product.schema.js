@@ -2,7 +2,6 @@ import { z } from "zod";
 
 export const PRODUCT_CATEGORIES = [
     "coffee_seedlings",
-    "coffee_cherries",
     "fertilizer",
     "coffee_beans",
 ];
@@ -27,9 +26,6 @@ export const PRODUCT_STATUS_OPTIONS = [
     { value: "inactive", label: "Inactive" },
 ];
 
-const objectId = (label) =>
-    z.string().regex(/^[0-9a-fA-F]{24}$/, `Invalid ${label}`);
-
 const category = z.enum(PRODUCT_CATEGORIES, { error: "Category is required" });
 
 const variety = z.enum(PRODUCT_VARIETIES, { error: "Variety is required" });
@@ -43,12 +39,15 @@ const stock = z.preprocess(
         .optional(),
 );
 
-const status = z.enum(["active", "inactive"]).optional();
+const price = z.coerce
+    .number("Price must be a number")
+    .nonnegative("Price must not be negative")
+    .refine(
+        (value) => value === undefined || Number.isInteger(Math.round(value * 100)),
+        { message: "Price must have at most 2 decimal places" },
+    );
 
-const weight = z.coerce
-    .number()
-    .nonnegative("Weight must not be negative")
-    .optional();
+const status = z.enum(["active", "inactive"]).optional();
 
 const description = z
     .string()
@@ -70,26 +69,22 @@ const imageUrls = z
     .optional();
 
 export const createProductSchema = z.object({
-    farm: objectId("farm id"),
     category,
     variety,
     stock,
+    price,
     status,
-    weight,
     description,
     imageUrls,
-    // Required for managers — resolved server-side for farmers/kaluppa.
-    owner: objectId("owner id").optional(),
 });
 
 export const updateProductSchema = z
     .object({
-        farm: objectId("farm id").optional(),
         category: category.optional(),
         variety: variety.optional(),
         stock: stock.optional(),
+        price: price.optional(),
         status: status.optional(),
-        weight: weight.optional(),
         description: description.optional(),
         imageUrls: imageUrls.optional(),
     })
