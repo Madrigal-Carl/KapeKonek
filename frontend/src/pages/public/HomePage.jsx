@@ -132,6 +132,7 @@ export function HomePage() {
           category: capitalize(p.category),
           variety: capitalize(p.variety),
           price: typeof p.price === "number" ? p.price : undefined,
+          unit: p.owner?.role === "kaluppa" ? "stock" : "kg",
           description: p.description ?? "",
           sellerRating: typeof p.rating === "number" ? p.rating : 0,
         })),

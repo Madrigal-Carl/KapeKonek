@@ -22,7 +22,7 @@ const EWALLETS = [
 export function CheckoutPage() {
   const { items, count, subtotal, setQty, remove, formatPrice } = useCart();
   const [method, setMethod] = useState("ewallet");
-  const [wallet, setWallet] = useState("gcash");
+  const [wallet] = useState("gcash");
   const [delivery, setDelivery] = useState("pickup"); // "pickup" | "delivery"
   const [receipt, setReceipt] = useState(null); // { file, url, progress, uploading }
   const [preview, setPreview] = useState(false);
@@ -152,17 +152,17 @@ export function CheckoutPage() {
                         className="flex flex-col gap-4 border-b border-border p-4 last:border-b-0 sm:flex-row sm:items-center sm:p-5"
                       >
                         <img
-                          src={it.product.image}
-                          alt={it.product.name}
-                          className="h-24 w-24 flex-shrink-0 object-cover sm:h-20 sm:w-20"
+                          src={it.product.imageUrls?.[0]?.url ?? it.product.image}
+                          alt={it.product.variety ?? it.product.name}
+                          className="h-24 w-24 flex-shrink-0 object-cover bg-[var(--color-neutral-warm)] sm:h-20 sm:w-20"
                         />
                         <div className="min-w-0 flex-1">
                           <h3 className="text-base font-semibold sm:text-lg">
-                            {it.product.name}
+                            {it.product.variety ?? it.product.name}
                           </h3>
                           <p className="label-mono mt-1 text-muted-foreground">
                             {formatPrice(it.product.price)} /{" "}
-                            {it.product.weightKg}kg
+                            {it.product.unit ?? it.product.weightKg ? "kg" : "item"}
                           </p>
                           <div className="mt-3 flex flex-wrap items-center gap-4">
                             <div className="flex items-center border border-border">

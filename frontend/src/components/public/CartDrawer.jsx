@@ -23,13 +23,43 @@ export function CartDrawer() {
   };
 
   const handleRemoveClick = (item) => {
-    setRemoveTarget({ id: item.product.id, name: item.product.name });
+    setRemoveTarget({
+      id: item.product.id,
+      name: item.product.variety ?? item.product.name ?? "item",
+    });
   };
 
   const handleRemoveConfirm = () => {
     if (removeTarget) remove(removeTarget.id);
     setRemoveTarget(null);
   };
+
+  const displayName = (item) =>
+    item.product.variety ?? item.product.name ?? "Product";
+
+  const unitStep = (item) => (item.product.unit === "kg" ? 0.25 : 1);
+  const roundQty = (n) => Math.round(n * 100) / 100;
+
+  // How much of this item is available: weight for kg items, stock otherwise.
+  const unitMax = (item) =>
+    item.product.unit === "kg"
+      ? item.product.weight ?? Infinity
+      : item.product.stock ?? Infinity;
+
+  const setItemQty = (item, value) => {
+    const next = Math.min(unitMax(item), Math.max(unitStep(item), value));
+    setQty(item.product.id, roundQty(next));
+  };
+
+  const stepQty = (item, delta) => setItemQty(item, item.qty + delta);
+
+  const typeQty = (item, raw) => {
+    const parsed = Number(raw);
+    if (Number.isNaN(parsed) || raw === "") return;
+    setItemQty(item, parsed);
+  };
+
+  const clampQty = (item) => setItemQty(item, item.qty);
 
   return (
     <>
@@ -87,14 +117,14 @@ export function CartDrawer() {
                   className="flex gap-4 border-b border-border px-6 py-5"
                 >
                   <img
-                    src={it.product.image}
-                    alt={it.product.name}
-                    className="h-20 w-20 flex-shrink-0 object-cover"
+                    src={it.product.imageUrls?.[0]?.url ?? it.product.image}
+                    alt={displayName(it)}
+                    className="h-20 w-20 flex-shrink-0 object-cover bg-[var(--color-neutral-warm)]"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <h4 className="truncate text-sm font-semibold">
-                        {it.product.name}
+                        {displayName(it)}
                       </h4>
                       <button
                         onClick={() => handleRemoveClick(it)}
@@ -105,31 +135,47 @@ export function CartDrawer() {
                       </button>
                     </div>
                     <p className="label-mono mt-1 text-muted-foreground">
-                      {formatPrice(it.product.price)}
-                      <span aria-hidden="true">·</span> {it.product.stock} stock
+                      {formatPrice(it.product.price)} /{" "}
+                      {it.product.unit ?? "item"}
+                      {it.product.stock != null &&
+                        ` · ${it.product.stock} left`}
+                      {it.product.unit === "kg" &&
+                        it.product.weight != null &&
+                        ` · ${it.product.weight} kg`}
                     </p>
-                    <div className="mt-3 flex items-center justify-between">
-                      <div className="flex items-center border border-border">
-                        <button
-                          className="grid h-8 w-8 place-items-center hover:bg-[var(--color-neutral-warm)]"
-                          onClick={() => setQty(it.product.id, it.qty - 1)}
-                          aria-label="Decrease"
-                        >
-                          <Minus size={12} />
-                        </button>
-                        <span className="label-mono w-8 text-center">
-                          {it.qty}
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center border border-border">
+                          <button
+                            className="grid h-8 w-8 place-items-center hover:bg-[var(--color-neutral-warm)]"
+                            onClick={() => stepQty(it, -unitStep(it))}
+                            aria-label="Decrease"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <input
+                            value={it.qty}
+                            onChange={(e) => typeQty(it, e.target.value)}
+                            onBlur={() => clampQty(it)}
+                            inputMode="decimal"
+                            step={unitStep(it)}
+                            className="label-mono h-8 w-12 border-x border-border bg-background text-center text-sm outline-none"
+                            aria-label={`${it.product.id} quantity`}
+                          />
+                          <button
+                            className="grid h-8 w-8 place-items-center hover:bg-[var(--color-neutral-warm)]"
+                            onClick={() => stepQty(it, unitStep(it))}
+                            aria-label="Increase"
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </div>
+                        <span className="label-mono w-9 text-muted-foreground">
+                          {it.product.unit === "kg" ? "kg" : "ct"}
                         </span>
-                        <button
-                          className="grid h-8 w-8 place-items-center hover:bg-[var(--color-neutral-warm)]"
-                          onClick={() => setQty(it.product.id, it.qty + 1)}
-                          aria-label="Increase"
-                        >
-                          <Plus size={12} />
-                        </button>
                       </div>
                       <span className="text-sm font-semibold">
-                        {formatPrice(it.qty * it.product.price)}
+                        {formatPrice(roundQty(it.qty) * it.product.price)}
                       </span>
                     </div>
                   </div>
@@ -144,17 +190,8 @@ export function CartDrawer() {
             <dl className="space-y-2 text-sm">
               <Row label="Total Items" value={String(count)} />
               <Row label="Subtotal" value={formatPrice(subtotal)} />
-              <Row
-                label="Estimated Fees"
-                value={formatPrice(Math.round(subtotal * 0.05))}
-                muted
-              />
               <div className="kk-rule pt-3">
-                <Row
-                  label="Estimated Total"
-                  value={formatPrice(subtotal + Math.round(subtotal * 0.05))}
-                  bold
-                />
+                <Row label="Total" value={formatPrice(subtotal)} bold />
               </div>
             </dl>
             <button

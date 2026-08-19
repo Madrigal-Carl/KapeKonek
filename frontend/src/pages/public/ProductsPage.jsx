@@ -33,6 +33,7 @@ export function ProductsPage() {
         category: capitalize(p.category),
         variety: capitalize(p.variety),
         owner: p.owner?.fullName ?? "KapeKonek",
+        unit: p.owner?.role === "kaluppa" ? "stock" : "kg",
         price: typeof p.price === "number" ? p.price : undefined,
         description: p.description ?? "",
         sellerRating: typeof p.rating === "number" ? p.rating : 0,
