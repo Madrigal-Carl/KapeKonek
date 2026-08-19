@@ -155,14 +155,15 @@ export const createUser = async (data, authenticatedUser) => {
 };
 
 export const updateMyProfile = async (data, authenticatedUser) => {
-    // Whitelisted, non-unique profile fields — email/username/role can't be
-    // changed through this endpoint.
+    // Whitelisted profile fields — email/username/role can't be changed
+    // through this endpoint.
     const allowed = [
         "firstName",
         "middleName",
         "lastName",
         "contactNumber",
         "address",
+        "password",
     ];
     const updateData = {};
     for (const field of allowed) {
@@ -173,6 +174,10 @@ export const updateMyProfile = async (data, authenticatedUser) => {
         const badRequestError = new Error("No fields to update");
         badRequestError.statusCode = 400;
         throw badRequestError;
+    }
+
+    if (updateData.password) {
+        updateData.password = await bcrypt.hash(updateData.password, 12);
     }
 
     return User.findOneAndUpdate(

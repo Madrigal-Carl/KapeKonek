@@ -173,6 +173,10 @@ export const updateMyProfileSchema = z
             .min(1, "Address is required")
             .max(200)
             .optional(),
+        password: z
+            .string()
+            .min(8, "Password must be at least 8 characters")
+            .optional(),
     })
     .refine((data) => Object.keys(data).length > 0, {
         message: "At least one field must be provided",
