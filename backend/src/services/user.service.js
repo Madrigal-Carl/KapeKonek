@@ -154,6 +154,34 @@ export const createUser = async (data, authenticatedUser) => {
     return user;
 };
 
+export const updateMyProfile = async (data, authenticatedUser) => {
+    // Whitelisted, non-unique profile fields — email/username/role can't be
+    // changed through this endpoint.
+    const allowed = [
+        "firstName",
+        "middleName",
+        "lastName",
+        "contactNumber",
+        "address",
+    ];
+    const updateData = {};
+    for (const field of allowed) {
+        if (data[field] !== undefined) updateData[field] = data[field];
+    }
+
+    if (!Object.keys(updateData).length) {
+        const badRequestError = new Error("No fields to update");
+        badRequestError.statusCode = 400;
+        throw badRequestError;
+    }
+
+    return User.findOneAndUpdate(
+        { _id: authenticatedUser._id },
+        { $set: updateData },
+        { returnDocument: "after", runValidators: true },
+    );
+};
+
 export const updateUser = async (id, data, authenticatedUser) => {
     const target = await User.findOne({ _id: id, deletedAt: null });
 

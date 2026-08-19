@@ -24,6 +24,13 @@ export async function updateUser(id, data) {
     return response.data;
 }
 
+// Updates the authenticated user's own profile (address, name, contact).
+export async function updateMyProfile(data) {
+    const response = await api.patch("/users/me", data);
+
+    return response.data;
+}
+
 export async function deleteUser(id) {
     const response = await api.delete(`/users/${id}`);
 

@@ -149,6 +149,35 @@ export const userIdParamSchema = z.object({
     id: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid user id"),
 });
 
+// A user updating their own basic profile. Whitelisted to safe, non-unique
+// fields only (no email/username/role changes).
+export const updateMyProfileSchema = z
+    .object({
+        firstName: z
+            .string()
+            .trim()
+            .min(1, "First name is required")
+            .max(100)
+            .optional(),
+        middleName: z.string().trim().max(100).optional(),
+        lastName: z
+            .string()
+            .trim()
+            .min(1, "Last name is required")
+            .max(100)
+            .optional(),
+        contactNumber: z.string().trim().max(20).optional(),
+        address: z
+            .string()
+            .trim()
+            .min(1, "Address is required")
+            .max(200)
+            .optional(),
+    })
+    .refine((data) => Object.keys(data).length > 0, {
+        message: "At least one field must be provided",
+    });
+
 export const reviewAccountSchema = z.object({
     status: z.enum(["approved", "rejected"]),
     remarks: z

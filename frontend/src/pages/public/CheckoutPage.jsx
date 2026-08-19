@@ -11,8 +11,11 @@ import {
   X,
   Store,
   Truck,
+  MapPin,
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import useAuth from "@/hooks/useAuth";
+import { updateMyProfile } from "@/services/user.service";
 
 const EWALLETS = [
   { id: "gcash", name: "GCash" },
@@ -21,6 +24,7 @@ const EWALLETS = [
 
 export function CheckoutPage() {
   const { items, count, subtotal, setQty, remove, formatPrice } = useCart();
+  const { user, isAuthenticated, fetchCurrentUser } = useAuth();
   const [method, setMethod] = useState("ewallet");
   const [wallet] = useState("gcash");
   const [delivery, setDelivery] = useState("pickup"); // "pickup" | "delivery"
@@ -29,12 +33,46 @@ export function CheckoutPage() {
   const [placed, setPlaced] = useState(false);
   const timerRef = useRef(null);
 
+  // Address missing on the account -> must set it before placing an order.
+  const [addressDraft, setAddressDraft] = useState(user?.address ?? "");
+  const [addressMsg, setAddressMsg] = useState(null); // { type, text }
+  const [addressSaving, setAddressSaving] = useState(false);
+
+  const needsAddress = Boolean(isAuthenticated && !user?.address?.trim());
+
   const total = subtotal;
 
   const canPlace =
     items.length > 0 &&
+    !needsAddress &&
     (method === "cash" ||
       (method === "ewallet" && receipt && !receipt.uploading));
+
+  async function handleSaveAddress(e) {
+    e.preventDefault();
+    const value = addressDraft.trim();
+    if (!value) {
+      setAddressMsg({ type: "error", text: "Please enter your address." });
+      return;
+    }
+    setAddressSaving(true);
+    setAddressMsg(null);
+    try {
+      await updateMyProfile({ address: value });
+      await fetchCurrentUser();
+      setAddressMsg({ type: "success", text: "Address saved." });
+    } catch (err) {
+      setAddressMsg({
+        type: "error",
+        text:
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to save your address.",
+      });
+    } finally {
+      setAddressSaving(false);
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -115,6 +153,68 @@ export function CheckoutPage() {
           <ArrowLeft size={14} /> Back
         </Link>
       </div>
+
+      {needsAddress && (
+        <div className="border-b border-border bg-[var(--color-surface)]">
+          <div className="kk-container py-6">
+            <div className="flex flex-col gap-4 border border-destructive/50 bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <MapPin
+                  size={20}
+                  className="mt-0.5 shrink-0 text-destructive"
+                />
+                <div>
+                  <p className="label-mono text-destructive">
+                    Delivery address required
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    You need to set your address before you can place an
+                    order.
+                  </p>
+                </div>
+              </div>
+              <form
+                onSubmit={handleSaveAddress}
+                className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"
+              >
+                <div className="relative flex-1 sm:w-80">
+                  <MapPin
+                    size={14}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <input
+                    value={addressDraft}
+                    onChange={(e) => {
+                      setAddressDraft(e.target.value);
+                      setAddressMsg(null);
+                    }}
+                    placeholder="Street, Barangay, City/Municipality, Province"
+                    className="h-11 w-full border border-border bg-background pl-9 pr-3 text-sm outline-none focus:border-foreground"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={addressSaving}
+                  className="label-mono shrink-0 bg-[var(--color-accent)] px-5 py-3 text-[var(--color-accent-foreground)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {addressSaving ? "Saving…" : "Save Address"}
+                </button>
+              </form>
+            </div>
+            {addressMsg && (
+              <p
+                className={`mt-2 text-sm ${
+                  addressMsg.type === "error"
+                    ? "text-destructive"
+                    : "text-foreground"
+                }`}
+              >
+                {addressMsg.text}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       <section className="kk-container py-10 sm:py-14">
         <span className="label-mono text-[var(--color-accent)]">Checkout</span>
@@ -231,13 +331,30 @@ export function CheckoutPage() {
               </div>
 
               {delivery === "delivery" && (
-                <div className="mt-6 border border-border p-5 text-base text-muted-foreground sm:p-6">
-                  Delivery fee is not included in the total below — it will be
-                  assessed and{" "}
-                  <span className="font-semibold text-foreground">
-                    paid upon receiving
-                  </span>{" "}
-                  your order.
+                <div className="mt-6 border border-border p-5 sm:p-6">
+                  <div className="flex items-start gap-3">
+                    <MapPin
+                      size={18}
+                      className="mt-0.5 shrink-0 text-[var(--color-accent)]"
+                    />
+                    <div>
+                      <span className="label-mono text-muted-foreground">
+                        Delivered to
+                      </span>
+                      <p className="mt-1 text-base font-semibold text-foreground">
+                        {user?.address ||
+                          "No address set yet — add one above to continue."}
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Delivery fee is not included in the total below — it
+                        will be assessed and{" "}
+                        <span className="font-semibold text-foreground">
+                          paid upon receiving
+                        </span>{" "}
+                        your order.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

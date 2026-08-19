@@ -4,6 +4,7 @@ import {
     getAvailableFarmersHandler,
     createUserHandler,
     updateUserHandler,
+    updateMyProfileHandler,
     deleteUserHandler,
     reviewAccountHandler,
     reviewAssociationHandler,
@@ -12,6 +13,7 @@ import {
     validateGetUsersQuery,
     validateCreateUser,
     validateUpdateUser,
+    validateUpdateMyProfile,
     validateReviewAccount,
     validateReviewAssociation,
     validateUserIdParam,
@@ -22,6 +24,14 @@ import {
 } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
+
+// Any authenticated user can update their own basic profile (address, etc.).
+router.patch(
+    "/me",
+    authenticated,
+    validateUpdateMyProfile,
+    updateMyProfileHandler,
+);
 
 router.get(
     "/",

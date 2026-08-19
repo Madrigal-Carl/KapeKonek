@@ -3,6 +3,7 @@ import {
     getAvailableFarmers,
     createUser,
     updateUser,
+    updateMyProfile,
     deleteUser,
     reviewAccount,
     reviewAssociation,
@@ -42,6 +43,15 @@ export const updateUserHandler = asyncHandler(async (req, res) => {
 
     return res.status(200).json({
         message: "User updated successfully",
+        user,
+    });
+});
+
+export const updateMyProfileHandler = asyncHandler(async (req, res) => {
+    const user = await updateMyProfile(req.body, req.user);
+
+    return res.status(200).json({
+        message: "Profile updated successfully",
         user,
     });
 });

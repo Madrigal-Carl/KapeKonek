@@ -1,6 +1,7 @@
 import {
     createUserSchema,
     updateUserSchema,
+    updateMyProfileSchema,
     userIdParamSchema,
     getUsersQuerySchema,
     reviewAccountSchema,
@@ -59,6 +60,7 @@ const validateQuery = (schema) => (req, res, next) => {
 
 export const validateCreateUser = validate(createUserSchema);
 export const validateUpdateUser = validate(updateUserSchema);
+export const validateUpdateMyProfile = validate(updateMyProfileSchema);
 export const validateReviewAccount = validate(reviewAccountSchema);
 export const validateReviewAssociation = validate(reviewAssociationSchema);
 export const validateUserIdParam = validateParams(userIdParamSchema);
