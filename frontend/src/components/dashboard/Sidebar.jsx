@@ -7,6 +7,8 @@ import useAuth from "@/hooks/useAuth";
 import { useChats } from "@/hooks/useChats";
 import { ROLES } from "@/constants/roles";
 
+import { useOrderBadge } from "@/hooks/useOrderBadge";
+
 const ROLE_LABELS = {
   buyer: "Buyer",
   farmer: "Farmer",
@@ -30,13 +32,19 @@ export function Sidebar({ open, onClose }) {
     0,
   );
 
+  const { unseenCount = 0 } = useOrderBadge();
+
   const navSections = getNavSectionsForRole(user?.role).map((section) => ({
     ...section,
-    items: section.items.map((item) =>
-      item.to?.endsWith("/chat") && unreadCount > 0
-        ? { ...item, badge: unreadCount > 9 ? "9+" : unreadCount }
-        : item,
-    ),
+    items: section.items.map((item) => {
+      if (item.to?.endsWith("/chat") && unreadCount > 0) {
+        return { ...item, badge: unreadCount > 9 ? "9+" : unreadCount };
+      }
+      if (item.to?.endsWith("/orders") && unseenCount > 0) {
+        return { ...item, badge: unseenCount > 9 ? "9+" : unseenCount };
+      }
+      return { ...item, badge: undefined };
+    }),
   }));
 
   const fullName =

@@ -61,8 +61,22 @@ export const logout = asyncHandler(async (req, res) => {
   });
 });
 
+import FarmerVerification from "../models/farmerVerification.model.js";
+
 export const getMe = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    return res.json({ user: null });
+  }
+
+  const userData = req.user.toObject ? req.user.toObject() : { ...req.user };
+
+  if (userData.role === "farmer") {
+    const verification = await FarmerVerification.findOne({ user: userData._id });
+    userData.accountStatus = verification?.accountStatus ?? "pending";
+    userData.associationStatus = verification?.associationStatus ?? "pending";
+  }
+
   return res.json({
-    user: req.user || null,
+    user: userData,
   });
 });

@@ -12,6 +12,7 @@ import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/constants/roles";
 import { useUsers } from "@/hooks/useUsers";
 import {
+  useCoffeeBeans,
   useCreateCoffeeBean,
   useUpdateCoffeeBean,
 } from "@/hooks/useCoffeeBeans";
@@ -25,6 +26,8 @@ import {
 import { uploadToCloudinary } from "@/services/upload.service";
 import { notify, notifyError } from "@/utils/notify";
 
+const UNAPPROVED_LIMIT_KG = 5;
+
 const capitalize = (value) =>
   value
     ? value
@@ -34,7 +37,7 @@ const capitalize = (value) =>
     : "";
 
 export function CoffeeBeanModal({ mode, initial, onClose }) {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
   const isManager = role === ROLES.MANAGER;
 
   const beanLabel = (item) =>
@@ -64,6 +67,8 @@ export function CoffeeBeanModal({ mode, initial, onClose }) {
   const isPending = (mode === "add" ? createCoffeeBean : updateCoffeeBean)
     .isPending;
 
+  const { data: allBeans = [] } = useCoffeeBeans({ all: true });
+
   const { data: farmers = [] } = useUsers(
     { role: "farmer", all: true },
     { enabled: isManager },
@@ -72,7 +77,24 @@ export function CoffeeBeanModal({ mode, initial, onClose }) {
   const farmerOptions = farmers.map((farmer) => ({
     value: farmer._id,
     label: farmer.fullName || `${farmer.firstName} ${farmer.lastName}`,
+    accountStatus: farmer.accountStatus,
   }));
+
+  // Determine if the effective farmer account is unapproved
+  const targetOwnerId = isManager ? form.owner : user?._id;
+  const isUnapprovedFarmer = isManager
+    ? farmers.find((f) => f._id === form.owner)?.accountStatus !== "approved"
+    : user?.role === "farmer" && user?.accountStatus !== "approved";
+
+  // Calculate cumulative weight of other active coffee beans listed by this farmer
+  const otherBeansWeight = allBeans
+    .filter((b) => {
+      const bOwnerId = b.owner?._id ?? b.owner;
+      return String(bOwnerId) === String(targetOwnerId) && b._id !== initial?._id;
+    })
+    .reduce((sum, b) => sum + (Number(b.weight) || 0), 0);
+
+  const remainingLimit = Math.max(0, UNAPPROVED_LIMIT_KG - otherBeansWeight);
 
   const set = (key, value) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -182,6 +204,13 @@ export function CoffeeBeanModal({ mode, initial, onClose }) {
       return;
     }
 
+    if (isUnapprovedFarmer && Number(result.data.weight) > remainingLimit) {
+      setErrors({
+        weight: `Weight cannot exceed your remaining unapproved allowance of ${remainingLimit.toFixed(2)} kg (Total limit: 5kg).`,
+      });
+      return;
+    }
+
     setErrors({});
 
     const mutation = mode === "add" ? createCoffeeBean : updateCoffeeBean;
@@ -273,6 +302,11 @@ export function CoffeeBeanModal({ mode, initial, onClose }) {
                 onChange={(e) => set("weight", e.target.value)}
                 placeholder="0"
               />
+              {isUnapprovedFarmer && !readOnly && (
+                <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                  ⚠️ Unapproved account limit: Max 5kg total (Remaining: {remainingLimit.toFixed(2)} kg).
+                </p>
+              )}
               <FieldError message={errors.weight} />
             </Field>
 

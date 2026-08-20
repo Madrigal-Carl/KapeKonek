@@ -1,6 +1,50 @@
 import CoffeeBean from "../models/coffeeBean.model.js";
 import User from "../models/user.model.js";
 import Association from "../models/association.model.js";
+import FarmerVerification from "../models/farmerVerification.model.js";
+
+const UNAPPROVED_FARMER_WEIGHT_LIMIT_KG = 5;
+
+const assertFarmerWeightLimit = async (ownerId, newWeight, excludeBeanId = null) => {
+    if (typeof newWeight !== "number" || newWeight <= 0) return;
+
+    // Check farmer verification status
+    const verification = await FarmerVerification.findOne({ user: ownerId });
+    const isApproved = verification && verification.accountStatus === "approved";
+
+    if (isApproved) {
+        return; // Approved farmers have no weight limit
+    }
+
+    // Sum active weights of coffee beans listed by this farmer
+    const filter = {
+        owner: ownerId,
+        deletedAt: null,
+    };
+    if (excludeBeanId) {
+        filter._id = { $ne: excludeBeanId };
+    }
+
+    const currentBeans = await CoffeeBean.find(filter).select("weight");
+    const currentTotalWeight = currentBeans.reduce(
+        (sum, bean) => sum + (typeof bean.weight === "number" ? bean.weight : 0),
+        0,
+    );
+
+    const projectedTotalWeight = currentTotalWeight + newWeight;
+
+    if (projectedTotalWeight > UNAPPROVED_FARMER_WEIGHT_LIMIT_KG) {
+        const remainingAllowed = Math.max(
+            0,
+            UNAPPROVED_FARMER_WEIGHT_LIMIT_KG - currentTotalWeight,
+        );
+        const error = new Error(
+            `Unapproved farmer accounts are limited to a maximum of ${UNAPPROVED_FARMER_WEIGHT_LIMIT_KG}kg of coffee beans in total. You currently have ${currentTotalWeight.toFixed(2)}kg listed (remaining allowance: ${remainingAllowed.toFixed(2)}kg). Please get your account approved to list more.`,
+        );
+        error.statusCode = 400;
+        throw error;
+    }
+};
 
 const getFullName = (user) =>
     [user.firstName, user.middleName, user.lastName]
@@ -164,6 +208,10 @@ export const createCoffeeBean = async (data, authenticatedUser) => {
         owner = authenticatedUser._id;
     }
 
+    if (data.weight !== undefined) {
+        await assertFarmerWeightLimit(owner, Number(data.weight));
+    }
+
     const { owner: _ignoredOwner, price: _ignoredPrice, ...rest } = data;
 
     const coffeeBean = await CoffeeBean.create({
@@ -185,6 +233,14 @@ export const updateCoffeeBean = async (id, data, authenticatedUser) => {
     }
 
     await assertCanModifyCoffeeBean(coffeeBean, authenticatedUser);
+
+    if (data.weight !== undefined) {
+        await assertFarmerWeightLimit(
+            coffeeBean.owner,
+            Number(data.weight),
+            coffeeBean._id,
+        );
+    }
 
     const { owner: _ignoredOwner, price: _ignoredPrice, ...rest } = data;
 

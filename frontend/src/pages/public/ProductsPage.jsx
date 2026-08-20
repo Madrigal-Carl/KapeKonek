@@ -28,16 +28,20 @@ export function ProductsPage() {
 
   const cards = useMemo(
     () =>
-      products.map((p) => ({
-        id: p._id,
-        image: p.imageUrls?.[0]?.url,
-        category: capitalize(p.category),
-        variety: capitalize(p.variety),
-        owner: p.owner?.fullName ?? "Kaluppa",
-        price: typeof p.price === "number" ? p.price : undefined,
-        description: p.description ?? "",
-        sellerRating: typeof p.rating === "number" ? p.rating : 0,
-      })),
+      products
+        .filter((p) => p.status === "active")
+        .map((p) => ({
+          id: p._id,
+          image: p.imageUrls?.[0]?.url,
+          category: capitalize(p.category),
+          rawCategory: p.category,
+          variety: capitalize(p.variety),
+          owner: p.owner?.fullName ?? "Kaluppa",
+          price: typeof p.price === "number" ? p.price : undefined,
+          description: p.description ?? "",
+          sellerRating: typeof p.rating === "number" ? p.rating : 0,
+          status: p.status,
+        })),
     [products],
   );
 
@@ -51,12 +55,12 @@ export function ProductsPage() {
           p.category.toLowerCase().includes(ql) ||
           p.description.toLowerCase().includes(ql),
       );
-    if (cat !== "All")
+    if (cat !== "All") {
+      const selectedValue = CATEGORY_OPTIONS.find((c) => c.label === cat)?.value;
       list = list.filter(
-        (p) =>
-          p.category ===
-          CATEGORY_OPTIONS.find((c) => c.label === cat)?.value,
+        (p) => p.rawCategory === selectedValue || p.category === cat,
       );
+    }
     return list;
   }, [q, cat, cards]);
 

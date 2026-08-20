@@ -14,6 +14,7 @@ import {
   OrderDetailsModal,
   UpdateStatusModal,
 } from "@/components/modals";
+import { useOrderBadge } from "@/hooks/useOrderBadge";
 
 const CANCELLATION_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
@@ -22,6 +23,7 @@ export function OrdersPage() {
   const isKaluppa = user?.role === "kaluppa";
 
   const { data: orders = [], isLoading } = useOrders({ all: true });
+  const { markAllAsViewed } = useOrderBadge();
   const reserveOrder = useReserveOrder();
   const completeOrder = useCompleteOrder();
   const cancelOrder = useCancelOrder();
@@ -29,6 +31,13 @@ export function OrdersPage() {
   const [viewModal, setViewModal] = useState(null);
   const [statusModal, setStatusModal] = useState(null);
   const [cancelModal, setCancelModal] = useState(null);
+
+  // Mark all currently fetched orders as viewed upon visiting the page
+  useEffect(() => {
+    if (orders.length > 0) {
+      markAllAsViewed();
+    }
+  }, [orders, markAllAsViewed]);
 
   // Auto-refresh timer to keep 1-hour cancellation calculation accurate
   const [now, setNow] = useState(Date.now());

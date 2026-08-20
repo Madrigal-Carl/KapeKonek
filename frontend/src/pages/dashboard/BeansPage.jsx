@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Archive, Eye, Pencil, Plus, Tag } from "lucide-react";
+import { AlertCircle, Archive, Eye, Pencil, Plus, Tag } from "lucide-react";
 import { Button } from "@/components/ui";
 import { fmtPrice } from "@/utils/format";
 import {
@@ -33,7 +33,7 @@ const capitalize = (value) =>
     : "";
 
 export function BeansPage() {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
   const isDTI = role === ROLES.DTI;
   const isFarmerOrManager =
     role === ROLES.FARMER || role === ROLES.MANAGER;
@@ -44,6 +44,13 @@ export function BeansPage() {
   const [modal, setModal] = useState(null);
   const [priceModal, setPriceModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+
+  const totalWeight = coffeeBeans.reduce(
+    (sum, b) => sum + (Number(b.weight) || 0),
+    0,
+  );
+  const isUnapprovedFarmer =
+    role === ROLES.FARMER && user?.accountStatus !== "approved";
 
   const columns = [
     {
@@ -182,6 +189,28 @@ export function BeansPage() {
           ) : null
         }
       />
+
+      {isUnapprovedFarmer && (
+        <div className="mb-6 flex items-start gap-3 border border-amber-300 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <div className="space-y-1">
+            <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+              Account Pending Approval — 5kg Bean Listing Limit
+            </h4>
+            <p className="text-sm text-amber-700 dark:text-amber-300/90">
+              Your farmer account is currently awaiting verification. Unapproved accounts can list up to a cumulative total of <strong>5 kg</strong> of coffee beans.
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-4 text-xs font-medium text-amber-800 dark:text-amber-200">
+              <span>
+                Currently Listed: <strong>{totalWeight.toFixed(2)} kg</strong> / 5.00 kg
+              </span>
+              <span>
+                Remaining Allowance: <strong>{Math.max(0, 5 - totalWeight).toFixed(2)} kg</strong>
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       <DataTable
         rows={coffeeBeans}
